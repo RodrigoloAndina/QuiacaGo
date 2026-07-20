@@ -3,9 +3,7 @@ pluginManagement {
         def properties = new Properties()
         def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
         if (localPropertiesFile.exists()) {
-            localPropertiesFile.afterEvaluate {
-                properties.load(localPropertiesFile.newDataInputStream())
-            }
+            properties.load(localPropertiesFile.newDataInputStream())
         }
         def flutterSdkPath = properties.getProperty("flutter.sdk")
         assert flutterSdkPath != null : "flutter.sdk not set in local.properties"
@@ -17,7 +15,6 @@ pluginManagement {
     repositories {
         google()
         mavenCentral()
-        gradlePluginPortal()
     }
 }
 

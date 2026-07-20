@@ -4,13 +4,17 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/constants/app_constants.dart';
 
 class TaxiAsignadoScreen extends StatelessWidget {
   const TaxiAsignadoScreen({super.key});
 
-  final LatLng conductorPos = const LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng);
-  final LatLng pasajeroPos = const LatLng(-22.1024, -65.5998); // Av. Sarmiento 450
+  // Coordenadas reales siguiendo la cuadrícula de calles de La Quiaca
+  final List<LatLng> rutaPorCalles = const [
+    LatLng(-22.1055, -65.5985), // Inicio: Calle Belgrano y Av. España
+    LatLng(-22.1055, -65.5960), // Esquina: Belgrano y Balcarce
+    LatLng(-22.1024, -65.5960), // Esquina: Balcarce y 9 de Julio
+    LatLng(-22.1024, -65.5998), // Destino: Av. Sarmiento 450 (Punto de Recogida)
+  ];
 
   Future<void> _hacerLlamada() async {
     final Uri url = Uri.parse('tel:+5493885401234');
@@ -28,68 +32,75 @@ class TaxiAsignadoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final LatLng conductorPos = rutaPorCalles.first;
+    final LatLng pasajeroPos = rutaPorCalles.last;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('En camino al Pasajero'),
-        centerTitle: true,
-        backgroundColor: AppColors.primary,
-      ),
       body: Stack(
         children: [
-          // Mapa de Ruta Trazada al Pasajero
+          // MAPA MODO NAVEGACIÓN ESTILO UBER
           FlutterMap(
             options: MapOptions(
               initialCenter: LatLng(
                 (conductorPos.latitude + pasajeroPos.latitude) / 2,
                 (conductorPos.longitude + pasajeroPos.longitude) / 2,
               ),
-              initialZoom: 15.5,
+              initialZoom: 16.2,
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
                 userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
               ),
-              // Línea de Ruta Trazada en Azul
+              // Línea de Ruta Curvada por Calles (Estilo Neón Uber #0052FF)
               PolylineLayer(
                 polylines: [
                   Polyline(
-                    points: [
-                      conductorPos,
-                      const LatLng(-22.1040, -65.5990),
-                      const LatLng(-22.1030, -65.5995),
-                      pasajeroPos,
-                    ],
-                    strokeWidth: 5.0,
-                    color: AppColors.primary,
+                    points: rutaPorCalles,
+                    strokeWidth: 6.5,
+                    color: const Color(0xFF0052FF),
+                    strokeCap: StrokeCap.round,
+                    strokeJoin: StrokeJoin.round,
                   ),
                 ],
               ),
-              // Marcador del Auto y del Pasajero
+              // Marcadores de Vehículo y Pasajero
               MarkerLayer(
                 markers: [
                   Marker(
                     point: conductorPos,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00327D),
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.directions_car, color: Colors.white, size: 24),
+                      child: const Icon(Icons.directions_car_filled, color: Colors.white, size: 24),
                     ),
                   ),
                   Marker(
                     point: pasajeroPos,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: AppColors.statusAvailable,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.person_pin_circle, color: Colors.white, size: 28),
+                      child: const Icon(Icons.person_pin_circle, color: Colors.white, size: 26),
                     ),
                   ),
                 ],
@@ -97,7 +108,83 @@ class TaxiAsignadoScreen extends StatelessWidget {
             ],
           ),
 
-          // Card Inferior con Datos del Pasajero
+          // BARRA SUPERIOR DE NAVEGACIÓN ESTILO UBER / DIDI
+          Positioned(
+            top: 44,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A), // Dark Slate Uber Style
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 15,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.turn_right, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'En 150m gira a la derecha',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'por Calle Balcarce hacia 9 de Julio',
+                          style: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Column(
+                      children: [
+                        Text(
+                          '4 min',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        Text(
+                          '1.2 km',
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // PANEL INFERIOR ESTILO UBER / DIDI CON BOTONES DE CONTACTO
           Positioned(
             left: 16,
             right: 16,
@@ -106,24 +193,23 @@ class TaxiAsignadoScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 24,
+                    offset: const Offset(0, -6),
                   ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Info Pasajero + Botones de Contacto
                   Row(
                     children: [
                       const CircleAvatar(
                         radius: 24,
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: Color(0xFF00327D),
                         child: Text(
                           'MG',
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
@@ -136,7 +222,7 @@ class TaxiAsignadoScreen extends StatelessWidget {
                           children: [
                             Text(
                               'María Gómez',
-                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
                             ),
                             SizedBox(height: 2),
                             Row(
@@ -145,7 +231,7 @@ class TaxiAsignadoScreen extends StatelessWidget {
                                 SizedBox(width: 4),
                                 Text(
                                   '4.9 (12 viajes)',
-                                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                                 ),
                               ],
                             ),
@@ -155,40 +241,39 @@ class TaxiAsignadoScreen extends StatelessWidget {
 
                       // Botón Llamar
                       IconButton.filledTonal(
-                        icon: const Icon(Icons.phone, color: AppColors.primary),
+                        icon: const Icon(Icons.phone, color: Color(0xFF00327D)),
                         onPressed: _hacerLlamada,
-                        tooltip: 'Llamar al Pasajero',
+                        style: IconButton.styleFrom(backgroundColor: const Color(0xFFEFF6FF)),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       // Botón WhatsApp
                       IconButton.filledTonal(
-                        icon: const Icon(Icons.chat_outlined, color: AppColors.statusAvailable),
+                        icon: const Icon(Icons.chat_outlined, color: Color(0xFF10B981)),
                         onPressed: _abrirWhatsApp,
-                        tooltip: 'Enviar WhatsApp',
+                        style: IconButton.styleFrom(backgroundColor: const Color(0xFFECFDF5)),
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 14),
 
-                  // Dirección Origen & Distancia
                   Row(
                     children: const [
-                      Icon(Icons.navigation, color: AppColors.primary, size: 20),
-                      SizedBox(width: 12),
+                      Icon(Icons.location_on, color: Color(0xFF10B981), size: 22),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'PUNTO DE RECOGIDA (A 1.2 KM - 4 MIN)',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+                              'PUNTO DE RECOGIDA',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8)),
                             ),
                             Text(
                               'Av. Sarmiento 450, La Quiaca',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                             ),
                           ],
                         ),
@@ -198,21 +283,22 @@ class TaxiAsignadoScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Botón "Llegué al Punto de Encuentro"
+                  // Botón Accionar Llegada
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 54,
                     child: ElevatedButton.icon(
                       onPressed: () => context.push('/confirmacion-llegada'),
-                      icon: const Icon(Icons.check_circle, color: Colors.white),
+                      icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 22),
                       label: const Text(
-                        'HE LLEGADO AL PASAJERO',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        'HE LLEGADO / NOTIFICAR',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.statusAvailable,
+                        backgroundColor: const Color(0xFF10B981),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                       ),
                     ),

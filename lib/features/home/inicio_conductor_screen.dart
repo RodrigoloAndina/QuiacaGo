@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../services/location_service.dart';
 
 class InicioConductorScreen extends StatefulWidget {
   const InicioConductorScreen({super.key});
@@ -15,6 +17,43 @@ class InicioConductorScreen extends StatefulWidget {
 class _InicioConductorScreenState extends State<InicioConductorScreen> {
   bool _isConnected = false;
   int _currentIndex = 0;
+  LatLng _conductorPos = const LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng);
+  StreamSubscription<LatLng>? _locationSubscription;
+  final MapController _mapController = MapController();
+
+  @override
+  void initState() {
+    super.initState();
+    _iniciarCapturaGPSReal();
+  }
+
+  Future<void> _iniciarCapturaGPSReal() async {
+    // 1. Obtener primera posición conocida o precisa
+    final posIncial = await LocationService.getCurrentLocation();
+    if (mounted) {
+      setState(() {
+        _conductorPos = posIncial;
+      });
+      _mapController.move(posIncial, 16.0);
+    }
+
+    // 2. Suscribirse a cambios continuos de GPS a medida que el auto avanza
+    _locationSubscription = LocationService.getRealtimeLocationStream().listen((nuevaPos) {
+      if (mounted) {
+        setState(() {
+          _conductorPos = nuevaPos;
+        });
+        _mapController.move(nuevaPos, _mapController.camera.zoom);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _locationSubscription?.cancel();
+    _mapController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,22 +85,37 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
       ),
       body: Stack(
         children: [
-          // Mapa Interactivo HD de La Quiaca
+          // Mapa Interactivo HD de La Quiaca con seguimiento GPS real
           FlutterMap(
-            options: const MapOptions(
-              initialCenter: LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng),
-              initialZoom: 15.0,
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _conductorPos,
+              initialZoom: 16.0,
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
                 userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
               ),
-              const MarkerLayer(
+              MarkerLayer(
                 markers: [
                   Marker(
-                    point: LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng),
-                    child: Icon(Icons.directions_car, color: AppColors.primary, size: 36),
+                    point: _conductorPos,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.directions_car, color: Colors.white, size: 24),
+                    ),
                   ),
                 ],
               ),

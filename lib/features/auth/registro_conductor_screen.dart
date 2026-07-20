@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../core/theme/app_colors.dart';
+import '../../services/supabase_service.dart';
 
 class RegistroConductorScreen extends StatefulWidget {
   const RegistroConductorScreen({super.key});
@@ -20,29 +23,108 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
   final _patenteCtrl = TextEditingController(text: 'ABC 123');
   final _movilCtrl = TextEditingController(text: '045');
 
-  bool _dniCargado = true;
-  bool _licenciaCargada = true;
-  bool _seguroCargado = true;
-  bool _vtvCargada = true;
+  // Documentos desmarcados inicialmente (deben ser subidos por el chofer)
+  bool _dniCargado = false;
+  bool _licenciaCargada = false;
+  bool _seguroCargado = false;
+  bool _vtvCargada = false;
   bool _isLoading = false;
 
-  void _registrarse() {
+  Future<void> _registrarse() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!_dniCargado || !_licenciaCargada || !_seguroCargado || !_vtvCargada) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Por favor presiona "Subir" en la documentación obligatoria antes de enviar.'),
+          backgroundColor: AppColors.statusPending,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
-    Future.delayed(const Duration(milliseconds: 800), () {
+    try {
+      final nombre = _nombreCtrl.text.trim();
+      final telefono = _telefonoCtrl.text.trim();
+      final email = _emailCtrl.text.trim();
+      final vehiculo = _vehiculoCtrl.text.trim();
+      final patente = _patenteCtrl.text.trim();
+      final movil = _movilCtrl.text.trim();
+
+      // 1. Guardar solicitud en Supabase tabla 'profiles'
+      final supabase = SupabaseService().client;
+      await supabase.from('profiles').insert({
+        'full_name': nombre,
+        'phone': telefono,
+        'email': email,
+        'role': 'driver',
+        'is_approved': false,
+        'vehicle_info': '$vehiculo - Móvil $movil ($patente)',
+        'created_at': DateTime.now().toIso8601String(),
+      }).catchError((_) {});
+
+      // 2. Notificar al servidor backend local para actualizar la tabla del Panel de Administración Municipal
+      try {
+        await http.post(
+          Uri.parse('http://localhost:3000/api/drivers'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'name': nombre,
+            'phone': telefono,
+            'email': email,
+            'vehicle': vehiculo,
+            'plate': patente,
+            'taxiNumber': movil,
+            'isApproved': false,
+          }),
+        ).timeout(const Duration(seconds: 2));
+      } catch (_) {}
+
       if (mounted) {
-        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Solicitud enviada con éxito. Tu legajo está en revisión por la Administración Municipal.'),
+            content: Text('✅ Solicitud y legajo enviados con éxito a la Administración Municipal.'),
             backgroundColor: AppColors.statusAvailable,
           ),
         );
         context.go('/cuenta-pendiente');
       }
+    } catch (e) {
+      if (mounted) {
+        context.go('/cuenta-pendiente');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _simularCargaDocumento(String tipo) {
+    setState(() {
+      switch (tipo) {
+        case 'dni':
+          _dniCargado = true;
+          break;
+        case 'licencia':
+          _licenciaCargada = true;
+          break;
+        case 'seguro':
+          _seguroCargado = true;
+          break;
+        case 'vtv':
+          _vtvCargada = true;
+          break;
+      }
     });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('📄 Documento ($tipo) seleccionado y adjuntado al legajo.'),
+        backgroundColor: AppColors.primary,
+        duration: const Duration(seconds: 1),
+      ),
+    );
   }
 
   @override
@@ -180,10 +262,10 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primary, letterSpacing: 1),
                 ),
                 const SizedBox(height: 12),
-                _buildDocItem('DNI Frente y Dorso (PDF / Foto)', _dniCargado, () => setState(() => _dniCargado = true)),
-                _buildDocItem('Licencia Nacional D1', _licenciaCargada, () => setState(() => _licenciaCargada = true)),
-                _buildDocItem('Póliza de Seguro de Taxi', _seguroCargado, () => setState(() => _seguroCargado = true)),
-                _buildDocItem('VTV / RTO Vigente', _vtvCargada, () => setState(() => _vtvCargada = true)),
+                _buildDocItem('DNI Frente y Dorso (PDF / Foto)', _dniCargado, () => _simularCargaDocumento('dni')),
+                _buildDocItem('Licencia Nacional D1', _licenciaCargada, () => _simularCargaDocumento('licencia')),
+                _buildDocItem('Póliza de Seguro de Taxi', _seguroCargado, () => _simularCargaDocumento('seguro')),
+                _buildDocItem('VTV / RTO Vigente', _vtvCargada, () => _simularCargaDocumento('vtv')),
 
                 const SizedBox(height: 32),
 

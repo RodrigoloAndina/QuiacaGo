@@ -26,13 +26,15 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Generar Archivos Nativos Android Si Faltan
-        run: flutter create --platforms=android --org=com.quiacago .
+      - name: Reconstruir Plantilla Nativa de Android
+        run: |
+          rm -rf android
+          flutter create --platforms=android --org com.quiacago .
 
-      - name: Instalar Dependencias de Flutter
+      - name: Instalar Dependencias
         run: flutter pub get
 
-      - name: Compilar APK Android Release
+      - name: Compilar APK Release
         run: flutter build apk --release --no-tree-shake-icons
 
       - name: Subir APK de QuiacaGo como Artefacto Descargable

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo - Pedir Taxi</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for horizontal lists */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Map specific subtle fade at the top */
+        .map-gradient {
+            background: linear-gradient(to bottom, rgba(249, 249, 252, 1) 0%, rgba(249, 249, 252, 0) 15%);
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#ffb59d",
+                    "outline": "#737784",
+                    "inverse-on-surface": "#f0f0f3",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#b1c5ff",
+                    "tertiary": "#3c3625",
+                    "background": "#f9f9fc",
+                    "primary-container": "#0047ab",
+                    "surface-container": "#eeeef0",
+                    "tertiary-fixed": "#ece2c9",
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#434653",
+                    "tertiary-fixed-dim": "#cfc6ae",
+                    "primary": "#00327d",
+                    "surface-container-low": "#f3f3f6",
+                    "surface-dim": "#dadadc",
+                    "on-secondary-container": "#742405",
+                    "surface-variant": "#e2e2e5",
+                    "surface-container-highest": "#e2e2e5",
+                    "secondary-container": "#fe8c65",
+                    "surface-tint": "#2559bd",
+                    "on-primary-fixed-variant": "#00419e",
+                    "outline-variant": "#c3c6d5",
+                    "on-background": "#1a1c1e",
+                    "on-primary-fixed": "#001946",
+                    "on-secondary-fixed": "#390c00",
+                    "on-secondary-fixed-variant": "#7e2c0c",
+                    "secondary": "#9d4221",
+                    "inverse-primary": "#b1c5ff",
+                    "on-error": "#ffffff",
+                    "on-tertiary-container": "#c7bea6",
+                    "on-tertiary-fixed-variant": "#4c4634",
+                    "surface-bright": "#f9f9fc",
+                    "surface": "#f9f9fc",
+                    "on-primary-container": "#a5bdff",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#ffdbd0",
+                    "on-tertiary-fixed": "#201b0c",
+                    "on-surface": "#1a1c1e",
+                    "inverse-surface": "#2f3133",
+                    "primary-fixed": "#dae2ff",
+                    "tertiary-container": "#534d3a",
+                    "surface-container-high": "#e8e8ea",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "margin-desktop": "64px",
+                    "base": "8px",
+                    "margin-mobile": "20px",
+                    "container-padding": "24px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "display": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen w-screen overflow-hidden flex flex-col relative antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Drawer Overlay (Hidden by default) -->
+<div class="fixed inset-0 bg-on-background/40 z-[55] hidden opacity-0 transition-opacity duration-300" id="drawer-overlay"></div>
+<!-- Navigation Drawer -->
+<nav class="fixed inset-y-0 left-0 z-[60] flex flex-col p-6 bg-surface h-full w-80 rounded-r-2xl shadow-2xl transition-transform duration-300 ease-in-out -translate-x-full" id="navigation-drawer">
+<!-- Header -->
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 border-primary-container">
+<img alt="Usuario de QuiacaGo" class="w-full h-full object-cover" data-alt="A close-up portrait of a friendly male passenger smiling slightly in natural daylight. He is wearing a casual blue jacket. The setting is bright and clear, reflecting a reliable and welcoming mood consistent with the QuiacaGo brand. High contrast minimalist style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBS0zY8Xssv7fZiY3IRxlbWy_oVLRJRsKWRdorR4flhpCOvpLP5idD6JFmL00VYwi2bjCCeU2DifxHlQo4irmVmqX2QpaMMS1FbNVnTRwU6CBS-Zi451iMn_dhS-MPyJU4Booz_KUk-v-Bz6INdTnUX-blwkdaXNYtxmRB4jtGRTdrGiZR2yq1sczG8HS4MM7DXUuaXpuG0XfNtjW9Kw9U8hx-3DLmeC41McbxB6OfIL82yJ3p7boIt"/>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary m-0">Juan Perez</h2>
+<p class="font-body-md text-body-md text-secondary m-0">Pasajero Estrella</p>
+<p class="font-label-sm text-label-sm text-outline m-0">La Quiaca, AR</p>
+</div>
+</div>
+<!-- Links -->
+<div class="flex flex-col gap-2 flex-grow">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-body-md text-body-md">Mi Perfil</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">route</span>
+<span class="font-body-md text-body-md">Historial de Viajes</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-md text-body-md">Metodos de Pago</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-body-md text-body-md">Soporte</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</a>
+</div>
+<div class="mt-auto pt-6 border-t border-surface-variant">
+<button class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-error hover:bg-error-container hover:text-on-error-container transition-colors duration-200 font-label-lg text-label-lg">
+<span class="material-symbols-outlined">logout</span>
+                Cerrar Sesión
+            </button>
+</div>
+</nav>
+<!-- Top App Bar -->
+<header class="flex justify-between items-center w-full px-margin-mobile h-14 z-50 bg-surface shadow-sm absolute top-0 left-0 right-0">
+<button aria-label="Abrir menú" class="p-2 -ml-2 rounded-full hover:bg-surface-container-low transition-colors duration-200 text-on-surface-variant" id="menu-btn">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight m-0">QuiacaGo</h1>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A small circular avatar of a male user. Bright, clear lighting, minimalist style. The man has short dark hair and a neutral friendly expression. High contrast." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYsEgSYPsELxJdB7o-1JfcTG8ofipZkh9rq4TZMz17x6Z3GWQIhLZIZA8XbVQGT8mWBwJ-UrN1wwGjS97cos0GNM9hPdPUGMyjjbdAIOju29NeKfg70BgScjV1yV6UufDWaF7VqtKX_qVZyY3_YeQ4dxXqi4OyiQKQkgDL8jZKMnsdxjHKimS74jXziy5OoAw5uDt4kI4VF_iUYKRLsyterRL04qrr-ogoduyABaC_NGgW8tq3kFl8"/>
+</div>
+</header>
+<!-- Main Content Area: Map Canvas -->
+<main class="flex-grow relative w-full pt-14">
+<!-- Map Background Placeholder -->
+<div class="absolute inset-0 z-0 bg-surface-container-low" data-alt="A top-down stylized map interface of La Quiaca, Argentina. The map features smooth, highly legible roads in light grey (#f0f0f3) against a pale off-white background (#f9f9fc). Subtly textured topography elements represent the Puna region. High-contrast minimalism with soft ambient shadows. No text labels on the map itself." data-location="La Quiaca, Argentina" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD78YXsMDBPE2Kda2v9HkGiYGLeHV7zciZNg-UV_h7HSYPTOMhawU9XZJ1--2lZepSg2AzGRSwKGxBe1UtKeZIkGrXINBAUp1yPItjz1NF5Afy4mmt99aThx18m5mPwJbm0yBufCii611iNkUsxk-k8j870PYVgpa9BuMrrQ_ktUBgj5V3FK_auJ7QkZva9No2VKIjw-AKofol2NKBj2P5PYheVOeXaQVVN4F9zuuGL2eoCXPFy6Gek')">
+<div class="absolute inset-0 bg-background/10 mix-blend-multiply"></div>
+<!-- Top Gradient to blend with AppBar -->
+<div class="absolute top-0 left-0 right-0 h-16 map-gradient pointer-events-none z-10"></div>
+</div>
+<!-- Floating Map Controls -->
+<div class="absolute right-4 top-20 flex flex-col gap-2 z-20">
+<button aria-label="Mi ubicación" class="w-12 h-12 bg-surface rounded-full shadow-md flex items-center justify-center text-primary hover:bg-surface-container-low transition-colors active:scale-95 border border-surface-variant">
+<span class="material-symbols-outlined filled">my_location</span>
+</button>
+<button aria-label="Centrar mapa" class="w-12 h-12 bg-surface rounded-full shadow-md flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 border border-surface-variant">
+<span class="material-symbols-outlined">explore</span>
+</button>
+</div>
+<!-- Custom Map Pin (Current Location) -->
+<div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center drop-shadow-md">
+<div class="bg-primary text-on-primary px-3 py-1 rounded-full font-label-sm text-label-sm mb-1 shadow-sm whitespace-nowrap">
+                Estás aquí
+            </div>
+<div class="w-6 h-6 bg-primary rounded-full border-2 border-surface flex items-center justify-center relative">
+<div class="absolute inset-0 bg-primary rounded-full animate-ping opacity-50"></div>
+<div class="w-2 h-2 bg-surface rounded-full"></div>
+</div>
+<div class="w-1 h-4 bg-primary/80 -mt-1 rounded-b-full"></div>
+</div>
+</main>
+<!-- Bottom Sheet / Control Panel -->
+<div class="relative z-30 w-full bg-surface rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,50,125,0.08)] flex flex-col pb-safe pb-[72px] md:pb-0 transition-transform duration-300 ease-out translate-y-0">
+<!-- Handle -->
+<div class="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
+<div class="w-12 h-1.5 bg-surface-variant rounded-full"></div>
+</div>
+<div class="px-margin-mobile pt-2 pb-6 flex flex-col gap-6">
+<!-- Primary Action Headline -->
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface m-0 tracking-tight">¿A dónde querés ir?</h2>
+<!-- Search / Input Section -->
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-primary">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-4 bg-surface-container-lowest border border-outline-variant rounded-2xl font-body-lg text-body-lg text-on-surface placeholder-on-surface-variant focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none transition-all shadow-sm group-hover:border-primary/50" placeholder="Ingresá tu destino..." type="text"/>
+</div>
+<!-- Quick Actions Grid -->
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low border border-surface-variant hover:bg-surface-variant hover:border-outline-variant transition-colors active:scale-95 text-left">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div class="flex flex-col overflow-hidden">
+<span class="font-label-lg text-label-lg text-on-surface truncate">Buscar</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Dirección</span>
+</div>
+</button>
+<button class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low border border-surface-variant hover:bg-surface-variant hover:border-outline-variant transition-colors active:scale-95 text-left">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined">map</span>
+</div>
+<div class="flex flex-col overflow-hidden">
+<span class="font-label-lg text-label-lg text-on-surface truncate">Seleccionar</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">en mapa</span>
+</div>
+</button>
+</div>
+<!-- Frequent Destinations Section -->
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<h3 class="font-label-lg text-label-lg text-on-surface-variant uppercase tracking-wider m-0">Destinos Frecuentes</h3>
+</div>
+<!-- Horizontal Scroll for Chips -->
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2 -mx-margin-mobile px-margin-mobile scroll-smooth">
+<button class="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-fixed-dim/20 transition-colors text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-primary">local_hospital</span>
+<span class="font-body-md text-body-md whitespace-nowrap">Hospital Jorge Uro</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-fixed-dim/20 transition-colors text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-primary">directions_bus</span>
+<span class="font-body-md text-body-md whitespace-nowrap">Terminal</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-fixed-dim/20 transition-colors text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-primary">account_balance</span>
+<span class="font-body-md text-body-md whitespace-nowrap">Municipalidad</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-fixed-dim/20 transition-colors text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-primary">savings</span>
+<span class="font-body-md text-body-md whitespace-nowrap">Banco Nación</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-fixed-dim/20 transition-colors text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-primary">flag</span>
+<span class="font-body-md text-body-md whitespace-nowrap">Paso Villazón</span>
+</button>
+<button class="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-fixed-dim/20 transition-colors text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-primary">storefront</span>
+<span class="font-body-md text-body-md whitespace-nowrap">Mercado Municipal</span>
+</button>
+</div>
+</div>
+<!-- Primary Action Button (FAB Style within sheet) -->
+<button class="w-full h-14 mt-2 bg-primary text-on-primary rounded-2xl flex items-center justify-center gap-3 font-headline-md text-headline-md shadow-[0_4px_14px_rgba(0,50,125,0.39)] hover:bg-on-primary-fixed-variant transition-all active:scale-95">
+<span class="material-symbols-outlined filled">local_taxi</span>
+                PEDIR TAXI
+            </button>
+</div>
+</div>
+<!-- Bottom Navigation Bar (Hidden on Desktop, Visible on Mobile Top-level destination) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface border-t border-outline-variant shadow-lg md:hidden rounded-t-xl">
+<!-- Active Item (Viajar) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-6 py-1 active:scale-95 transition-transform duration-150 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">local_taxi</span>
+<span class="font-label-lg text-label-lg mt-1">Viajar</span>
+</a>
+<!-- Inactive Items -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 transition-transform duration-150 hover:bg-surface-container-high rounded-lg p-2 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">history</span>
+<span class="font-label-lg text-label-lg mt-1 opacity-80 group-hover:opacity-100">Actividad</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 transition-transform duration-150 hover:bg-surface-container-high rounded-lg p-2 group relative" href="#">
+<div class="absolute top-2 right-4 w-2 h-2 bg-error rounded-full"></div>
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">notifications</span>
+<span class="font-label-lg text-label-lg mt-1 opacity-80 group-hover:opacity-100">Alertas</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 transition-transform duration-150 hover:bg-surface-container-high rounded-lg p-2 group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">account_circle</span>
+<span class="font-label-lg text-label-lg mt-1 opacity-80 group-hover:opacity-100">Perfil</span>
+</a>
+</nav>
+<!-- Simple JavaScript for Drawer Interaction -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuBtn = document.getElementById('menu-btn');
+            const drawer = document.getElementById('navigation-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+            
+            function openDrawer() {
+                drawer.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                // Small delay to allow display:block to apply before opacity transition
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                }, 10);
+            }
+            
+            function closeDrawer() {
+                drawer.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                }, 300); // match duration
+            }
+
+            menuBtn.addEventListener('click', openDrawer);
+            overlay.addEventListener('click', closeDrawer);
+        });
+    </script>
+</body></html>

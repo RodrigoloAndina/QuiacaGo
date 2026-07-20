@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo - Drivers Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dadadc",
+                      "primary": "#00327d",
+                      "on-primary-fixed-variant": "#00419e",
+                      "tertiary-container": "#534d3a",
+                      "surface-variant": "#e2e2e5",
+                      "secondary-container": "#fe8c65",
+                      "on-surface-variant": "#434653",
+                      "on-secondary-fixed": "#390c00",
+                      "outline-variant": "#c3c6d5",
+                      "tertiary-fixed": "#ece2c9",
+                      "surface-tint": "#2559bd",
+                      "surface-container": "#eeeef0",
+                      "surface-bright": "#f9f9fc",
+                      "secondary-fixed-dim": "#ffb59d",
+                      "secondary-fixed": "#ffdbd0",
+                      "secondary": "#9d4221",
+                      "on-tertiary-fixed": "#201b0c",
+                      "on-secondary-fixed-variant": "#7e2c0c",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#1a1c1e",
+                      "on-error": "#ffffff",
+                      "primary-fixed": "#dae2ff",
+                      "tertiary": "#3c3625",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#f0f0f3",
+                      "primary-container": "#0047ab",
+                      "on-error-container": "#93000a",
+                      "on-secondary-container": "#742405",
+                      "background": "#f9f9fc",
+                      "surface-container-highest": "#e2e2e5",
+                      "on-background": "#1a1c1e",
+                      "tertiary-fixed-dim": "#cfc6ae",
+                      "on-tertiary-container": "#c7bea6",
+                      "surface-container-low": "#f3f3f6",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed": "#001946",
+                      "inverse-surface": "#2f3133",
+                      "inverse-primary": "#b1c5ff",
+                      "primary-fixed-dim": "#b1c5ff",
+                      "on-secondary": "#ffffff",
+                      "on-primary-container": "#a5bdff",
+                      "surface-container-high": "#e8e8ea",
+                      "error-container": "#ffdad6",
+                      "outline": "#737784",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#4c4634",
+                      "surface": "#f9f9fc"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "margin-desktop": "64px",
+                      "margin-mobile": "20px",
+                      "container-padding": "24px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "label-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "display": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+      </style>
+</head>
+<body class="bg-surface text-on-surface flex flex-col md:flex-row min-h-screen antialiased">
+<!-- Desktop Sidebar Drawer (NavigationDrawer) -->
+<aside class="hidden md:flex flex-col h-full w-80 rounded-r-xl bg-surface dark:bg-surface-container shadow-2xl fixed inset-y-0 left-0 z-[60] p-6">
+<!-- Header -->
+<div class="flex items-center mb-8 left_align">
+<div class="h-12 w-12 rounded-full overflow-hidden mr-4">
+<img alt="Usuario de QuiacaGo" class="w-full h-full object-cover" data-alt="A close up, well-lit, professional portrait photograph of a young Argentinian man, smiling warmly. He is wearing a simple, clean, dark blue shirt. The background is a soft, out-of-focus, warm-toned neutral color. The lighting is soft and flattering, creating a trustworthy and approachable professional look suitable for an app profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdB0mh6MGZ4UQu2QohQ2wuk7NDWNwaKULQraGQkh2W6wYjyDU4nHHJnOIuxQxZfdIrHkvK-vimNmvLaCOow2ppGCpzpQcxPQKodn2FcW-Z2j-l5mQ9VlWkIauWqE22WGvN3ykHgREOr6-bVZ42Bc0ZiMsUETEwxGSQzVayq4CgmSRNuqcpPwilHm-TI07Swtm7SVsAwkTl6GWWO6QcpaVGUlxmQeY5M8OnxgVNTMyvu_X4Thqzr6tr"/>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Juan Perez</h2>
+<p class="font-body-md text-body-md text-secondary">Pasajero Estrella</p>
+<p class="font-label-sm text-label-sm text-outline">La Quiaca, AR</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 space-y-2">
+<a class="flex items-center p-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="person">person</span>
+<span class="font-body-md text-body-md">Mi Perfil</span>
+</a>
+<a class="flex items-center p-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="route">route</span>
+<span class="font-body-md text-body-md">Historial de Viajes</span>
+</a>
+<a class="flex items-center p-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="payments">payments</span>
+<span class="font-body-md text-body-md">Metodos de Pago</span>
+</a>
+<a class="flex items-center p-3 rounded-lg text-primary dark:text-primary-fixed font-bold bg-primary-fixed dark:bg-primary-container transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="group" data-weight="fill" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-body-md text-body-md">Drivers Management</span>
+</a>
+<a class="flex items-center p-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="support_agent">support_agent</span>
+<span class="font-body-md text-body-md">Soporte</span>
+</a>
+<a class="flex items-center p-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</a>
+</nav>
+</aside>
+<!-- Mobile Top App Bar -->
+<header class="md:hidden flex justify-between items-center w-full px-margin-mobile h-14 z-50 bg-surface dark:bg-surface shadow-sm docked full-width top-0 fixed">
+<button class="text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200 p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-extrabold text-primary dark:text-inverse-primary tracking-tight">QuiacaGo</h1>
+<div class="h-8 w-8 rounded-full overflow-hidden bg-surface-variant">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A small, circular avatar image showing a generic profile silhouette in subtle shades of light blue and white. The background is a clean, minimalist off-white, reflecting the app's high-contrast, premium aesthetic. It serves as a placeholder for a user's profile photo in a mobile app navigation bar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAje2B8eydqCGZUiXm65um-LI1iddIohJtxtwYmPzDDDXwhD4vNX7jXxC4vA7M_6PqeXe3CtVpyHwTPmIWM2_Uh8AT8_rCX0fvZXH2ZEbEgIqeHwUx1gMY2tv8LMJR76MS9BtvyB52mW1G5daJc6O8R5EiuUEpJOwu8YZuoHrWg3Qy2n5subNkKDO6JiVjvjF55FUWIdc4q8r_-uXlzQkIB5oLbrMmM0SHM-koAXbdGcNUemXkOQFnv"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full md:pl-80 pt-16 md:pt-0 min-h-screen">
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12 pb-32 md:pb-12">
+<!-- Page Header & Actions -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">Drivers Management</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage and monitor QuiacaGo driver network.</p>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto">
+<!-- Search Input -->
+<div class="relative flex-1 md:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-4 focus:ring-primary/20 transition-all outline-none" placeholder="Search drivers..." type="text"/>
+</div>
+<!-- Filter Button -->
+<button class="flex items-center justify-center p-3 bg-surface-container-low hover:bg-surface-container-high rounded-lg border border-outline-variant transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+</button>
+<!-- Add Driver Button -->
+<button class="flex items-center justify-center h-12 px-6 bg-primary text-on-primary rounded-lg font-label-lg text-label-lg hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+<span class="material-symbols-outlined mr-2" data-icon="person_add">person_add</span>
+<span class="hidden sm:inline">Add Driver</span>
+</button>
+</div>
+</div>
+<!-- Bento Grid List / Data Cards -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+<!-- Driver Card 1 -->
+<div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-6 shadow-[0_4px_20px_-4px_rgba(0,50,125,0.04)] hover:border-primary/30 hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-4">
+<div class="h-14 w-14 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged Argentinian man, looking confident and reliable. He wears a casual but neat grey polo shirt. The background is a soft, blurred landscape hinting at the Puna region with subtle earthy tones. The lighting is bright and natural, fitting a high-quality app profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy-eeaU9rGJ6ipsavREGAmLWnVMD8fSF2x-j7wMnGJ0VLkPRev61eLfeaqzVhH2jQGScpWQ5apBAKhSPf-Eu1oNVaP7LGSkZeHiVjBe2V3nkvxOcr0NlaR6wWzpNUw7h0VKziTiujjxmv59mD70WsEJqtZUkS00GE86QYsgwezRuGiGtLz-AsnszPkEkfbVMasKbS05iomQPuEkQxf-82bf4KRM9bnrQMEszcbR7EgEqA6B19IkogX"/>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Carlos Mendoza</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">DNI: 28.345.678</p>
+</div>
+</div>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-[#e6f4ea] text-[#137333] font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-[#137333] mr-2"></span>
+                            Active
+                        </span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container-low p-3 rounded-lg">
+<p class="font-label-sm text-label-sm text-outline mb-1">Vehicle</p>
+<p class="font-body-md text-body-md text-on-surface font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="directions_car">directions_car</span>
+                                Toyota Hilux
+                            </p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg">
+<p class="font-label-sm text-label-sm text-outline mb-1">License Plate</p>
+<p class="font-body-md text-body-md text-on-surface font-medium uppercase">AB 123 CD</p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg col-span-2">
+<p class="font-label-sm text-label-sm text-outline mb-1">Rating</p>
+<div class="flex items-center gap-1 text-[#f9bc04]">
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-outline-variant" data-icon="star_half" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star_half</span>
+<span class="ml-2 font-body-md text-body-md text-on-surface">4.8 (124 rides)</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3 mt-auto">
+<button class="flex-1 bg-surface-container hover:bg-surface-variant text-on-surface font-label-lg text-label-lg py-3 rounded-lg transition-colors flex items-center justify-center gap-2 border border-outline-variant">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+                            Profile
+                        </button>
+<button class="flex-1 bg-[#fef1ec] hover:bg-[#fde3d9] text-secondary font-label-lg text-label-lg py-3 rounded-lg transition-colors flex items-center justify-center gap-2 border border-secondary-fixed">
+<span class="material-symbols-outlined" data-icon="folder_managed">folder_managed</span>
+                            Documents
+                        </button>
+</div>
+</div>
+<!-- Driver Card 2 -->
+<div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-6 shadow-[0_4px_20px_-4px_rgba(0,50,125,0.04)] hover:border-primary/30 hover:shadow-md transition-all relative overflow-hidden">
+<!-- Subtle pattern for pending -->
+<div class="absolute inset-0 bg-[radial-gradient(#fdf5e6_1px,transparent_1px)] [background-size:16px_16px] opacity-50 pointer-events-none"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<div class="flex items-center gap-4">
+<div class="h-14 w-14 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A profile picture of a young woman from Argentina, appearing professional and ready to work. She has dark hair tied back and is wearing a simple white blouse. The background is a flat, soft terracotta color, matching the brand's secondary palette. The image is crisp, high-contrast, and suitable for a driver management dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCW3oqRCccQP4b1zjTCDWfw1Dkf1vzclgUI9fmtFzT-2CgBnkYkYRyKjcR6YklMun0vQrQIrgWXt_NjvCZaxqjh_-ncsFPWSlhPuKnaYtBNP6eLs9_Ddl-GcxSQ2DLO6hHgf4q3VhL9nRp-JE5oHPK0QFpRR_HWh3CKHmuEDu1YC6d42pMc-njuhmy3zY4XLTpueeY9wN2e0eEgHkEmVMCpYhZ2TYs3syQhBlMuoLT_NaMo-TKfYG-z"/>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Maria Gutierrez</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">DNI: 35.122.990</p>
+</div>
+</div>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-[#fef7e0] text-[#b06000] font-label-sm text-label-sm border border-[#fde293]">
+<span class="w-2 h-2 rounded-full bg-[#f9ab00] mr-2"></span>
+                            Pending Docs
+                        </span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6 relative z-10">
+<div class="bg-surface-container-low p-3 rounded-lg">
+<p class="font-label-sm text-label-sm text-outline mb-1">Vehicle</p>
+<p class="font-body-md text-body-md text-on-surface font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="directions_car">directions_car</span>
+                                Renault Kangoo
+                            </p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg">
+<p class="font-label-sm text-label-sm text-outline mb-1">License Plate</p>
+<p class="font-body-md text-body-md text-on-surface font-medium uppercase text-on-surface-variant">Pending...</p>
+</div>
+</div>
+<div class="flex gap-3 mt-auto relative z-10">
+<button class="flex-1 bg-surface-container hover:bg-surface-variant text-on-surface font-label-lg text-label-lg py-3 rounded-lg transition-colors flex items-center justify-center gap-2 border border-outline-variant">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+                            Profile
+                        </button>
+<button class="flex-1 bg-primary text-on-primary hover:bg-on-primary-fixed-variant font-label-lg text-label-lg py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+                            Review Docs
+                        </button>
+</div>
+</div>
+<!-- Driver Card 3 -->
+<div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-6 shadow-[0_4px_20px_-4px_rgba(0,50,125,0.04)] hover:border-primary/30 hover:shadow-md transition-all opacity-75">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-4">
+<div class="h-14 w-14 rounded-full bg-surface-container overflow-hidden grayscale">
+<img class="w-full h-full object-cover" data-alt="A headshot of an older Argentinian man with a thick mustache, looking serious but kind. He is wearing a dark jacket over a light shirt. The photo is slightly desaturated to indicate an 'inactive' status in the UI, set against a plain light gray background. It maintains a clean, professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjrshrMMeRFZi2xBREIRmwpSrRTemXsnlDuj7sWFjWJga5McAMX-3OoXkMQHKnB2QFDEnlrBWgUm58e8eQgX7iuiMwNVtq7OjiMHI8liyyp4LKYozminiYbhEn_m8wSZKfNQ2iFeVcXoGwumseWFxAn0t5VLTQVUknMFSZmz27oMU3ZW0E0I8b9T9ZoRLLijZ1SzmDwt-oMWnoau5kp8eAIzW5Ci1C1Wx6HslWkBJcJ_g_kBe8Ar-o"/>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Roberto Silva</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">DNI: 14.887.201</p>
+</div>
+</div>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-outline mr-2"></span>
+                            Inactive
+                        </span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container-low p-3 rounded-lg">
+<p class="font-label-sm text-label-sm text-outline mb-1">Vehicle</p>
+<p class="font-body-md text-body-md text-on-surface font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-outline" data-icon="directions_car">directions_car</span>
+                                Fiat Cronos
+                            </p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg">
+<p class="font-label-sm text-label-sm text-outline mb-1">License Plate</p>
+<p class="font-body-md text-body-md text-on-surface font-medium uppercase">AA 987 ZZ</p>
+</div>
+</div>
+<div class="flex gap-3 mt-auto">
+<button class="flex-1 bg-surface-container hover:bg-surface-variant text-on-surface font-label-lg text-label-lg py-3 rounded-lg transition-colors flex items-center justify-center gap-2 border border-outline-variant">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+                            Profile
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom Nav Bar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface dark:bg-surface-container-lowest border-t border-outline-variant shadow-lg docked full-width bottom-0 rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest active:scale-95 transition-transform duration-150 p-2 rounded-lg">
+<span class="material-symbols-outlined mb-1" data-icon="local_taxi">local_taxi</span>
+<span class="font-label-sm text-label-sm">Viajar</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest active:scale-95 transition-transform duration-150 p-2 rounded-lg">
+<span class="material-symbols-outlined mb-1" data-icon="history">history</span>
+<span class="font-label-sm text-label-sm">Actividad</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest active:scale-95 transition-transform duration-150 p-2 rounded-lg">
+<span class="material-symbols-outlined mb-1" data-icon="notifications">notifications</span>
+<span class="font-label-sm text-label-sm">Alertas</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-6 py-1 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined mb-1" data-icon="account_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+<span class="font-label-sm text-label-sm font-bold">Perfil</span>
+</button>
+</nav>
+</body></html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo - Panel de Administración</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dadadc",
+                      "primary": "#00327d",
+                      "on-primary-fixed-variant": "#00419e",
+                      "tertiary-container": "#534d3a",
+                      "surface-variant": "#e2e2e5",
+                      "secondary-container": "#fe8c65",
+                      "on-surface-variant": "#434653",
+                      "on-secondary-fixed": "#390c00",
+                      "outline-variant": "#c3c6d5",
+                      "tertiary-fixed": "#ece2c9",
+                      "surface-tint": "#2559bd",
+                      "surface-container": "#eeeef0",
+                      "surface-bright": "#f9f9fc",
+                      "secondary-fixed-dim": "#ffb59d",
+                      "secondary-fixed": "#ffdbd0",
+                      "secondary": "#9d4221",
+                      "on-tertiary-fixed": "#201b0c",
+                      "on-secondary-fixed-variant": "#7e2c0c",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#1a1c1e",
+                      "on-error": "#ffffff",
+                      "primary-fixed": "#dae2ff",
+                      "tertiary": "#3c3625",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#f0f0f3",
+                      "primary-container": "#0047ab",
+                      "on-error-container": "#93000a",
+                      "on-secondary-container": "#742405",
+                      "background": "#f9f9fc",
+                      "surface-container-highest": "#e2e2e5",
+                      "on-background": "#1a1c1e",
+                      "tertiary-fixed-dim": "#cfc6ae",
+                      "on-tertiary-container": "#c7bea6",
+                      "surface-container-low": "#f3f3f6",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed": "#001946",
+                      "inverse-surface": "#2f3133",
+                      "inverse-primary": "#b1c5ff",
+                      "primary-fixed-dim": "#b1c5ff",
+                      "on-secondary": "#ffffff",
+                      "on-primary-container": "#a5bdff",
+                      "surface-container-high": "#e8e8ea",
+                      "error-container": "#ffdad6",
+                      "outline": "#737784",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#4c4634",
+                      "surface": "#f9f9fc"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "margin-desktop": "64px",
+                      "margin-mobile": "20px",
+                      "container-padding": "24px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "label-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "display": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col md:flex-row font-body-md text-body-md">
+<!-- Navigation Drawer (Desktop) -->
+<aside class="hidden md:flex flex-col p-6 w-80 h-screen sticky top-0 bg-surface shadow-2xl rounded-r-xl z-[60]">
+<!-- Drawer Header -->
+<div class="flex items-center gap-4 mb-8">
+<img alt="Usuario de QuiacaGo" class="w-12 h-12 rounded-full object-cover border-2 border-surface-container-low shadow-sm" data-alt="Close-up professional portrait of a tech administrator in a modern office setting. Light mode aesthetic, sharp focus on the face, neutral background. High contrast, clean, corporate vibe. The person is looking slightly off-camera with a confident expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmg4Dh4LMRthr45kKsRD43PZKqVNRuEV5MGsi-b2eilgQvmXjOhx3gh2sKWRTUTI_H9IxQiGPHjTP10bgt9C7h9fxUoVONoJXttKT4gNbgUJaAPiynx-dFGRRo3MWWASMXTNM9B3HutEAlub9ltdWCHxCSb7nR9PRBjIcLGWL9Y3xHoXIhpiLKiWkI2rgkPgaaXqTTyfC2IBXVisp4c4icEkjy0AsjpQL1eZc0W6JTaM-TOrM5kfOG"/>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-primary truncate max-w-[180px]">Admin Principal</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate max-w-[180px]">Sistema Central</span>
+</div>
+</div>
+<!-- Drawer Navigation -->
+<nav class="flex-1 overflow-y-auto space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 text-primary font-bold bg-primary-fixed rounded-lg transition-all duration-300 ease-in-out group" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface hover:bg-surface-variant rounded-lg transition-all duration-300 ease-in-out group" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Usuarios</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface hover:bg-surface-variant rounded-lg transition-all duration-300 ease-in-out group" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<span>Conductores</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface hover:bg-surface-variant rounded-lg transition-all duration-300 ease-in-out group" href="#">
+<span class="material-symbols-outlined">route</span>
+<span>Viajes</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface hover:bg-surface-variant rounded-lg transition-all duration-300 ease-in-out group" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Reportes</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface hover:bg-surface-variant rounded-lg transition-all duration-300 ease-in-out group mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configuración</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar (Mobile) -->
+<header class="md:hidden flex justify-between items-center w-full px-margin-mobile h-14 z-50 bg-surface shadow-sm sticky top-0">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary">QuiacaGo Admin</span>
+<img alt="User profile photo" class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="Small circular avatar placeholder showing a simple geometric pattern in deep blue and terracotta, clean light mode aesthetic, crisp edges, minimal details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDP37EpfJVCPWJYUD9AIDqvEdsERUqR2ysWDvuTVPP9hsxIgLkVbZ1BogQz9kdMo2Xy3I9uAInjXa3ZPZYt0EFr2d6DbSGy5XKPH7HAvRwtT7NhMu42K7K2zXx-aKJ5C0HhgCyclRLyyovF13Yms-aDGgOvSHzDoCmyMvQxvYs1RnKA6ShJ5UfxOIYu5y5ifoemupTxNNYLvVK7UwfZ1HgXcPi6lbV2VzAGXGn-m-_gmqFB6dGyuebl"/>
+</header>
+<!-- Page Content -->
+<div class="flex-1 overflow-y-auto p-4 md:p-8 lg:p-margin-desktop space-y-8 bg-background">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Resumen de Operaciones</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Visión general del estado actual del sistema en La Quiaca.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container border border-outline-variant text-on-surface rounded-full font-label-lg text-label-lg hover:bg-surface-container-high transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+<span>Hoy</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-full font-label-lg text-label-lg hover:bg-primary-container transition-colors shadow-md">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span>Exportar</span>
+</button>
+</div>
+</div>
+<!-- Summary Cards Bento Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl shadow-[0_4px_20px_rgba(0,50,125,0.04)] flex flex-col gap-3 relative overflow-hidden group hover:shadow-[0_8px_30px_rgba(0,50,125,0.08)] transition-shadow">
+<div class="absolute top-0 right-0 p-4 opacity-10 text-primary group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-6xl">route</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px] text-primary">route</span>
+                        Viajes del Día
+                    </div>
+<div class="font-display text-display text-on-surface mt-2">1,284</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-[#2e7d32]">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+12% vs ayer</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl shadow-[0_4px_20px_rgba(0,50,125,0.04)] flex flex-col gap-3 relative overflow-hidden group hover:shadow-[0_8px_30px_rgba(0,50,125,0.08)] transition-shadow">
+<div class="absolute top-0 right-0 p-4 opacity-10 text-secondary group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-6xl">group</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px] text-secondary">group</span>
+                        Usuarios Registrados
+                    </div>
+<div class="font-display text-display text-on-surface mt-2">8,450</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-[#2e7d32]">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+45 nuevos hoy</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl shadow-[0_4px_20px_rgba(0,50,125,0.04)] flex flex-col gap-3 relative overflow-hidden group hover:shadow-[0_8px_30px_rgba(0,50,125,0.08)] transition-shadow">
+<div class="absolute top-0 right-0 p-4 opacity-10 text-primary-container group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-6xl">local_taxi</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px] text-primary-container">local_taxi</span>
+                        Conductores Activos
+                    </div>
+<div class="font-display text-display text-on-surface mt-2">142</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">info</span>
+<span>85% de ocupación</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl shadow-[0_4px_20px_rgba(0,50,125,0.04)] flex flex-col gap-3 relative overflow-hidden group hover:shadow-[0_8px_30px_rgba(0,50,125,0.08)] transition-shadow">
+<div class="absolute top-0 right-0 p-4 opacity-10 text-[#0277bd] group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-6xl">multiple_stop</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px] text-[#0277bd]">multiple_stop</span>
+                        Viajes en Curso
+                    </div>
+<div class="font-display text-display text-on-surface mt-2">38</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-[#0277bd] h-full rounded-full" style="width: 60%;"></div>
+</div>
+</div>
+<!-- Card 5 (Cancelled) -->
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl shadow-[0_4px_20px_rgba(0,50,125,0.04)] flex flex-col gap-3 relative overflow-hidden group hover:shadow-[0_8px_30px_rgba(0,50,125,0.08)] transition-shadow sm:col-span-2 xl:col-span-1">
+<div class="absolute top-0 right-0 p-4 opacity-10 text-error group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-6xl">cancel</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px] text-error">cancel</span>
+                        Viajes Cancelados
+                    </div>
+<div class="font-display text-display text-on-surface mt-2">12</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-error">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+<span>Ligeramente alto</span>
+</div>
+</div>
+</div>
+<!-- Chart & Table Area -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Chart Area -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_4px_20px_rgba(0,50,125,0.04)] p-6 flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-headline-md text-headline-md text-on-surface">Demanda por Hora</h2>
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Faux Chart Representation using Flex/CSS -->
+<div class="flex-1 flex items-end gap-2 h-64 mt-4 relative">
+<!-- Y-axis labels -->
+<div class="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-on-surface-variant font-label-sm text-label-sm text-right w-8 pr-2 z-10">
+<span>150</span>
+<span>100</span>
+<span>50</span>
+<span>0</span>
+</div>
+<!-- Grid lines -->
+<div class="absolute left-8 right-0 top-0 bottom-0 flex flex-col justify-between z-0 pointer-events-none">
+<div class="w-full border-b border-surface-container-high h-0"></div>
+<div class="w-full border-b border-surface-container-high h-0"></div>
+<div class="w-full border-b border-surface-container-high h-0"></div>
+<div class="w-full border-b border-surface-container-high h-0"></div>
+</div>
+<!-- Bars -->
+<div class="flex-1 flex items-end gap-1 sm:gap-2 ml-8 h-[calc(100%-20px)] z-10">
+<div class="flex-1 bg-primary/20 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 15%;">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 transform -translate-x-1/2 bg-inverse-surface text-inverse-on-surface px-2 py-1 rounded text-xs whitespace-nowrap transition-opacity">22</div>
+</div>
+<div class="flex-1 bg-primary/30 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 10%;"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 5%;"></div>
+<div class="flex-1 bg-primary/40 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 25%;"></div>
+<div class="flex-1 bg-primary/50 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 40%;"></div>
+<div class="flex-1 bg-primary/80 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 75%;"></div>
+<div class="flex-1 bg-primary hover:bg-primary-container transition-colors rounded-t-sm relative group cursor-pointer" style="height: 95%;"></div>
+<div class="flex-1 bg-primary/90 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 85%;"></div>
+<div class="flex-1 bg-primary/70 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 60%;"></div>
+<div class="flex-1 bg-primary/60 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 50%;"></div>
+<div class="flex-1 bg-primary/50 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 45%;"></div>
+<div class="flex-1 bg-primary/70 hover:bg-primary transition-colors rounded-t-sm relative group cursor-pointer" style="height: 65%;"></div>
+<div class="flex-1 bg-secondary/80 hover:bg-secondary transition-colors rounded-t-sm relative group cursor-pointer shadow-[0_0_10px_rgba(157,66,33,0.3)]" style="height: 80%;">
+<!-- Current hour highlight -->
+</div>
+<div class="flex-1 bg-surface-container-high rounded-t-sm relative" style="height: 10%;"></div>
+<div class="flex-1 bg-surface-container-high rounded-t-sm relative" style="height: 10%;"></div>
+</div>
+</div>
+<!-- X-axis labels -->
+<div class="flex justify-between items-center mt-2 ml-8 text-on-surface-variant font-label-sm text-label-sm">
+<span>00:00</span>
+<span>06:00</span>
+<span>12:00</span>
+<span>18:00</span>
+<span>23:59</span>
+</div>
+</div>
+<!-- Recent Activity List -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_4px_20px_rgba(0,50,125,0.04)] flex flex-col overflow-hidden">
+<div class="p-6 border-b border-surface-container flex justify-between items-center bg-surface-bright">
+<h2 class="font-headline-md text-headline-md text-on-surface">Actividad Reciente</h2>
+</div>
+<div class="flex-1 overflow-y-auto">
+<ul class="divide-y divide-surface-container">
+<li class="p-4 hover:bg-surface-container-lowest transition-colors flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary-container shrink-0 mt-1">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface"><span class="font-semibold">Nuevo Conductor</span> registrado</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Carlos M. completó verificación</p>
+<p class="font-label-sm text-label-sm text-outline mt-1">Hace 5 min</p>
+</div>
+</li>
+<li class="p-4 hover:bg-surface-container-lowest transition-colors flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center text-error shrink-0 mt-1">
+<span class="material-symbols-outlined text-[20px]">report</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface"><span class="font-semibold">Reporte de Usuario</span></p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Problema con pago viaje #4892</p>
+<p class="font-label-sm text-label-sm text-outline mt-1">Hace 18 min</p>
+</div>
+</li>
+<li class="p-4 hover:bg-surface-container-lowest transition-colors flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary shrink-0 mt-1">
+<span class="material-symbols-outlined text-[20px]">campaign</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface"><span class="font-semibold">Alerta Zonal</span> emitida</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Corte de calle en Av. principal</p>
+<p class="font-label-sm text-label-sm text-outline mt-1">Hace 1 hora</p>
+</div>
+</li>
+<li class="p-4 hover:bg-surface-container-lowest transition-colors flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 mt-1">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface"><span class="font-semibold">Actualización de Sistema</span></p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Módulo de mapas sincronizado</p>
+<p class="font-label-sm text-label-sm text-outline mt-1">Hace 3 horas</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="p-4 border-t border-surface-container bg-surface-bright text-center">
+<button class="text-primary font-label-lg text-label-lg hover:underline">Ver todo el registro</button>
+</div>
+</div>
+</div>
+<div class="pb-safe md:pb-0 h-20 md:h-8"></div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface border-t border-outline-variant shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-6 py-1 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-lg text-label-lg mt-1 text-[10px]">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-lg p-2 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-lg text-label-lg mt-1 text-[10px]">Usuarios</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-lg p-2 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">route</span>
+<span class="font-label-lg text-label-lg mt-1 text-[10px]">Viajes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high rounded-lg p-2 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-lg text-label-lg mt-1 text-[10px]">Ajustes</span>
+</a>
+</nav>
+</body></html>

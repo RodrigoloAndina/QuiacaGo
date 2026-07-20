@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo - Registro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#ffb59d",
+                        "outline": "#737784",
+                        "inverse-on-surface": "#f0f0f3",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "tertiary": "#3c3625",
+                        "background": "#f9f9fc",
+                        "primary-container": "#0047ab",
+                        "surface-container": "#eeeef0",
+                        "tertiary-fixed": "#ece2c9",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#434653",
+                        "tertiary-fixed-dim": "#cfc6ae",
+                        "primary": "#00327d",
+                        "surface-container-low": "#f3f3f6",
+                        "surface-dim": "#dadadc",
+                        "on-secondary-container": "#742405",
+                        "surface-variant": "#e2e2e5",
+                        "surface-container-highest": "#e2e2e5",
+                        "secondary-container": "#fe8c65",
+                        "surface-tint": "#2559bd",
+                        "on-primary-fixed-variant": "#00419e",
+                        "outline-variant": "#c3c6d5",
+                        "on-background": "#1a1c1e",
+                        "on-primary-fixed": "#001946",
+                        "on-secondary-fixed": "#390c00",
+                        "on-secondary-fixed-variant": "#7e2c0c",
+                        "secondary": "#9d4221",
+                        "inverse-primary": "#b1c5ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#c7bea6",
+                        "on-tertiary-fixed-variant": "#4c4634",
+                        "surface-bright": "#f9f9fc",
+                        "surface": "#f9f9fc",
+                        "on-primary-container": "#a5bdff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbd0",
+                        "on-tertiary-fixed": "#201b0c",
+                        "on-surface": "#1a1c1e",
+                        "inverse-surface": "#2f3133",
+                        "primary-fixed": "#dae2ff",
+                        "tertiary-container": "#534d3a",
+                        "surface-container-high": "#e8e8ea",
+                        "on-primary": "#ffffff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1rem"
+                    },
+                    spacing: {
+                        "gutter": "16px",
+                        "margin-desktop": "64px",
+                        "base": "8px",
+                        "margin-mobile": "20px",
+                        "container-padding": "24px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .input-glow:focus-within {
+            box-shadow: 0 0 0 4px rgba(0, 50, 125, 0.15); /* primary color with opacity */
+            border-color: #00327d;
+        }
+    </style>
+</head>
+<body class="bg-surface-container-low text-on-surface antialiased min-h-screen flex flex-col font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Header / Nav Shell Suppressed for Transactional Flow -->
+<header class="flex justify-between items-center w-full px-margin-mobile h-14 z-50 bg-transparent shrink-0">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors text-on-surface">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="text-label-lg font-label-lg text-primary">Paso 1 de 2</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col items-center px-margin-mobile pb-8 overflow-y-auto">
+<div class="w-full max-w-md flex flex-col gap-6 pt-4">
+<!-- Branding -->
+<div class="flex flex-col items-center gap-4 mb-4">
+<div class="w-24 h-24 rounded-2xl bg-surface shadow-sm flex items-center justify-center overflow-hidden">
+<img class="w-20 h-20 object-contain" data-alt="A clean, minimalist vector logo design of mountains combined with a winding road, using a color palette of deep reliable navy blue and warm terracotta orange. High contrast, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUsxJ143Z3xlHLsAja7fJxEFonsa2dJGcIDCimqYJ1r7yXXNwnffYcpHU1M6EBhFv2eU018An-hQL0IDV04q-juc3iobzHm2bLr39l6MvrI7ILLFW3ea8w0vuAVvXp-a5FXP12_3TFHO-RMGWK6gduFwhkTjg5BDDNh1_D4DthNoAwZ_OZ_WheQ7bBHB8vOY3HhCoqA6EOP0hU0AQBstUxCdmqCzUzuUDo304d2Obnsn4QoRtiW4_7"/>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-center">Crear cuenta</h1>
+<p class="text-on-surface-variant text-center font-body-md">Ingresa tus datos para comenzar a viajar con QuiacaGo.</p>
+</div>
+<!-- Registration Form -->
+<form class="flex flex-col gap-4" onsubmit="event.preventDefault();">
+<div class="flex gap-4">
+<!-- Nombre -->
+<div class="relative flex-1 group">
+<label class="sr-only" for="nombre">Nombre</label>
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">person</span>
+</div>
+<input class="input-glow w-full h-[56px] pl-12 pr-4 bg-surface border border-outline-variant rounded-xl font-body-md text-on-surface placeholder:text-outline outline-none transition-all duration-200" id="nombre" name="nombre" placeholder="Nombre" required="" type="text"/>
+</div>
+<!-- Apellido -->
+<div class="relative flex-1 group">
+<label class="sr-only" for="apellido">Apellido</label>
+<input class="input-glow w-full h-[56px] px-4 bg-surface border border-outline-variant rounded-xl font-body-md text-on-surface placeholder:text-outline outline-none transition-all duration-200" id="apellido" name="apellido" placeholder="Apellido" required="" type="text"/>
+</div>
+</div>
+<!-- Teléfono -->
+<div class="relative group">
+<label class="sr-only" for="telefono">Teléfono</label>
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">phone_iphone</span>
+</div>
+<div class="absolute inset-y-0 left-11 flex items-center pointer-events-none text-on-surface font-body-md">
+                        +54
+                    </div>
+<input class="input-glow w-full h-[56px] pl-[84px] pr-4 bg-surface border border-outline-variant rounded-xl font-body-md text-on-surface placeholder:text-outline outline-none transition-all duration-200" id="telefono" name="telefono" placeholder="Ej: 388 123 4567" required="" type="tel"/>
+</div>
+<!-- Email (Opcional) -->
+<div class="relative group">
+<label class="sr-only" for="email">Email (opcional)</label>
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">mail</span>
+</div>
+<input class="input-glow w-full h-[56px] pl-12 pr-4 bg-surface border border-outline-variant rounded-xl font-body-md text-on-surface placeholder:text-outline outline-none transition-all duration-200" id="email" name="email" placeholder="Email (opcional)" type="email"/>
+</div>
+<!-- Contraseña -->
+<div class="relative group">
+<label class="sr-only" for="password">Contraseña</label>
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">lock</span>
+</div>
+<input class="input-glow w-full h-[56px] pl-12 pr-12 bg-surface border border-outline-variant rounded-xl font-body-md text-on-surface placeholder:text-outline outline-none transition-all duration-200" id="password" name="password" placeholder="Contraseña" required="" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-4 flex items-center text-outline hover:text-on-surface transition-colors focus:outline-none" type="button">
+<span class="material-symbols-outlined">visibility_off</span>
+</button>
+</div>
+<!-- Verification Notice -->
+<div class="bg-primary-container/10 rounded-xl p-4 mt-2 flex gap-3 items-start border border-primary-container/20">
+<span class="material-symbols-outlined text-primary mt-0.5">sms</span>
+<p class="text-label-sm font-label-sm text-on-surface-variant">
+                        Al continuar, te enviaremos un código por SMS para verificar tu número de teléfono. Aplican tarifas estándar.
+                    </p>
+</div>
+<!-- Submit Button -->
+<button class="mt-4 w-full h-[56px] bg-primary text-on-primary font-label-lg text-label-lg rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 shadow-sm shadow-primary/20" type="submit">
+                    Registrarse
+                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</form>
+<!-- Login Link -->
+<div class="mt-4 text-center">
+<span class="text-on-surface-variant font-body-md">¿Ya tienes una cuenta?</span>
+<a class="text-primary font-label-lg text-label-lg ml-1 hover:underline underline-offset-4" href="#">Inicia sesión</a>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo Conductor - Nuevo Viaje</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f3f3f6",
+                        "surface-bright": "#f9f9fc",
+                        "inverse-surface": "#2f3133",
+                        "primary-container": "#0047ab",
+                        "primary-fixed": "#dae2ff",
+                        "surface": "#f9f9fc",
+                        "on-primary-container": "#a5bdff",
+                        "surface-container-high": "#e8e8ea",
+                        "secondary": "#9d4221",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#c3c6d5",
+                        "on-surface": "#1a1c1e",
+                        "secondary-container": "#fe8c65",
+                        "primary": "#00327d",
+                        "on-surface-variant": "#434653",
+                        "on-primary-fixed-variant": "#00419e",
+                        "on-primary-fixed": "#001946",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#4c4634",
+                        "surface-container-highest": "#e2e2e5",
+                        "secondary-fixed": "#ffdbd0",
+                        "on-secondary-fixed": "#390c00",
+                        "surface-dim": "#dadadc",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "surface-container": "#eeeef0",
+                        "on-background": "#1a1c1e",
+                        "surface-tint": "#2559bd",
+                        "on-tertiary-container": "#c7bea6",
+                        "on-error-container": "#93000a",
+                        "background": "#f9f9fc",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#742405",
+                        "surface-variant": "#e2e2e5",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#201b0c",
+                        "tertiary": "#3c3625",
+                        "tertiary-container": "#534d3a",
+                        "secondary-fixed-dim": "#ffb59d",
+                        "tertiary-fixed": "#ece2c9",
+                        "outline": "#737784",
+                        "on-secondary-fixed-variant": "#7e2c0c",
+                        "inverse-on-surface": "#f0f0f3",
+                        "tertiary-fixed-dim": "#cfc6ae",
+                        "inverse-primary": "#b1c5ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "margin-desktop": "64px",
+                        "gutter": "16px",
+                        "container-padding": "24px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom Timer Animation */
+        .timer-circle {
+            transition: stroke-dashoffset 1s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .pulse-shadow {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 50, 125, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(0, 50, 125, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 50, 125, 0); }
+        }
+
+        /* Slide up animation for modal */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-screen overflow-hidden relative font-sans antialiased">
+<!-- Background Map -->
+<!-- Navigation shell is intentionally suppressed here as this is a high-priority transactional overlay -->
+<div class="absolute inset-0 bg-cover bg-center z-0 filter blur-[2px]" data-location="La Quiaca" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqgyJ_gPAszulxS95kuvo_LsSImOZirPqKehKw2oGyWSt4-lU6UOEP_gtetwOE2kVIQptQDDhEtyuO73hf5JP4xIm8aM6yj-ZBVrU6YbO8fe1Khb4W4lln9y5AP26ZSfObNgZklj3oAvw8VTqvMlUcqc6JdW15jfs19hEDP-2VM9TrYmD-1c_Ss_wLypB_5x0vB0zMK04CIqiYfttkUAEU_-_8DM8QUlSO9mvH6pfjsIZanmhwtkCI')"></div>
+<!-- Dark Backdrop Overlay -->
+<div class="absolute inset-0 bg-on-surface/50 z-10 backdrop-blur-sm"></div>
+<!-- Incoming Ride Modal (Bottom Sheet style) -->
+<main class="absolute bottom-0 left-0 w-full z-50 flex flex-col items-center justify-end h-full p-4 md:p-margin-desktop pointer-events-none">
+<div class="w-full max-w-lg bg-surface-container-lowest rounded-t-[32px] md:rounded-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] pointer-events-auto flex flex-col animate-slide-up overflow-hidden relative">
+<!-- Handle (Mobile) -->
+<div class="w-12 h-1.5 bg-outline-variant/50 rounded-full mx-auto mt-4 mb-2 md:hidden"></div>
+<div class="p-container-padding flex flex-col items-center">
+<!-- Header -->
+<div class="w-full text-center mb-6">
+<span class="inline-block px-3 py-1 bg-primary/10 text-primary font-label-sm text-label-sm rounded-full mb-2 uppercase tracking-wider font-bold">Solicitud Entrante</span>
+</div>
+<!-- Timer & Fare Cluster (The focal point) -->
+<div class="relative w-48 h-48 mb-8 flex items-center justify-center pulse-shadow rounded-full bg-surface-bright">
+<!-- SVG Circular Progress -->
+<svg class="absolute inset-0 w-full h-full drop-shadow-md" viewbox="0 0 100 100">
+<!-- Background Track -->
+<circle cx="50" cy="50" fill="none" r="45" stroke="#e8e8ea" stroke-width="6"></circle>
+<!-- Progress Ring -->
+<circle class="timer-circle" cx="50" cy="50" fill="none" id="progressRing" r="45" stroke="#00327d" stroke-dasharray="283" stroke-dashoffset="0" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<!-- Inner Content (Fare & Countdown text) -->
+<div class="flex flex-col items-center z-10 text-center">
+<span class="font-display text-display text-primary leading-none mb-1" id="countdownText">15</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Segundos</span>
+</div>
+</div>
+<!-- Fare Display -->
+<div class="text-center mb-8">
+<span class="font-display text-display text-on-surface block leading-tight">$1.200</span>
+<span class="font-label-lg text-label-lg text-on-surface-variant block mt-1">ARS - Pago en Efectivo</span>
+</div>
+<!-- Route Details Card -->
+<div class="w-full bg-surface rounded-2xl p-4 border border-surface-variant shadow-sm mb-8 relative">
+<!-- Vertical connector line -->
+<div class="absolute left-7 top-10 bottom-10 w-0.5 bg-outline-variant/30"></div>
+<!-- Origin -->
+<div class="flex items-start gap-4 mb-5 relative z-10">
+<div class="mt-0.5">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">my_location</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Origen</span>
+<span class="font-body-lg text-body-lg text-on-surface block mt-0.5 font-medium">Plaza Central</span>
+</div>
+</div>
+<!-- Destination -->
+<div class="flex items-start gap-4 relative z-10">
+<div class="mt-0.5">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Destino</span>
+<span class="font-body-lg text-body-lg text-on-surface block mt-0.5 font-medium">Terminal</span>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="w-full flex gap-3">
+<button class="flex-1 h-14 rounded-full border-2 border-error text-error font-label-lg text-label-lg flex items-center justify-center hover:bg-error/5 active:scale-95 transition-all duration-150">
+<span class="material-symbols-outlined mr-2">close</span>
+                        RECHAZAR
+                    </button>
+<button class="flex-1 h-14 rounded-full bg-primary text-on-primary font-label-lg text-label-lg flex items-center justify-center shadow-md hover:bg-primary/90 active:scale-95 transition-all duration-150">
+<span class="material-symbols-outlined mr-2">check</span>
+                        ACEPTAR
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Simple JavaScript for the Timer Visuals -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const timeLeftElement = document.getElementById('countdownText');
+            const progressRing = document.getElementById('progressRing');
+            let timeLeft = 15;
+            const totalTime = 15;
+            
+            // Circumference of circle with r=45 (2 * PI * 45) ≈ 282.7
+            const circumference = 2 * Math.PI * 45;
+            progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+            progressRing.style.strokeDashoffset = '0';
+
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                timeLeftElement.textContent = timeLeft;
+                
+                // Calculate offset
+                const offset = circumference - (timeLeft / totalTime) * circumference;
+                progressRing.style.strokeDashoffset = offset;
+
+                // Change color if time is running out (< 5 seconds)
+                if (timeLeft <= 5) {
+                    progressRing.style.stroke = '#ba1a1a'; // Error color
+                    timeLeftElement.classList.remove('text-primary');
+                    timeLeftElement.classList.add('text-error');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    // Handle timeout logic here (e.g., auto-reject)
+                }
+            }, 1000);
+        });
+    </script>
+</body></html>

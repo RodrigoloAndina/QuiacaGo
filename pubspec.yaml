@@ -1,0 +1,42 @@
+name: quiaca_go_conductor
+description: Aplicación de taxis habilitados para conductores de La Quiaca, Jujuy - QuiacaGo Conductor.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Gestión de Estado
+  flutter_riverpod: ^2.4.9
+  
+  # Navegación Declarativa
+  go_router: ^13.0.0
+  
+  # UI, Tipografía e Iconos
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.9
+  cupertino_icons: ^1.0.6
+  intl: ^0.19.0
+
+  # Mapas y Geolocalización (OpenStreetMap / MapLibre)
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+
+  # Backend Inicial y Autenticación
+  supabase_flutter: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/

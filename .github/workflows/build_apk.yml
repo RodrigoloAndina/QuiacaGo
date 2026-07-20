@@ -1,0 +1,40 @@
+name: Compilar APK Android QuiacaGo
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compilar APK Android (Release)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Código Fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Instalar Dependencias de Flutter
+        run: flutter pub get
+
+      - name: Compilar APK Android Release
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Subir APK de QuiacaGo como Artefacto Descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuiacaGo-Android-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error

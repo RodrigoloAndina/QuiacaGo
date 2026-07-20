@@ -1,0 +1,21 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+*.apk
+*.aab
+*.keystore
+
+# Node.js
+node_modules/
+npm-debug.log
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.ds_store
+Thumbs.db

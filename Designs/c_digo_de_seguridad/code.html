@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo - Viaje Activo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#ffb59d",
+                        "outline": "#737784",
+                        "inverse-on-surface": "#f0f0f3",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "tertiary": "#3c3625",
+                        "background": "#f9f9fc",
+                        "primary-container": "#0047ab",
+                        "surface-container": "#eeeef0",
+                        "tertiary-fixed": "#ece2c9",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#434653",
+                        "tertiary-fixed-dim": "#cfc6ae",
+                        "primary": "#00327d",
+                        "surface-container-low": "#f3f3f6",
+                        "surface-dim": "#dadadc",
+                        "on-secondary-container": "#742405",
+                        "surface-variant": "#e2e2e5",
+                        "surface-container-highest": "#e2e2e5",
+                        "secondary-container": "#fe8c65",
+                        "surface-tint": "#2559bd",
+                        "on-primary-fixed-variant": "#00419e",
+                        "outline-variant": "#c3c6d5",
+                        "on-background": "#1a1c1e",
+                        "on-primary-fixed": "#001946",
+                        "on-secondary-fixed": "#390c00",
+                        "on-secondary-fixed-variant": "#7e2c0c",
+                        "secondary": "#9d4221",
+                        "inverse-primary": "#b1c5ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#c7bea6",
+                        "on-tertiary-fixed-variant": "#4c4634",
+                        "surface-bright": "#f9f9fc",
+                        "surface": "#f9f9fc",
+                        "on-primary-container": "#a5bdff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbd0",
+                        "on-tertiary-fixed": "#201b0c",
+                        "on-surface": "#1a1c1e",
+                        "inverse-surface": "#2f3133",
+                        "primary-fixed": "#dae2ff",
+                        "tertiary-container": "#534d3a",
+                        "surface-container-high": "#e8e8ea",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "margin-desktop": "64px",
+                        "base": "8px",
+                        "margin-mobile": "20px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #f9f9fc; /* surface */
+        }
+        /* Custom map pin animation */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .pulse-element::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background-color: #9d4221; /* secondary */
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="antialiased text-on-surface h-screen w-full flex flex-col overflow-hidden relative">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-margin-mobile h-14 z-50 bg-surface shadow-sm fixed top-0 left-0 right-0">
+<button aria-label="Menu" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors duration-200">
+<span class="material-symbols-outlined text-primary text-[24px]">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">QuiacaGo</span>
+<div class="w-9 h-9 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant shadow-sm flex-shrink-0">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A small, circular profile picture of a young adult user for a ride-hailing app, facing forward with a neutral expression. The background is a soft, solid light gray to fit seamlessly into a light-mode modern UI. The lighting is clear and professional, ensuring high visibility at small sizes." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDns_WIcHeJTvMAEor9duhdxbb1uGbUdkvDS8ng_DTvXmUjU9NrfHIJ2b8ALt5gJDtgAtelTvTTUBCGEuLRted8Zdik74wdKmKFOFRvhNJNXKbozBgpc8V3wLbOBPfYifaVvn5jIRI5K6LBrY8S71C7A_SIkzK_9_ylhami9_szY56IA_TYrLmuF4vNP95iQTPLLiBXRshQVsGOhOxxKKpVhKdGxoWisoH1Q3ZSaKsFxtKWN4fDhLaG"/>
+</div>
+</header>
+<!-- Map View Area (Top Half) -->
+<main class="flex-1 flex flex-col relative w-full pt-14">
+<div class="h-[45vh] w-full relative z-0 bg-surface-container-lowest">
+<div class="w-full h-full bg-cover bg-center absolute inset-0" data-alt="A stylized, high-contrast digital map view of La Quiaca, Argentina, rendered in a modern light-mode aesthetic. The map features minimal geographic details with clean, intersecting roads in pale gray against a pristine white background. A glowing blue route path indicates an active journey. The overall mood is hyper-local, calm, and technologically sophisticated, adhering to a premium UI design language without cluttered elements." data-location="La Quiaca, Argentina" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD78YXsMDBPE2Kda2v9HkGiYGLeHV7zciZNg-UV_h7HSYPTOMhawU9XZJ1--2lZepSg2AzGRSwKGxBe1UtKeZIkGrXINBAUp1yPItjz1NF5Afy4mmt99aThx18m5mPwJbm0yBufCii611iNkUsxk-k8j870PYVgpa9BuMrrQ_ktUBgj5V3FK_auJ7QkZva9No2VKIjw-AKofol2NKBj2P5PYheVOeXaQVVN4F9zuuGL2eoCXPFy6Gek')"></div>
+<!-- Map Overlay UI -->
+<div class="absolute top-4 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-md px-4 py-2 rounded-full shadow-sm border border-surface-variant flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Llegando en 3 min</span>
+</div>
+<!-- Simulated Map Pin -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 relative pulse-element">
+<div class="bg-surface rounded-full p-1.5 shadow-md border border-surface-variant">
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+</div>
+</div>
+</div>
+<!-- Active Trip Bottom Sheet Card -->
+<div class="relative z-10 flex-1 bg-surface rounded-t-[24px] shadow-[0_-8px_30px_rgba(0,50,125,0.08)] px-container-padding py-6 flex flex-col -mt-4 border-t border-outline-variant/30">
+<!-- Sheet Handle -->
+<div class="w-12 h-1.5 bg-outline-variant/50 rounded-full mx-auto mb-6"></div>
+<!-- Driver Identity Row -->
+<div class="flex items-center justify-between pb-6 border-b border-surface-variant mb-6">
+<div class="flex items-center gap-4">
+<div class="w-[60px] h-[60px] rounded-full bg-surface-container-high overflow-hidden shadow-sm relative">
+<img alt="Foto del conductor" class="w-full h-full object-cover" data-alt="A professional, brightly lit portrait of a friendly driver for a ride-hailing app, shot against a clean, light gray background to match a modern light-mode UI. The subject is wearing a casual but neat dark blue shirt. The lighting is soft and even, creating a trustworthy and reliable presence. The image is cropped in a tight circle suitable for a digital avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL8JQd5H-pKvZ3161lcPikRJYooFdpZw_wKNXVkuF9WCw9onGez2fA7c1xvvSHcJf_Orn0_F4GwcTWvhOHZK5K8WG97tMCv1c94wUjy5qOnEorOnSnXGr-T3QAlyDh0UxG1TF4B2jKHjNvX99heKEhO98rfDuQ8pE7CHIeO2GpTsXjz7RZYTWveZLFibTlhaFPs2B5oQXo-TviOYUVz2rkPXEU4wJv-dGjyxyY3ZGoDsEEiWibRngc"/>
+<div class="absolute bottom-0 right-0 bg-surface rounded-full p-0.5 shadow-sm">
+<div class="bg-primary text-on-primary text-[10px] font-bold px-1.5 rounded-full flex items-center gap-0.5">
+                                4.9 <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface leading-tight">Roberto</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Renault Kangoo Gris</p>
+</div>
+</div>
+<div class="bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant text-center">
+<span class="font-headline-md text-headline-md font-bold text-primary block leading-none">AF 342</span>
+</div>
+</div>
+<!-- Security Code Section (Focus Area) -->
+<div class="flex flex-col items-center justify-center py-6 bg-primary-container/5 rounded-2xl border border-primary/10 mb-auto">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">shield_locked</span>
+<p class="font-label-lg text-label-lg text-on-surface-variant uppercase tracking-widest">Decile este código al conductor</p>
+</div>
+<div class="flex gap-4">
+<div class="w-16 h-20 flex items-center justify-center bg-surface rounded-xl shadow-sm border border-outline-variant/50">
+<span class="font-display text-display text-primary">8</span>
+</div>
+<div class="w-16 h-20 flex items-center justify-center bg-surface rounded-xl shadow-sm border border-outline-variant/50">
+<span class="font-display text-display text-primary">2</span>
+</div>
+<div class="w-16 h-20 flex items-center justify-center bg-surface rounded-xl shadow-sm border border-outline-variant/50">
+<span class="font-display text-display text-primary">0</span>
+</div>
+<div class="w-16 h-20 flex items-center justify-center bg-surface rounded-xl shadow-sm border border-outline-variant/50">
+<span class="font-display text-display text-primary">5</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-3 mt-6">
+<button class="w-full h-[56px] flex items-center justify-center gap-3 bg-surface-container-high hover:bg-surface-container-highest text-primary rounded-full transition-colors duration-200 font-label-lg text-label-lg shadow-sm">
+<span class="material-symbols-outlined text-[20px]">ios_share</span>
+                    Compartir viaje
+                </button>
+<button class="w-full h-[56px] flex items-center justify-center gap-3 bg-surface hover:bg-error-container/20 text-error rounded-full transition-colors duration-200 font-label-lg text-label-lg border border-error/20">
+<span class="material-symbols-outlined text-[20px]">sos</span>
+                    Ayuda
+                </button>
+</div>
+</div>
+</main>
+</body></html>

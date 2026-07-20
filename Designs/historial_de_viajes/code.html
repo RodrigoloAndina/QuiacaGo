@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Historial de Viajes - QuiacaGo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#ffb59d",
+                        "outline": "#737784",
+                        "inverse-on-surface": "#f0f0f3",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "tertiary": "#3c3625",
+                        "background": "#f9f9fc",
+                        "primary-container": "#0047ab",
+                        "surface-container": "#eeeef0",
+                        "tertiary-fixed": "#ece2c9",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#434653",
+                        "tertiary-fixed-dim": "#cfc6ae",
+                        "primary": "#00327d",
+                        "surface-container-low": "#f3f3f6",
+                        "surface-dim": "#dadadc",
+                        "on-secondary-container": "#742405",
+                        "surface-variant": "#e2e2e5",
+                        "surface-container-highest": "#e2e2e5",
+                        "secondary-container": "#fe8c65",
+                        "surface-tint": "#2559bd",
+                        "on-primary-fixed-variant": "#00419e",
+                        "outline-variant": "#c3c6d5",
+                        "on-background": "#1a1c1e",
+                        "on-primary-fixed": "#001946",
+                        "on-secondary-fixed": "#390c00",
+                        "on-secondary-fixed-variant": "#7e2c0c",
+                        "secondary": "#9d4221",
+                        "inverse-primary": "#b1c5ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#c7bea6",
+                        "on-tertiary-fixed-variant": "#4c4634",
+                        "surface-bright": "#f9f9fc",
+                        "surface": "#f9f9fc",
+                        "on-primary-container": "#a5bdff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbd0",
+                        "on-tertiary-fixed": "#201b0c",
+                        "on-surface": "#1a1c1e",
+                        "inverse-surface": "#2f3133",
+                        "primary-fixed": "#dae2ff",
+                        "tertiary-container": "#534d3a",
+                        "surface-container-high": "#e8e8ea",
+                        "on-primary": "#ffffff"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        gutter: "16px",
+                        "margin-desktop": "64px",
+                        base: "8px",
+                        "margin-mobile": "20px",
+                        "container-padding": "24px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+                        "display": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0 md:pl-80 font-body-md antialiased overflow-x-hidden">
+<!-- TopAppBar (Mobile Only) -->
+<header class="md:hidden bg-surface dark:bg-surface shadow-sm flex justify-between items-center w-full px-margin-mobile h-14 z-50 docked full-width top-0 sticky top-0">
+<button aria-label="Menu" class="p-2 -ml-2 text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200 rounded-full">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight">QuiacaGo</h1>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A close-up portrait of a friendly young adult passenger in a light-filled environment, representing the user profile photo. The lighting is soft and natural, enhancing a modern and clean aesthetic with high contrast minimalist style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPMtl-1g6RNQf2Ljff4BBWntM2VXZD6YcBas2rpXWiuEaB7t4n7j1t-RrLmKKqi2rUZTRFNcg960WveGUib6qKzaH3h3NeQdEUZ5A3JJ5PblouqF-ACmuYiC_WcjMwWjSQ-Nklh-D4I2_nML_z5G6T34clGBmSx6XsUjWB8BmymQ_KJmlLWfOXGgq-j7Pb026GWmwDFiddekvE346NNis_BVwMh88lzaTCuhDGCeDUiUzyGVFbV-51"/>
+</div>
+</header>
+<!-- Navigation Drawer (Desktop) -->
+<nav class="hidden md:flex fixed inset-y-0 left-0 z-[60] flex-col p-6 bg-surface dark:bg-surface-container shadow-2xl h-full w-80 rounded-r-xl border-r border-surface-variant">
+<div class="flex items-center space-x-4 mb-8">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Usuario de QuiacaGo" class="w-full h-full object-cover" data-alt="A close-up portrait of a friendly passenger named Juan Perez in a light-filled environment, representing the user profile photo. The lighting is soft and natural, enhancing a modern and clean aesthetic with high contrast minimalist style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0xW1SeS6F885X_T1dkczSp1XOs5TjRF6Q2dhnt7-SyawubkFXbvDUPvQ-7CG8vEPlPBaAKtF8Um_7YAWUMRoOmBOkhWIc0Tbog07IMUA_xnE3gOOWrnng1V-io7tGlPWt138QXvYNa5h9-5JbZq_aHjgDiQOWHlA3OQpneNjxldvI2wkR4L5Ooz0NVBmhZ8yvxz4RGdwYaYJoE7EgDTzy1sVocZEoVe2xgr20ugbE9XE9cHE4p5f7"/>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary font-bold">Juan Perez</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Pasajero Estrella</p>
+<p class="font-label-sm text-label-sm text-outline">La Quiaca, AR</p>
+</div>
+</div>
+<ul class="space-y-2 flex-grow">
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-lg text-label-lg">Mi Perfil</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-primary dark:text-primary-fixed font-bold bg-primary-fixed dark:bg-primary-container transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined icon-filled">route</span>
+<span class="font-label-lg text-label-lg">Historial de Viajes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-lg text-label-lg">Metodos de Pago</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-label-lg text-label-lg">Soporte</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface dark:text-on-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-lg text-label-lg">Configuración</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content -->
+<main class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-8">
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h1 class="font-display text-display text-primary tracking-tight mb-2">Mis Viajes</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Revisa tu historial de recorridos por la región.</p>
+</div>
+<div class="hidden sm:flex items-center bg-surface-container-low rounded-full px-4 py-2 border border-surface-variant">
+<span class="material-symbols-outlined text-outline mr-2">filter_list</span>
+<span class="font-label-lg text-label-lg text-on-surface-variant">Filtrar</span>
+</div>
+</div>
+<!-- Trip Cards List -->
+<div class="space-y-4">
+<!-- Card 1 -->
+<article class="bg-surface-container-lowest rounded-xl p-5 border border-surface-variant shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary group-hover:bg-secondary transition-colors duration-300"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center space-x-2 text-outline">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+<time class="font-label-sm text-label-sm uppercase tracking-wider">12 Oct 2023 • 14:30</time>
+</div>
+<span class="font-headline-md text-headline-md text-primary font-bold">$1,250</span>
+</div>
+<div class="flex flex-col space-y-3 mb-6 relative">
+<!-- Path connecting dots -->
+<div class="absolute left-[11px] top-4 bottom-4 w-[2px] bg-surface-variant"></div>
+<div class="flex items-start space-x-3 relative z-10">
+<div class="mt-1 w-6 h-6 rounded-full bg-surface-container flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-outline mb-0.5">Origen</p>
+<p class="font-body-md text-body-md text-on-surface font-medium">Plaza de la República</p>
+</div>
+</div>
+<div class="flex items-start space-x-3 relative z-10">
+<div class="mt-1 w-6 h-6 rounded-full bg-surface-container flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-outline mb-0.5">Destino</p>
+<p class="font-body-md text-body-md text-on-surface font-medium">Terminal de Ómnibus</p>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-surface-variant">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container border border-surface-variant">
+<img class="w-full h-full object-cover" data-alt="A portrait of a male driver wearing a casual jacket, soft natural lighting, modern high contrast minimalist style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNG1fjEDssGOjJmRG-y_heh5StP0mQVrzR47jtET2DL566CZQDxRvSKwIMJFvthOdoQACpgW1QsiOD0tclPdYz3SUtLbnShYyFl6JGb1mkgssd4HcIPUgEiekOeGtAuqtV9mv0yQWFIJCAMz5LrGk3ixCNEClc-UnOxAhm0ziJmQ4BRvEKy4syRz-TG1gNRtd3FyhSlWuaXaxbrnCWRP5xpQwoY0WIwMtP42awgiNfsNoA58VuS3L-"/>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-medium">Conductor: Carlos M.</p>
+<div class="flex text-secondary text-[14px]">
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+<span class="material-symbols-outlined icon-filled text-[14px]">star_half</span>
+</div>
+</div>
+</div>
+<button class="bg-surface-container-low hover:bg-surface-container-high text-primary font-label-sm text-label-sm px-4 py-2 rounded-full transition-colors">
+                        Ver Detalles
+                    </button>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container-lowest rounded-xl p-5 border border-surface-variant shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-surface-variant group-hover:bg-primary transition-colors duration-300"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center space-x-2 text-outline">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+<time class="font-label-sm text-label-sm uppercase tracking-wider">08 Oct 2023 • 09:15</time>
+</div>
+<span class="font-headline-md text-headline-md text-primary font-bold">$850</span>
+</div>
+<div class="flex flex-col space-y-3 mb-6 relative">
+<div class="absolute left-[11px] top-4 bottom-4 w-[2px] bg-surface-variant"></div>
+<div class="flex items-start space-x-3 relative z-10">
+<div class="mt-1 w-6 h-6 rounded-full bg-surface-container flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-outline mb-0.5">Origen</p>
+<p class="font-body-md text-body-md text-on-surface font-medium">Mercado Central</p>
+</div>
+</div>
+<div class="flex items-start space-x-3 relative z-10">
+<div class="mt-1 w-6 h-6 rounded-full bg-surface-container flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-outline mb-0.5">Destino</p>
+<p class="font-body-md text-body-md text-on-surface font-medium">Barrio Santa Clara</p>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-surface-variant">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container border border-surface-variant">
+<img class="w-full h-full object-cover" data-alt="A portrait of a female driver wearing sunglasses, bright daylight, modern clean minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhD6hV5zeBYLuxYN87hHKD7qkr7KYlVa6i26CWgqguoRLZJs2iA27-KO3Q9vMfSeTEIw5qigPWqjzY2O3cRr4X9AMpeotZykzXuyt6xjVlhmXwhStrCYdiDjdMXrfHUEi-Pgk25SNwSddAw97_4JqMSp6fm1QYYajHk42r7qS1HbTtwjh-5q5yM-phiDnKBFr8nBAtDGbHzHjOnAbvoOwpONki7L9C5qwFdy1WjMN9Q1nNkfQB2bTm"/>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-medium">Conductora: Laura G.</p>
+<div class="flex text-secondary text-[14px]">
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+<span class="material-symbols-outlined icon-filled text-[14px]">star</span>
+</div>
+</div>
+</div>
+<button class="bg-surface-container-low hover:bg-surface-container-high text-primary font-label-sm text-label-sm px-4 py-2 rounded-full transition-colors">
+                        Ver Detalles
+                    </button>
+</div>
+</article>
+<!-- Card 3 (Canceled) -->
+<article class="bg-surface-container-lowest rounded-xl p-5 border border-surface-variant shadow-sm opacity-75 relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center space-x-2 text-outline">
+<span class="material-symbols-outlined text-[20px]">event_busy</span>
+<time class="font-label-sm text-label-sm uppercase tracking-wider">05 Oct 2023 • 18:45</time>
+</div>
+<span class="font-label-sm text-label-sm text-error bg-error-container px-2 py-1 rounded-full font-bold">Cancelado</span>
+</div>
+<div class="flex flex-col space-y-3 mb-6 relative">
+<div class="absolute left-[11px] top-4 bottom-4 w-[2px] bg-surface-variant"></div>
+<div class="flex items-start space-x-3 relative z-10">
+<div class="mt-1 w-6 h-6 rounded-full bg-surface-container flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-outline mb-0.5">Origen</p>
+<p class="font-body-md text-body-md text-on-surface-variant font-medium">Hospital Jorge Uro</p>
+</div>
+</div>
+<div class="flex items-start space-x-3 relative z-10">
+<div class="mt-1 w-6 h-6 rounded-full bg-surface-container flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-outline mb-0.5">Destino</p>
+<p class="font-body-md text-body-md text-on-surface-variant font-medium">Centro Cívico</p>
+</div>
+</div>
+</div>
+</article>
+</div>
+<div class="mt-8 text-center">
+<button class="font-label-lg text-label-lg text-primary border border-primary-container hover:bg-surface-container-low px-6 py-3 rounded-full transition-colors">
+                Cargar más viajes
+            </button>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-surface dark:bg-surface-container-lowest border-t border-outline-variant shadow-lg fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe docked full-width bottom-0 rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-transform duration-150 active:scale-95 px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined">local_taxi</span>
+<span class="font-label-sm text-label-sm mt-1">Viajar</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-6 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined icon-filled">history</span>
+<span class="font-label-sm text-label-sm mt-1 font-bold">Actividad</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-transform duration-150 active:scale-95 px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-label-sm mt-1">Alertas</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-transform duration-150 active:scale-95 px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-sm text-label-sm mt-1">Perfil</span>
+</a>
+</nav>
+</body></html>

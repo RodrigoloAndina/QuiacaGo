@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo - Driver Documentation Review</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dadadc",
+                      "primary": "#00327d",
+                      "on-primary-fixed-variant": "#00419e",
+                      "tertiary-container": "#534d3a",
+                      "surface-variant": "#e2e2e5",
+                      "secondary-container": "#fe8c65",
+                      "on-surface-variant": "#434653",
+                      "on-secondary-fixed": "#390c00",
+                      "outline-variant": "#c3c6d5",
+                      "tertiary-fixed": "#ece2c9",
+                      "surface-tint": "#2559bd",
+                      "surface-container": "#eeeef0",
+                      "surface-bright": "#f9f9fc",
+                      "secondary-fixed-dim": "#ffb59d",
+                      "secondary-fixed": "#ffdbd0",
+                      "secondary": "#9d4221",
+                      "on-tertiary-fixed": "#201b0c",
+                      "on-secondary-fixed-variant": "#7e2c0c",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#1a1c1e",
+                      "on-error": "#ffffff",
+                      "primary-fixed": "#dae2ff",
+                      "tertiary": "#3c3625",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#f0f0f3",
+                      "primary-container": "#0047ab",
+                      "on-error-container": "#93000a",
+                      "on-secondary-container": "#742405",
+                      "background": "#f9f9fc",
+                      "surface-container-highest": "#e2e2e5",
+                      "on-background": "#1a1c1e",
+                      "tertiary-fixed-dim": "#cfc6ae",
+                      "on-tertiary-container": "#c7bea6",
+                      "surface-container-low": "#f3f3f6",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed": "#001946",
+                      "inverse-surface": "#2f3133",
+                      "inverse-primary": "#b1c5ff",
+                      "primary-fixed-dim": "#b1c5ff",
+                      "on-secondary": "#ffffff",
+                      "on-primary-container": "#a5bdff",
+                      "surface-container-high": "#e8e8ea",
+                      "error-container": "#ffdad6",
+                      "outline": "#737784",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#4c4634",
+                      "surface": "#f9f9fc"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "margin-desktop": "64px",
+                      "margin-mobile": "20px",
+                      "container-padding": "24px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "label-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "display": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex h-screen overflow-hidden">
+<!-- NavigationDrawer (Hidden on Mobile, Visible on Desktop) -->
+<aside class="hidden md:flex flex-col bg-surface-container shadow-xl h-full w-80 rounded-r-xl fixed inset-y-0 left-0 z-[60] p-6 transition-all duration-300 ease-in-out">
+<div class="flex items-center mb-8">
+<span class="font-headline-md text-headline-md font-bold text-primary mr-3">QuiacaGo</span>
+</div>
+<div class="flex items-center mb-8 bg-surface-container-low p-4 rounded-xl">
+<div class="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center mr-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<div>
+<div class="font-label-lg text-label-lg text-on-surface">Admin Portal</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Review Team</div>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-lg text-label-lg">Dashboard</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-primary font-bold bg-primary-fixed transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">badge</span>
+<span class="font-label-lg text-label-lg">Driver Review</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">route</span>
+<span class="font-label-lg text-label-lg">Active Rides</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-label-lg text-label-lg">Support Tickets</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full md:ml-80 relative overflow-y-auto">
+<!-- TopAppBar (Visible on all sizes, acts as header) -->
+<header class="bg-surface border-b border-outline-variant/30 flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-14 z-50 sticky top-0 shadow-sm transition-colors duration-200">
+<div class="flex items-center">
+<button class="md:hidden p-2 -ml-2 text-primary hover:bg-surface-container-low rounded-full mr-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="hidden md:flex font-headline-md text-headline-md font-bold text-primary">Driver Review</div>
+<div class="md:hidden font-headline-md text-headline-md font-bold text-primary">QuiacaGo</div>
+</div>
+<div class="flex items-center space-x-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined">search</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A small circular profile picture of an administrative user in a modern office setting. High-key lighting, bright white and primary blue tones, clean professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBr0-bvaLhjUnMiRk--ck7tTSljOixpS1rtPglDdaXYCczoLRaBSuKcONPH8i3G9hiffdt14rVszN2VzALbVk0Bmjzv9B2M3Fti5hAmcWR4YKLiM6ivUbWEITvAqfKJMCgxrxauP-XD_Mv8j63JBtjhgiwCM4lW1hu20CsZ3bS470mkDW25pH4b7iHWt30Zo7zbJqV78_v1cKQusFKK6LsatygJOhK21jIULpTUK-6aW3UmKxXLJk52"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-margin-mobile md:p-margin-desktop max-w-7xl mx-auto w-full pb-32">
+<!-- Driver Profile Header -->
+<div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/50 p-6 md:p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+<div class="flex items-center gap-6">
+<div class="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-primary-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="A portrait photo of a driver for a rideshare app, taken outdoors in bright natural daylight. The driver is smiling slightly, wearing a neutral jacket. The background is softly blurred showing a street in La Quiaca, Argentina, with subtle terracotta and deep blue tones in the environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAnzSlWNRqJ4ScJfF_3eLVYCk1JKwrYUBzA36P4_HWeZpxn96dSi7C4qXmjhkX41KeUC7FLxQkihY-lv8mMgIpEFgRrKB30b29vxnzzmXReAoYzf9d7JEqhxgzRwePYdTEPngOEtam500hYctGLZt0BT1k4fPmEBxjHXSXRlHC734pDcwzC-a0mB4dLhUMhwpFviYzz74hlzCkBCMC58gUUtoYHNZO0HyVDToMKqx4zi2sX7Fzf3pe"/>
+</div>
+<div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-1">Carlos Mendoza</h1>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-[18px]">directions_car</span> Toyota Hilux 2019 (AB 123 CD)
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px] mr-1">warning</span> Action Required
+                            </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm">
+                                ID: #DRV-8832
+                            </span>
+</div>
+</div>
+</div>
+<div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+<button class="px-6 py-3 rounded-lg border border-error text-error hover:bg-error-container/20 font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">block</span> Suspend
+                    </button>
+<button class="px-6 py-3 rounded-lg bg-surface-container text-primary hover:bg-surface-container-high font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">mail</span> Contact
+                    </button>
+<button class="px-6 py-3 rounded-lg bg-primary text-on-primary hover:bg-on-primary-fixed-variant font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined">check_circle</span> Approve All
+                    </button>
+</div>
+</div>
+<!-- Documents Grid (Bento Style) -->
+<h2 class="font-headline-md text-headline-md text-on-surface mb-6">Required Documents</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Document Card: DNI (Validated) -->
+<div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/50 overflow-hidden flex flex-col group">
+<div class="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">badge</span>
+<h3 class="font-label-lg text-label-lg text-on-surface">DNI (Front &amp; Back)</h3>
+</div>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[14px]">check</span> Validated
+                        </span>
+</div>
+<div class="p-6 flex-1 flex flex-col items-center justify-center bg-surface-container-low/50 relative group-hover:bg-surface-container-low transition-colors">
+<div class="w-full h-32 rounded-lg overflow-hidden border border-outline-variant/50 mb-4 relative cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="A clear, high-resolution photo of an Argentine National Identity Document (DNI) card, front side, resting on a clean white surface. The image is brightly lit, ensuring high contrast and legibility, reflecting a professional document verification process." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3kJnbEj91o5cdWi1gO9nV8IpsKYBjGNeBtpJ7LO9gnZpTSB61SxVSCgmj7f97iDMFYwNIyluJPjx_JRLaPEo-RisP9CNk3VHRhkcp45mX5xudDF5jY8m4lAQVXvADX5uTh0nhDKoINR803lG8yRRSvtrMDRljgOLWlRkv-DZHzI17DgzrcGeT_fzP0WBdSGX1VakyRMbkRknZnaFYlAUh9xh3z5dDvu4FoNVcVeGHbkXUcb2HC9m6"/>
+<div class="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary opacity-0 group-hover:opacity-100 text-3xl shadow-sm">zoom_in</span>
+</div>
+</div>
+<div class="w-full text-left space-y-1">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Exp: 14/05/2030</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Uploaded: 2 days ago</p>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant/30 flex justify-end gap-2 bg-surface-bright">
+<button class="px-3 py-1.5 rounded text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm transition-colors">Re-evaluate</button>
+</div>
+</div>
+<!-- Document Card: License (Expired) -->
+<div class="bg-surface-container-lowest rounded-2xl shadow-sm border-2 border-error-container overflow-hidden flex flex-col group relative">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error">id_card</span>
+<h3 class="font-label-lg text-label-lg text-on-surface">Driver's License</h3>
+</div>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-error-container text-on-error-container font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[14px]">error</span> Expired
+                        </span>
+</div>
+<div class="p-6 flex-1 flex flex-col items-center justify-center bg-error-container/5 relative">
+<div class="w-full h-32 rounded-lg overflow-hidden border border-error/20 mb-4 relative cursor-pointer opacity-70">
+<img class="w-full h-full object-cover grayscale" data-alt="A photograph of an Argentine Driver's License card on a neutral gray background. The card appears slightly worn. The lighting is functional and flat, highlighting the document details. A subtle red tint overlays the image to indicate an expired status." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBX6XaN9DelO8iUxsxZU15STfZ35tNzWQWbNQFDzTnMTyyGklJPnu1099O5sv0NPWnrQsRHGcaR4x55kianxZoa7ZKhLC6WDZv5BtJpej4-KAkPYEdeWk4Iugpv2WvfKzdoEMjISOYxOSnoWigk_Gz-Jbj4STktwAur7maNwxuV0VSDXSALmLsYoXz6vbPLTqAh-qrXkEmhT3GuToER1cwtlnwZDFy33A08KPtgu0kcg8sB_J7B4Edu"/>
+</div>
+<div class="w-full text-left space-y-1">
+<p class="font-label-sm text-label-sm text-error font-medium">Exp: 12/10/2023 (Overdue)</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Class: D2 (Professional)</p>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant/30 flex justify-between gap-2 bg-surface-bright">
+<button class="px-3 py-1.5 rounded text-error hover:bg-error-container/20 font-label-sm text-label-sm transition-colors">Reject</button>
+<button class="px-4 py-1.5 rounded bg-surface-container text-on-surface hover:bg-surface-container-high font-label-sm text-label-sm transition-colors">Request Update</button>
+</div>
+</div>
+<!-- Document Card: Insurance (Pending Review) -->
+<div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/50 overflow-hidden flex flex-col group ring-2 ring-primary/20">
+<div class="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">shield</span>
+<h3 class="font-label-lg text-label-lg text-on-surface">Vehicle Insurance</h3>
+</div>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-secondary-container text-on-secondary-container font-label-sm text-label-sm gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> Pending Review
+                        </span>
+</div>
+<div class="p-6 flex-1 flex flex-col items-center justify-center bg-surface-container-low/50 relative group-hover:bg-surface-container-low transition-colors">
+<div class="w-full h-32 rounded-lg overflow-hidden border border-outline-variant/50 mb-4 relative cursor-pointer flex items-center justify-center bg-white">
+<span class="material-symbols-outlined text-4xl text-outline-variant">description</span>
+<div class="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary opacity-0 group-hover:opacity-100 text-3xl shadow-sm">visibility</span>
+</div>
+</div>
+<div class="w-full text-left space-y-1">
+<p class="font-label-sm text-label-sm text-on-surface">Policy: Seguros Rivadavia</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Uploaded: 2 hours ago</p>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant/30 flex justify-end gap-2 bg-surface-bright">
+<button class="px-4 py-1.5 rounded text-error hover:bg-error-container/20 font-label-sm text-label-sm transition-colors border border-transparent hover:border-error/30">Reject</button>
+<button class="px-4 py-1.5 rounded bg-primary text-on-primary hover:bg-on-primary-fixed-variant font-label-sm text-label-sm transition-colors shadow-sm">Approve</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

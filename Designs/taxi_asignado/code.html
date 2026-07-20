@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo - Taxi Asignado</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#ffb59d",
+                        "outline": "#737784",
+                        "inverse-on-surface": "#f0f0f3",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "tertiary": "#3c3625",
+                        "background": "#f9f9fc",
+                        "primary-container": "#0047ab",
+                        "surface-container": "#eeeef0",
+                        "tertiary-fixed": "#ece2c9",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#434653",
+                        "tertiary-fixed-dim": "#cfc6ae",
+                        "primary": "#00327d",
+                        "surface-container-low": "#f3f3f6",
+                        "surface-dim": "#dadadc",
+                        "on-secondary-container": "#742405",
+                        "surface-variant": "#e2e2e5",
+                        "surface-container-highest": "#e2e2e5",
+                        "secondary-container": "#fe8c65",
+                        "surface-tint": "#2559bd",
+                        "on-primary-fixed-variant": "#00419e",
+                        "outline-variant": "#c3c6d5",
+                        "on-background": "#1a1c1e",
+                        "on-primary-fixed": "#001946",
+                        "on-secondary-fixed": "#390c00",
+                        "on-secondary-fixed-variant": "#7e2c0c",
+                        "secondary": "#9d4221",
+                        "inverse-primary": "#b1c5ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#c7bea6",
+                        "on-tertiary-fixed-variant": "#4c4634",
+                        "surface-bright": "#f9f9fc",
+                        "surface": "#f9f9fc",
+                        "on-primary-container": "#a5bdff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbd0",
+                        "on-tertiary-fixed": "#201b0c",
+                        "on-surface": "#1a1c1e",
+                        "inverse-surface": "#2f3133",
+                        "primary-fixed": "#dae2ff",
+                        "tertiary-container": "#534d3a",
+                        "surface-container-high": "#e8e8ea",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1.5rem"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "margin-desktop": "64px",
+                        "base": "8px",
+                        "margin-mobile": "20px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .map-bg {
+            background-color: #e5e3df; /* Fallback map color */
+            background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(2.4); opacity: 0; }
+        }
+
+        .bottom-sheet-anim {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen w-screen overflow-hidden flex flex-col relative antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top App Bar - Fixed -->
+<header class="bg-surface shadow-sm docked full-width top-0 z-50 transition-colors duration-200">
+<div class="flex justify-between items-center w-full px-margin-mobile h-14">
+<button aria-label="Atrás" class="text-primary p-2 -ml-2 rounded-full hover:bg-surface-container-low transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Viaje en curso</h1>
+<div class="w-10"></div> <!-- Spacer for center alignment -->
+</div>
+</header>
+<!-- Map Canvas Area -->
+<main class="flex-1 relative w-full bg-surface-variant flex items-center justify-center overflow-hidden">
+<!-- Interactive Map Placeholder -->
+<div class="absolute inset-0 map-bg w-full h-full" data-alt="A highly detailed top-down view of a modern digital map interface for the city of La Quiaca, Argentina. The map uses a clean, light-mode high-contrast minimalist aesthetic with soft topographic contour lines evoking the Puna region. The color palette features light sand and crisp white surface roads, accented with primary deep blue for the main route and terracotta markers. Subtle ambient shadows give the map a premium, tactile quality." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAdsFUuHga_3RtZ89ljxSfwoIjXZ2GzoHzfK8v1-mGhfGVsoKuCd1SWoINH9Df5FmnhlUtk8Ya-rbvePCyToQSFV0LYptTOZCEJx5NGc7IjdkvJLZQuJxEow2W25mZ_BJQW2hh8gQ--m_C7BjhMGwPwKinFBdA7NwLziQhQUgKWELs6lX81mXw2QVNMolDEul8FopvT3xz2_Sk-nSUgFIVFFh_t3Wewntvfyxcro8zFFPMEW28iUUZA')"></div>
+<!-- Animated Map Pin (Driver Location) -->
+<div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
+<div class="relative w-12 h-12 flex items-center justify-center">
+<!-- Pulse Effect -->
+<div class="absolute inset-0 bg-secondary rounded-full pulse-ring"></div>
+<!-- Pin Body -->
+<div class="bg-surface shadow-lg rounded-full w-10 h-10 flex items-center justify-center border-2 border-secondary z-10 relative">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">local_taxi</span>
+</div>
+</div>
+<!-- Pin Arrow -->
+<div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-secondary -mt-1 z-0"></div>
+<div class="bg-surface px-3 py-1 mt-2 rounded-full shadow-md border border-outline-variant text-label-sm font-label-sm text-on-surface-variant flex items-center gap-1">
+<span>Llegando en 3 min</span>
+</div>
+</div>
+</main>
+<!-- Contextual Bottom Sheet -->
+<div class="absolute bottom-0 w-full z-40 px-4 pb-safe flex flex-col items-center">
+<!-- Bottom Sheet Container -->
+<div class="w-full max-w-md bg-surface rounded-t-2xl shadow-[0_-8px_30px_rgba(0,50,125,0.08)] bottom-sheet-anim border border-outline-variant border-b-0 overflow-hidden flex flex-col">
+<!-- Handle -->
+<div class="w-full flex justify-center pt-3 pb-1">
+<div class="w-12 h-1.5 bg-outline-variant rounded-full opacity-50"></div>
+</div>
+<div class="px-container-padding pb-container-padding pt-2 flex flex-col gap-6">
+<!-- Status Banner -->
+<div class="flex items-center justify-between w-full">
+<div class="flex items-center gap-2">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<h2 class="font-headline-md text-[20px] text-on-surface leading-tight">Taxi asignado</h2>
+</div>
+<!-- PIN Code -->
+<div class="bg-primary-container/10 px-3 py-1.5 rounded-lg border border-primary-container/20 flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">PIN:</span>
+<span class="font-headline-md text-headline-md text-primary font-bold tracking-widest">4821</span>
+</div>
+</div>
+<!-- Driver & Vehicle Profile Card -->
+<div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant flex flex-col gap-4">
+<!-- Driver Info -->
+<div class="flex items-center gap-4">
+<div class="relative w-16 h-16 shrink-0">
+<img class="w-full h-full rounded-full object-cover border-2 border-surface shadow-sm" data-alt="A professional headshot portrait of a friendly Argentine taxi driver named Carlos. He is a middle-aged man with a warm smile, wearing a casual but neat light blue collared shirt. The lighting is soft and flattering, set against a clean, light-mode white background. The image has a high-quality, trustworthy feel consistent with a premium mobility app in the Andean region." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_qyYre8bsqq9L-l48EOaTG_9wu50YUd2YrZPuCUygz_OfcDUuRSJMv9kT00f5HLjY4U_RsMxtsdpz7h8KlFzexxzARtjjmY1bffIZhf507j0VRIkswrXjtmnJHZYurk_kjaLpwsIopT6FxHY8Zmf0y7Q4CnzHB83WAdC3YphSc6Mm-1d6XY77cSZtOlXTiX9DwOtwMXKErNgM7YOWeya1-ARmGaisUz5k3wMcY2FsxmN9weV_hiFz"/>
+<div class="absolute -bottom-1 -right-1 bg-surface rounded-full p-0.5 shadow-sm border border-outline-variant">
+<div class="bg-secondary/10 text-secondary rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[11px] font-bold">4.9</span>
+</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col">
+<h3 class="font-headline-md text-[18px] text-on-surface leading-tight">Carlos</h3>
+<div class="flex items-center gap-1 text-on-surface-variant mt-1">
+<span class="material-symbols-outlined text-[16px] text-green-600">verified</span>
+<span class="text-label-sm font-label-sm text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">Taxi Habilitado</span>
+</div>
+</div>
+</div>
+<!-- Divider -->
+<hr class="border-outline-variant opacity-50"/>
+<!-- Vehicle Info -->
+<div class="flex justify-between items-center">
+<div class="flex flex-col">
+<span class="text-label-lg font-label-lg text-on-surface">Chevrolet Corsa Blanco</span>
+<span class="text-body-md font-body-md text-on-surface-variant text-sm mt-0.5">Móvil 042</span>
+</div>
+<div class="bg-surface-container-highest px-3 py-1.5 rounded border border-outline-variant shadow-inner">
+<span class="font-mono text-[16px] font-bold text-on-surface tracking-wider uppercase">ABC 123</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons Grid -->
+<div class="grid grid-cols-2 gap-3 w-full">
+<button class="col-span-2 bg-primary hover:bg-on-primary-fixed-variant active:scale-[0.98] transition-all duration-200 text-on-primary h-[56px] rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">share</span>
+                        Compartir viaje
+                    </button>
+<button class="bg-surface hover:bg-surface-container-low active:scale-[0.98] transition-all duration-200 text-primary border border-outline-variant h-[48px] rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined">call</span>
+                        Llamar
+                    </button>
+<button class="bg-error-container/30 hover:bg-error-container/50 active:scale-[0.98] transition-all duration-200 text-error border border-error/20 h-[48px] rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined">close</span>
+                        Cancelar
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Navigation Suppressed: Transactional/Task-Focused Journey -->
+<!-- The BottomNavBar and SideNav are intentionally excluded as this is an active ride screen representing a focused user journey with a departure intent ("Atrás" button present), adhering to the Shell Visibility & Relevance Filter. -->
+</body></html>

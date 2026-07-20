@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuiacaGo Conductor - Inicio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-low": "#f3f3f6",
+                      "surface-bright": "#f9f9fc",
+                      "inverse-surface": "#2f3133",
+                      "primary-container": "#0047ab",
+                      "primary-fixed": "#dae2ff",
+                      "surface": "#f9f9fc",
+                      "on-primary-container": "#a5bdff",
+                      "surface-container-high": "#e8e8ea",
+                      "secondary": "#9d4221",
+                      "on-secondary": "#ffffff",
+                      "outline-variant": "#c3c6d5",
+                      "on-surface": "#1a1c1e",
+                      "secondary-container": "#fe8c65",
+                      "primary": "#00327d",
+                      "on-surface-variant": "#434653",
+                      "on-primary-fixed-variant": "#00419e",
+                      "on-primary-fixed": "#001946",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed-variant": "#4c4634",
+                      "surface-container-highest": "#e2e2e5",
+                      "secondary-fixed": "#ffdbd0",
+                      "on-secondary-fixed": "#390c00",
+                      "surface-dim": "#dadadc",
+                      "primary-fixed-dim": "#b1c5ff",
+                      "surface-container": "#eeeef0",
+                      "on-background": "#1a1c1e",
+                      "surface-tint": "#2559bd",
+                      "on-tertiary-container": "#c7bea6",
+                      "on-error-container": "#93000a",
+                      "background": "#f9f9fc",
+                      "error-container": "#ffdad6",
+                      "on-secondary-container": "#742405",
+                      "surface-variant": "#e2e2e5",
+                      "error": "#ba1a1a",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed": "#201b0c",
+                      "tertiary": "#3c3625",
+                      "tertiary-container": "#534d3a",
+                      "secondary-fixed-dim": "#ffb59d",
+                      "tertiary-fixed": "#ece2c9",
+                      "outline": "#737784",
+                      "on-secondary-fixed-variant": "#7e2c0c",
+                      "inverse-on-surface": "#f0f0f3",
+                      "tertiary-fixed-dim": "#cfc6ae",
+                      "inverse-primary": "#b1c5ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "20px",
+                      "margin-desktop": "64px",
+                      "gutter": "16px",
+                      "container-padding": "24px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "body-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "label-lg": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "display": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .map-gradient-overlay {
+            background: linear-gradient(to bottom, rgba(249, 249, 252, 0) 60%, rgba(249, 249, 252, 1) 100%);
+        }
+        .ambient-shadow {
+            box-shadow: 0 -4px 20px rgba(0, 50, 125, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-surface h-screen w-full flex flex-col overflow-hidden font-body-lg text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline shadow-sm flex items-center justify-between px-margin-mobile py-4 w-full top-0 absolute z-30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" style="font-variation-settings: 'FILL' 0;">local_taxi</span>
+<h1 class="font-headline-md text-headline-md-mobile text-primary dark:text-primary-fixed-dim font-extrabold tracking-tight">QuiacaGo Conductor</h1>
+</div>
+<button class="hover:bg-surface-container-high dark:hover:bg-surface-container-highest active:scale-95 transition-transform duration-150 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</header>
+<!-- Main Map Canvas -->
+<main class="flex-1 w-full relative z-0 mt-[68px]"> <!-- Offset for TopAppBar -->
+<!-- Map Background (60% visually) -->
+<div class="absolute inset-0 w-full h-[65%]">
+<div class="w-full h-full bg-cover bg-center" data-alt="A highly detailed, minimalist digital map of La Quiaca, Argentina, designed for a modern ride-hailing driver interface. The map uses a light-mode color palette with soft greys for roads, pristine white for city blocks, and subtle earthy terracotta accents denoting geographical features of the Puna region. The lighting is flat, prioritizing extreme legibility and a premium UI aesthetic over photorealism." data-location="La Quiaca, Argentina" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqgyJ_gPAszulxS95kuvo_LsSImOZirPqKehKw2oGyWSt4-lU6UOEP_gtetwOE2kVIQptQDDhEtyuO73hf5JP4xIm8aM6yj-ZBVrU6YbO8fe1Khb4W4lln9y5AP26ZSfObNgZklj3oAvw8VTqvMlUcqc6JdW15jfs19hEDP-2VM9TrYmD-1c_Ss_wLypB_5x0vB0zMK04CIqiYfttkUAEU_-_8DM8QUlSO9mvH6pfjsIZanmhwtkCI')"></div>
+<div class="absolute inset-0 map-gradient-overlay"></div>
+<!-- Custom Driver Pin on Map -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 flex flex-col items-center justify-end drop-shadow-md">
+<div class="w-8 h-8 bg-surface rounded-full flex items-center justify-center border-2 border-primary mb-[-8px] z-10">
+<span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1;">local_taxi</span>
+</div>
+<div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-primary"></div>
+</div>
+</div>
+<!-- Persistent Bottom Card Container -->
+<div class="absolute bottom-[80px] left-0 w-full bg-surface rounded-t-[24px] ambient-shadow z-20 px-margin-mobile pt-container-padding pb-4 flex flex-col border-t border-outline-variant/20">
+<!-- Handle -->
+<div class="w-12 h-1.5 bg-outline-variant rounded-full mx-auto mb-6 opacity-50"></div>
+<!-- Status Row -->
+<div class="flex justify-between items-center mb-8">
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface">Tu estado</h2>
+<div class="flex items-center gap-2 bg-error-container/20 border border-error-container px-3 py-1.5 rounded-full font-label-sm text-label-sm text-error">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
+                    No disponible
+                </div>
+</div>
+<!-- Main Action: Connect Button -->
+<button class="w-full h-[56px] bg-primary text-on-primary rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-3 mb-8 shadow-md active:scale-[0.98] transition-transform duration-200 hover:bg-primary/90">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">power_settings_new</span>
+                CONECTARSE
+            </button>
+<!-- Metrics Bento Grid -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Earnings Card -->
+<div class="bg-surface-container-low rounded-xl p-4 flex flex-col border border-outline-variant/30 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-3 opacity-10">
+<span class="material-symbols-outlined text-[40px]">payments</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-1 relative z-10">Ganancias de hoy</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary relative z-10">$0.00</span>
+</div>
+<!-- Trips Card -->
+<div class="bg-surface-container-low rounded-xl p-4 flex flex-col border border-outline-variant/30 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-3 opacity-10">
+<span class="material-symbols-outlined text-[40px]">history</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-1 relative z-10">Viajes</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary relative z-10">0</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-surface dark:bg-inverse-surface shadow-[0_-4px_20px_rgba(0,50,125,0.04)] rounded-t-xl">
+<!-- Inicio (Active) -->
+<button class="active:scale-90 transition-all duration-200 flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-full px-6 py-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-label-lg text-label-lg mt-1">Inicio</span>
+</button>
+<!-- Ganancias (Inactive) -->
+<button class="hover:bg-surface-container-high dark:hover:bg-surface-container-highest rounded-full active:scale-90 transition-all duration-200 flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">payments</span>
+<span class="font-label-sm text-label-sm mt-1">Ganancias</span>
+</button>
+<!-- Historial (Inactive) -->
+<button class="hover:bg-surface-container-high dark:hover:bg-surface-container-highest rounded-full active:scale-90 transition-all duration-200 flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+<span class="font-label-sm text-label-sm mt-1">Historial</span>
+</button>
+<!-- Perfil (Inactive) -->
+<button class="hover:bg-surface-container-high dark:hover:bg-surface-container-highest rounded-full active:scale-90 transition-all duration-200 flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-sm text-label-sm mt-1">Perfil</span>
+</button>
+</nav>
+</body></html>

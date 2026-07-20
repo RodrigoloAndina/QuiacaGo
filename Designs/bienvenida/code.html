@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bienvenido a QuiacaGo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#ffb59d",
+                        "outline": "#737784",
+                        "inverse-on-surface": "#f0f0f3",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "tertiary": "#3c3625",
+                        "background": "#f9f9fc",
+                        "primary-container": "#0047ab",
+                        "surface-container": "#eeeef0",
+                        "tertiary-fixed": "#ece2c9",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#434653",
+                        "tertiary-fixed-dim": "#cfc6ae",
+                        "primary": "#00327d",
+                        "surface-container-low": "#f3f3f6",
+                        "surface-dim": "#dadadc",
+                        "on-secondary-container": "#742405",
+                        "surface-variant": "#e2e2e5",
+                        "surface-container-highest": "#e2e2e5",
+                        "secondary-container": "#fe8c65",
+                        "surface-tint": "#2559bd",
+                        "on-primary-fixed-variant": "#00419e",
+                        "outline-variant": "#c3c6d5",
+                        "on-background": "#1a1c1e",
+                        "on-primary-fixed": "#001946",
+                        "on-secondary-fixed": "#390c00",
+                        "on-secondary-fixed-variant": "#7e2c0c",
+                        "secondary": "#9d4221",
+                        "inverse-primary": "#b1c5ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#c7bea6",
+                        "on-tertiary-fixed-variant": "#4c4634",
+                        "surface-bright": "#f9f9fc",
+                        "surface": "#f9f9fc",
+                        "on-primary-container": "#a5bdff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbd0",
+                        "on-tertiary-fixed": "#201b0c",
+                        "on-surface": "#1a1c1e",
+                        "inverse-surface": "#2f3133",
+                        "primary-fixed": "#dae2ff",
+                        "tertiary-container": "#534d3a",
+                        "surface-container-high": "#e8e8ea",
+                        "on-primary": "#ffffff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "gutter": "16px",
+                        "margin-desktop": "64px",
+                        "base": "8px",
+                        "margin-mobile": "20px",
+                        "container-padding": "24px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen flex flex-col font-body-md overflow-hidden antialiased">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0 w-full h-full">
+<div class="bg-cover bg-center bg-no-repeat w-full h-full scale-105 origin-center animate-pulse duration-1000" data-alt="A breathtaking, hyper-realistic wide shot of the Puna landscape in northern Argentina at golden hour. The rugged mountains feature subtle bands of deep terracotta and ochre, contrasting with a clear, vibrant blue sky. The lighting is soft and directional, creating a sense of vastness, reliability, and calm. The visual style is premium and cinematic, perfectly suited for a high-end mobility app background, with ample negative space at the bottom for UI elements." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA2-Acg3zRShz2rIFDZTej5hvZvv0Gramz0Sr6LqwwJLh3gwrI94zyct0hHrdIVh3n30K-a_bhww5uykFoNep1WKeXRhyVf-uUP9UwgbvAe3rG-EAtPk2aj9eZ17AsIembVO301eufpvDOdm8841ofOY0S6-WMZKh_v7qmYsGN98MMr33nKu4itGFQqNCWMbbHn7byHgOBruo-wIw1SxUC7zQbSkLBC_1UKpb1RtIcHap7YRGDg7O5e')">
+</div>
+<!-- Gradient Overlays for readability -->
+<div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60"></div>
+<div class="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/90 to-transparent"></div>
+</div>
+<!-- Main Content Canvas -->
+<main class="relative z-10 flex flex-col justify-end h-full px-margin-mobile md:px-margin-desktop pb-10 max-w-[1200px] mx-auto w-full">
+<!-- App Logo & Branding (Top/Center) -->
+<div class="absolute top-16 left-0 right-0 flex justify-center w-full px-margin-mobile">
+<!-- Utilizing the provided image for the logo aesthetic placeholder -->
+<div class="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-xl p-4">
+<svg fill="none" height="100%" viewbox="0 0 200 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M100 20C100 20 50 80 50 120C50 147.614 72.3858 170 100 170C127.614 170 150 147.614 150 120C150 80 100 20 100 20Z" fill="#00327d"></path>
+<path d="M100 50C100 50 70 90 70 120C70 136.569 83.4315 150 100 150C116.569 150 130 136.569 130 120C130 90 100 50 100 50Z" fill="#ffffff"></path>
+<path d="M100 150C83.4315 150 70 136.569 70 120H130C130 136.569 116.569 150 100 150Z" fill="#9d4221"></path>
+<circle cx="100" cy="110" fill="#00327d" r="15"></circle>
+</svg>
+</div>
+</div>
+<!-- Content Area -->
+<div class="glass-panel rounded-t-3xl md:rounded-3xl p-8 pt-10 shadow-2xl border-t md:border border-outline-variant/30 flex flex-col gap-8 w-full max-w-md mx-auto translate-y-4 animate-[slideUp_0.5s_ease-out_forwards]">
+<div class="text-center space-y-3">
+<h1 class="font-display text-display text-primary tracking-tight">Bienvenido a<br/>QuiacaGo</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-[280px] mx-auto">Tu taxi habilitado cuando lo necesitás.</p>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-4 mt-4">
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg flex items-center justify-center transition-transform active:scale-[0.98] shadow-lg shadow-primary/20 hover:bg-primary-fixed-variant" type="button">
+                    Crear cuenta
+                </button>
+<button class="w-full h-14 bg-surface text-primary border-2 border-outline-variant/50 rounded-xl font-label-lg text-label-lg flex items-center justify-center transition-colors hover:bg-surface-container-low active:bg-surface-container" type="button">
+                    Ingresar
+                </button>
+</div>
+<!-- Legal / Footer -->
+<div class="text-center mt-2">
+<p class="font-label-sm text-label-sm text-outline">
+                    Al continuar, aceptas nuestros <a class="text-primary underline decoration-primary/30 underline-offset-2" href="#">Términos</a> y <a class="text-primary underline decoration-primary/30 underline-offset-2" href="#">Privacidad</a>.
+                </p>
+</div>
+</div>
+</main>
+<style>
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(2rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body></html>

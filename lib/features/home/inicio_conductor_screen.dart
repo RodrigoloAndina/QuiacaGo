@@ -46,7 +46,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
       ),
       body: Stack(
         children: [
-          // Mapa Interactivo de La Quiaca
+          // Mapa Interactivo HD de La Quiaca
           FlutterMap(
             options: const MapOptions(
               initialCenter: LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng),
@@ -54,7 +54,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
                 userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
               ),
               const MarkerLayer(

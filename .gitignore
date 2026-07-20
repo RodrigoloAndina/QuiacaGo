@@ -9,6 +9,12 @@ build/
 *.aab
 *.keystore
 
+# Android / Gradle
+.gradle/
+android/.gradle/
+android/local.properties
+android/app/build/
+
 # Node.js
 node_modules/
 npm-debug.log

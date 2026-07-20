@@ -26,6 +26,9 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Generar Archivos Nativos Android Si Faltan
+        run: flutter create --platforms=android --org=com.quiacago .
+
       - name: Instalar Dependencias de Flutter
         run: flutter pub get
 

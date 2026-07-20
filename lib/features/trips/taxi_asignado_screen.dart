@@ -4,17 +4,43 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/location_service.dart';
+import '../../services/routing_service.dart';
 
-class TaxiAsignadoScreen extends StatelessWidget {
+class TaxiAsignadoScreen extends StatefulWidget {
   const TaxiAsignadoScreen({super.key});
 
-  // Coordenadas reales siguiendo la cuadrícula de calles de La Quiaca
-  final List<LatLng> rutaPorCalles = const [
-    LatLng(-22.1055, -65.5985), // Inicio: Calle Belgrano y Av. España
-    LatLng(-22.1055, -65.5960), // Esquina: Belgrano y Balcarce
-    LatLng(-22.1024, -65.5960), // Esquina: Balcarce y 9 de Julio
-    LatLng(-22.1024, -65.5998), // Destino: Av. Sarmiento 450 (Punto de Recogida)
-  ];
+  @override
+  State<TaxiAsignadoScreen> createState() => _TaxiAsignadoScreenState();
+}
+
+class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
+  LatLng _conductorPos = const LatLng(-22.1055, -65.5985);
+  final LatLng _pasajeroPos = const LatLng(-22.1024, -65.5998); // Av. Sarmiento 450
+  List<LatLng> _rutaPuntos = [];
+  bool _isLoadingRoute = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarRutaReal();
+  }
+
+  Future<void> _cargarRutaReal() async {
+    // 1. Obtener ubicación GPS actual del dispositivo del conductor
+    final posGps = await LocationService.getCurrentLocation();
+    
+    // 2. Consultar el motor de ruteo OSRM para trazar la línea exactamente por las calles
+    final puntosCalculados = await RoutingService.getRoutePoints(posGps, _pasajeroPos);
+
+    if (mounted) {
+      setState(() {
+        _conductorPos = posGps;
+        _rutaPuntos = puntosCalculados;
+        _isLoadingRoute = false;
+      });
+    }
+  }
 
   Future<void> _hacerLlamada() async {
     final Uri url = Uri.parse('tel:+5493885401234');
@@ -32,43 +58,41 @@ class TaxiAsignadoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final LatLng conductorPos = rutaPorCalles.first;
-    final LatLng pasajeroPos = rutaPorCalles.last;
-
     return Scaffold(
       body: Stack(
         children: [
-          // MAPA MODO NAVEGACIÓN ESTILO UBER
+          // MAPA DE NAVEGACIÓN OSRM POR CALLES
           FlutterMap(
             options: MapOptions(
               initialCenter: LatLng(
-                (conductorPos.latitude + pasajeroPos.latitude) / 2,
-                (conductorPos.longitude + pasajeroPos.longitude) / 2,
+                (_conductorPos.latitude + _pasajeroPos.latitude) / 2,
+                (_conductorPos.longitude + _pasajeroPos.longitude) / 2,
               ),
-              initialZoom: 16.2,
+              initialZoom: 16.0,
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
                 userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
               ),
-              // Línea de Ruta Curvada por Calles (Estilo Neón Uber #0052FF)
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: rutaPorCalles,
-                    strokeWidth: 6.5,
-                    color: const Color(0xFF0052FF),
-                    strokeCap: StrokeCap.round,
-                    strokeJoin: StrokeJoin.round,
-                  ),
-                ],
-              ),
-              // Marcadores de Vehículo y Pasajero
+              // Línea de Ruta Neón OSRM alineada 100% sobre el asfalto de las calles
+              if (_rutaPuntos.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _rutaPuntos,
+                      strokeWidth: 6.5,
+                      color: const Color(0xFF0052FF),
+                      strokeCap: StrokeCap.round,
+                      strokeJoin: StrokeJoin.round,
+                    ),
+                  ],
+                ),
+              // Marcadores de Ubicación GPS Real del Vehículo y Pasajero
               MarkerLayer(
                 markers: [
                   Marker(
-                    point: conductorPos,
+                    point: _conductorPos,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -86,7 +110,7 @@ class TaxiAsignadoScreen extends StatelessWidget {
                     ),
                   ),
                   Marker(
-                    point: pasajeroPos,
+                    point: _pasajeroPos,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -108,7 +132,7 @@ class TaxiAsignadoScreen extends StatelessWidget {
             ],
           ),
 
-          // BARRA SUPERIOR DE NAVEGACIÓN ESTILO UBER / DIDI
+          // BARRA SUPERIOR UBER / DIDI CON ESTADO OSRM
           Positioned(
             top: 44,
             left: 16,
@@ -116,7 +140,7 @@ class TaxiAsignadoScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A), // Dark Slate Uber Style
+                color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -137,20 +161,20 @@ class TaxiAsignadoScreen extends StatelessWidget {
                     child: const Icon(Icons.turn_right, color: Colors.white, size: 28),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'En 150m gira a la derecha',
-                          style: TextStyle(
+                          _isLoadingRoute ? 'Calculando ruta GPS...' : 'En 150m gira a la derecha',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           'por Calle Balcarce hacia 9 de Julio',
                           style: TextStyle(
                             color: Color(0xFF94A3B8),
@@ -184,7 +208,7 @@ class TaxiAsignadoScreen extends StatelessWidget {
             ),
           ),
 
-          // PANEL INFERIOR ESTILO UBER / DIDI CON BOTONES DE CONTACTO
+          // PANEL INFERIOR CON DATOS DEL PASAJERO
           Positioned(
             left: 16,
             right: 16,
@@ -239,14 +263,12 @@ class TaxiAsignadoScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // Botón Llamar
                       IconButton.filledTonal(
                         icon: const Icon(Icons.phone, color: Color(0xFF00327D)),
                         onPressed: _hacerLlamada,
                         style: IconButton.styleFrom(backgroundColor: const Color(0xFFEFF6FF)),
                       ),
                       const SizedBox(width: 8),
-                      // Botón WhatsApp
                       IconButton.filledTonal(
                         icon: const Icon(Icons.chat_outlined, color: Color(0xFF10B981)),
                         onPressed: _abrirWhatsApp,
@@ -268,7 +290,7 @@ class TaxiAsignadoScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'PUNTO DE RECOGIDA',
+                              'PUNTO DE RECOGIDA (GPS ACTIVO)',
                               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8)),
                             ),
                             Text(
@@ -283,7 +305,6 @@ class TaxiAsignadoScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Botón Accionar Llegada
                   SizedBox(
                     width: double.infinity,
                     height: 54,

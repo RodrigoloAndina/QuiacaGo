@@ -4,6 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/location_service.dart';
+import '../../services/routing_service.dart';
 
 class ViajeEnCursoScreen extends StatefulWidget {
   const ViajeEnCursoScreen({super.key});
@@ -13,13 +15,32 @@ class ViajeEnCursoScreen extends StatefulWidget {
 }
 
 class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
-  // Coordenadas reales trazadas por las esquinas y calles de La Quiaca hacia la Terminal
-  final List<LatLng> rutaAlDestino = const [
-    LatLng(-22.1024, -65.5998), // Origen: Av. Sarmiento 450
-    LatLng(-22.1060, -65.5998), // Esquina: Av. Sarmiento y 25 de Mayo
-    LatLng(-22.1060, -65.5940), // Esquina: 25 de Mayo y Av. España
-    LatLng(-22.1085, -65.5940), // Destino Final: Terminal de Ómnibus
-  ];
+  LatLng _conductorPos = const LatLng(-22.1024, -65.5998); // Av. Sarmiento 450
+  final LatLng _destinoPos = const LatLng(-22.1085, -65.5940); // Terminal de Ómnibus
+  List<LatLng> _rutaPuntos = [];
+  bool _isLoadingRoute = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarRutaRealOSRM();
+  }
+
+  Future<void> _cargarRutaRealOSRM() async {
+    // 1. Capturar la ubicación GPS en vivo del celular del conductor
+    final posGps = await LocationService.getCurrentLocation();
+    
+    // 2. Traer la geometría vial OSRM alineada 100% al asfalto de las calles
+    final puntos = await RoutingService.getRoutePoints(posGps, _destinoPos);
+
+    if (mounted) {
+      setState(() {
+        _conductorPos = posGps;
+        _rutaPuntos = puntos;
+        _isLoadingRoute = false;
+      });
+    }
+  }
 
   Future<void> _hacerLlamada() async {
     final Uri url = Uri.parse('tel:+5493885401234');
@@ -37,18 +58,15 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final LatLng conductorPos = rutaAlDestino[1]; // Auto avanzando en la esquina de Av. Sarmiento
-    final LatLng destinoPos = rutaAlDestino.last;
-
     return Scaffold(
       body: Stack(
         children: [
-          // MAPA DE NAVEGACIÓN ESTILO UBER / DIDI
+          // MAPA DE NAVEGACIÓN OSRM ALINEADO 100% SOBRE EL ASFALTO
           FlutterMap(
             options: MapOptions(
               initialCenter: LatLng(
-                (conductorPos.latitude + destinoPos.latitude) / 2,
-                (conductorPos.longitude + destinoPos.longitude) / 2,
+                (_conductorPos.latitude + _destinoPos.latitude) / 2,
+                (_conductorPos.longitude + _destinoPos.longitude) / 2,
               ),
               initialZoom: 16.0,
             ),
@@ -57,23 +75,22 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                 urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
                 userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
               ),
-              // Ruta Neón Terracota/Azul Siguiendo la Cuadrícula Urbana
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: rutaAlDestino,
-                    strokeWidth: 6.5,
-                    color: const Color(0xFF0052FF),
-                    strokeCap: StrokeCap.round,
-                    strokeJoin: StrokeJoin.round,
-                  ),
-                ],
-              ),
-              // Marcadores del Auto en Movimiento y del Destino Final
+              if (_rutaPuntos.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _rutaPuntos,
+                      strokeWidth: 6.5,
+                      color: const Color(0xFF0052FF),
+                      strokeCap: StrokeCap.round,
+                      strokeJoin: StrokeJoin.round,
+                    ),
+                  ],
+                ),
               MarkerLayer(
                 markers: [
                   Marker(
-                    point: conductorPos,
+                    point: _conductorPos,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -91,7 +108,7 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                     ),
                   ),
                   Marker(
-                    point: destinoPos,
+                    point: _destinoPos,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -113,7 +130,7 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
             ],
           ),
 
-          // BARRA SUPERIOR DE GIRO Y NAVEGACIÓN UBER STYLE (SLATE DARK)
+          // BARRA SUPERIOR SLATE DARK
           Positioned(
             top: 44,
             left: 16,
@@ -142,20 +159,20 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                     child: const Icon(Icons.turn_left, color: Colors.white, size: 28),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'En 200m gira a la izquierda',
-                          style: TextStyle(
+                          _isLoadingRoute ? 'Calculando ruta por calles...' : 'En 200m gira a la izquierda',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 2),
-                        Text(
+                        const SizedBox(height: 2),
+                        const Text(
                           'por Calle 25 de Mayo hacia Av. España',
                           style: TextStyle(
                             color: Color(0xFF94A3B8),
@@ -189,7 +206,7 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
             ),
           ),
 
-          // PANEL INFERIOR ESTILO UBER / DIDI CON COBRO Y FINALIZACIÓN
+          // PANEL INFERIOR DE FINALIZACIÓN
           Positioned(
             left: 16,
             right: 16,
@@ -252,7 +269,6 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                       const Text('María Gómez', style: TextStyle(color: Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold)),
                       const Spacer(),
 
-                      // Botones de contacto flotantes
                       IconButton.filledTonal(
                         icon: const Icon(Icons.phone, color: Color(0xFF00327D), size: 20),
                         onPressed: _hacerLlamada,
@@ -269,7 +285,6 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Botón Finalizar Viaje
                   SizedBox(
                     width: double.infinity,
                     height: 54,

@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: Column(
-              mainAxisAlignment: MainStateAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.all(24),

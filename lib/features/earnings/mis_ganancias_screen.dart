@@ -80,7 +80,7 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
-                '📈 +12% vs ayer',
+                '↗ +12% vs ayer',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,

@@ -14,6 +14,7 @@ class InicioConductorScreen extends StatefulWidget {
 
 class _InicioConductorScreenState extends State<InicioConductorScreen> {
   bool _isConnected = false;
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +46,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
       ),
       body: Stack(
         children: [
-          // Mapa
+          // Mapa Interactivo de La Quiaca
           FlutterMap(
             options: const MapOptions(
               initialCenter: LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng),
@@ -53,8 +54,8 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.quiacago.conductor',
+                urlTemplate: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
               ),
               const MarkerLayer(
                 markers: [
@@ -99,7 +100,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Estado
+                  // Estado del Conductor
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -107,15 +108,15 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                         'Tu estado',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.bold,
                           color: AppColors.onSurface,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
                           color: _isConnected
-                              ? AppColors.statusAvailable.withOpacity(0.12)
+                              ? AppColors.statusAvailable.withOpacity(0.15)
                               : AppColors.badgeCancelledBackground,
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -173,7 +174,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Tarjetas de Métricas
+                  // Tarjetas de Métricas (100% SIN EMOJIS, CON ICONOS MATERIAL)
                   Row(
                     children: [
                       Expanded(
@@ -186,9 +187,15 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
-                              Text(
-                                'Ganancias de hoy 💵',
-                                style: TextStyle(fontSize: 12, color: AppColors.outline),
+                              Row(
+                                children: [
+                                  Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppColors.outline),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Ganancias de hoy',
+                                    style: TextStyle(fontSize: 12, color: AppColors.outline),
+                                  ),
+                                ],
                               ),
                               SizedBox(height: 4),
                               Text(
@@ -214,9 +221,15 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
-                              Text(
-                                'Viajes 🕒',
-                                style: TextStyle(fontSize: 12, color: AppColors.outline),
+                              Row(
+                                children: [
+                                  Icon(Icons.access_time, size: 16, color: AppColors.outline),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Viajes',
+                                    style: TextStyle(fontSize: 12, color: AppColors.outline),
+                                  ),
+                                ],
                               ),
                               SizedBox(height: 4),
                               Text(
@@ -239,54 +252,35 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 70,
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(40),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.map, 'Inicio', isActive: true),
-            _buildNavItem(Icons.attach_money, 'Ganancias', onTap: () => context.push('/ganancias')),
-            _buildNavItem(Icons.history, 'Historial', onTap: () => context.push('/historial')),
-            _buildNavItem(Icons.person, 'Perfil', onTap: () => context.push('/perfil')),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, {bool isActive = false, VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.secondaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isActive ? AppColors.onSurface : AppColors.onSurfaceVariant, size: 20),
-            if (isActive) ...[
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.onSurface),
-              ),
-            ],
-          ],
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        selectedItemColor: AppColors.secondary,
+        unselectedItemColor: AppColors.outline,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+          switch (index) {
+            case 0:
+              context.go('/home');
+              break;
+            case 1:
+              context.push('/ganancias');
+              break;
+            case 2:
+              context.push('/historial');
+              break;
+            case 3:
+              context.push('/perfil');
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map), label: 'Inicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.attach_money), activeIcon: Icon(Icons.attach_money), label: 'Ganancias'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), activeIcon: Icon(Icons.history), label: 'Historial'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
+        ],
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/splash/splash_screen.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/auth/registro_conductor_screen.dart';
 import '../../features/auth/recuperar_password_screen.dart';
 import '../../features/auth/cuenta_pendiente_screen.dart';
 import '../../features/admin/admin_aprobaciones_screen.dart';
@@ -28,6 +29,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/login',
       builder: (BuildContext context, GoRouterState state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/registro-conductor',
+      builder: (BuildContext context, GoRouterState state) => const RegistroConductorScreen(),
     ),
     GoRoute(
       path: '/recuperar-password',

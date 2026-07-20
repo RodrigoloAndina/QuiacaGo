@@ -26,8 +26,8 @@ class TaxiAsignadoScreen extends StatelessWidget {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.quiacago.conductor',
+                urlTemplate: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
               ),
               const MarkerLayer(
                 markers: [

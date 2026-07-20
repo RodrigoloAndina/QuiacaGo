@@ -171,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
 
                       SizedBox(
                         width: double.infinity,
@@ -193,6 +193,28 @@ class _LoginScreenState extends State<LoginScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+
+                      // BOTÓN DE REGISTRO PARA NUEVOS CONDUCTORES Y CARGA DE PAPELES
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push('/registro-conductor'),
+                          icon: const Icon(Icons.person_add_alt_1, color: AppColors.primary),
+                          label: const Text(
+                            '¿Nuevo conductor? Registrate aquí',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.primary, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                          ),
                         ),
                       ),
                     ],

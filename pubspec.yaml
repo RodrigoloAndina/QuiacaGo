@@ -29,6 +29,7 @@ dependencies:
 
   # Backend Inicial y Autenticación
   supabase_flutter: ^2.3.0
+  url_launcher: ^6.2.4
 
 dev_dependencies:
   flutter_test:

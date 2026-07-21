@@ -7,6 +7,7 @@ import 'features/splash/splash_pasajero_screen.dart';
 import 'features/pasajero/login_pasajero_screen.dart';
 import 'features/pasajero/registro_pasajero_screen.dart';
 import 'features/pasajero/inicio_pasajero_screen.dart';
+import 'services/supabase_service.dart';
 
 final GoRouter pasajeroRouter = GoRouter(
   initialLocation: '/splash-pasajero',
@@ -30,8 +31,14 @@ final GoRouter pasajeroRouter = GoRouter(
   ],
 );
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicialización oficial de Supabase Realtime para la App de Pasajeros
+  try {
+    await SupabaseService().initialize();
+  } catch (_) {}
+
   runApp(
     const ProviderScope(
       child: QuiacaGoPasajeroApp(),

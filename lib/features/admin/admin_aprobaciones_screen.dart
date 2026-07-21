@@ -45,7 +45,7 @@ class _AdminAprobacionesScreenState extends State<AdminAprobacionesScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: AppColors.statusAvailable,
-        content: Text('✅ Conductor ${_solicitudes[index]['nombre']} APROBADO e incorporado al sistema.'),
+        content: Text('Conductor ${_solicitudes[index]['nombre']} APROBADO e incorporado al sistema.'),
       ),
     );
   }
@@ -54,7 +54,7 @@ class _AdminAprobacionesScreenState extends State<AdminAprobacionesScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: AppColors.statusCancelled,
-        content: Text('❌ Solicitud de ${_solicitudes[index]['nombre']} devuelta para revisión de documentos.'),
+        content: Text('Solicitud de ${_solicitudes[index]['nombre']} devuelta para revisión de documentos.'),
       ),
     );
   }

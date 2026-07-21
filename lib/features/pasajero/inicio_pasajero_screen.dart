@@ -55,8 +55,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
   // Código PIN de 4 dígitos único
   String _codigoPinSeguridad = '4821';
   String _motivoCancelacion = '';
-  bool _isPanelMinimized = false; // Estado para replegar el panel y ver bien el mapa
-  String? _tripIdActual;
+  bool _isPanelMinimized = false; // Modo Ubicación Uber Pin-Drop
 
   // LISTA OFICIAL DE DESTINOS FAVORITOS PREDEFINIDOS DE LA QUIACA
   final List<DestinoPredefinido> _destinosFavoritos = const [
@@ -128,8 +127,8 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
     if (_estado != EstadoPasajero.inicio) return;
     setState(() {
       _destinoPos = puntoTocado;
-      _destinoCtrl.text = 'Punto Marcado (${puntoTocado.latitude.toStringAsFixed(4)}, ${puntoTocado.longitude.toStringAsFixed(4)})';
-      _isPanelMinimized = true; // Minimizar panel para ver bien el mapa
+      _destinoCtrl.text = 'Punto Marcado en La Quiaca';
+      _isPanelMinimized = true; // Activa modo Uber Pin-Drop
     });
   }
 
@@ -141,8 +140,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       _isPanelMinimized = false;
     });
 
-    // Registrar solicitud real en Supabase DB
-    final tripId = await TripService.solicitarViaje(
+    await TripService.solicitarViaje(
       passengerName: 'María Gómez',
       passengerPhone: '+54 3885 401234',
       pickupAddress: _origenCtrl.text,
@@ -150,10 +148,6 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       fareAmount: precio,
       pinCode: _codigoPinSeguridad,
     );
-
-    setState(() {
-      _tripIdActual = tripId;
-    });
   }
 
   void _cancelarSolicitudConMotivo() {
@@ -229,33 +223,22 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Row(
-          children: const [
-            Icon(Icons.local_taxi, color: AppColors.primary, size: 26),
-            SizedBox(width: 8),
-            Text(
-              'QuiacaGo Pasajero',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
-            ),
-          ],
-        ),
-      ),
       body: Stack(
         children: [
-          // MAPA INTERACTIVO HD CON ALINEACIÓN CENTRADA PERFECTA DE ICONOS
+          // MAPA INTERACTIVO CON EVENTO DE ARRASTRE TIPO UBER PIN-DROP
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _pasajeroPos,
               initialZoom: 16.0,
               onTap: (tapPos, point) => _tocarPuntoEnMapa(point),
+              onPositionChanged: (position, hasGesture) {
+                if (_isPanelMinimized && hasGesture && position.center != null) {
+                  setState(() {
+                    _destinoPos = position.center!;
+                  });
+                }
+              },
             ),
             children: [
               TileLayer(
@@ -264,7 +247,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
               ),
               MarkerLayer(
                 markers: [
-                  // Marcador Verde Ubicación GPS Exacta Pasajero (ALINEADO AL CENTRO)
+                  // Marcador Verde Ubicación GPS Exacta Pasajero
                   Marker(
                     point: _pasajeroPos,
                     width: 44,
@@ -284,27 +267,28 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                     ),
                   ),
 
-                  // Marcador Rojo Destino Seleccionado (ALINEADO AL CENTRO)
-                  Marker(
-                    point: _destinoPos,
-                    width: 44,
-                    height: 44,
-                    alignment: Alignment.center,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.location_on, color: Colors.white, size: 26),
+                  // Si no está en modo Uber Pin-Drop, muestra el pin de destino en la posición seleccionada
+                  if (!_isPanelMinimized)
+                    Marker(
+                      point: _destinoPos,
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.location_on, color: Colors.white, size: 26),
+                        ),
                       ),
                     ),
-                  ),
 
-                  // Marcador Taxi Cercano Móvil 045 (ALINEADO AL CENTRO)
+                  // Marcador Taxi Cercano Móvil 045
                   Marker(
                     point: _conductorPos,
                     width: 44,
@@ -328,11 +312,88 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
             ],
           ),
 
-          // PANEL INFERIOR REPLEGABLE
+          // MARCADOR FIJO AL CENTRO EN MODO UBER PIN-DROP (IGUAL A LA IMAGEN)
+          if (_isPanelMinimized && _estado == EstadoPasajero.inicio)
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 35),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.square, color: Colors.white, size: 12),
+                      ),
+                    ),
+                    Container(
+                      width: 3,
+                      height: 22,
+                      color: Colors.black,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // BOTÓN FLOTANTE SUPERIOR ATRÁS (ESTILO UBER)
           Positioned(
+            top: 44,
             left: 16,
-            right: 16,
-            bottom: 20,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 3)),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () {
+                  if (_isPanelMinimized) {
+                    setState(() => _isPanelMinimized = false);
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ),
+          ),
+
+          // BOTÓN FLOTANTE GPS MI UBICACIÓN (ESTILO UBER DERECHA)
+          if (_isPanelMinimized)
+            Positioned(
+              right: 16,
+              bottom: 230,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 3)),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.my_location, color: Colors.black),
+                  onPressed: () => _mapController.move(_pasajeroPos, 16.2),
+                ),
+              ),
+            ),
+
+          // PANEL INFERIOR DINÁMICO (DESPLEGABLE / MODO UBER)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: _buildPanelSegunEstado(precioCalculado, descTarifa),
           ),
         ],
@@ -344,57 +405,116 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
     switch (_estado) {
       case EstadoPasajero.inicio:
         if (_isPanelMinimized) {
-          // PANEL MINIMIZADO PREMIUM ESTILO UBER SLATE DARK
+          // PANEL DE SELECCIÓN DE DESTINO IDÉNTICO A UBER (WHITE CARD PURE)
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
-              borderRadius: BorderRadius.circular(30),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 6),
+                  color: Colors.black12,
+                  blurRadius: 20,
+                  offset: Offset(0, -6),
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.open_in_full, color: Color(0xFF94A3B8), size: 20),
-                  tooltip: 'Ampliar detalles',
-                  onPressed: () => setState(() => _isPanelMinimized = false),
+                // Handle bar
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                const SizedBox(height: 14),
+
+                const Text(
+                  'Set your destination',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Arrastra el mapa para mover el marcador',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Caja de previsualización de dirección estilo Uber
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
                     children: [
-                      Text(
-                        _destinoCtrl.text,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Container(
+                        width: 14,
+                        height: 14,
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.rectangle,
+                        ),
                       ),
-                      Text(
-                        TariffService.formatearMonto(precio),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF10B981)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _destinoCtrl.text,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      const Icon(Icons.search, color: Colors.black54, size: 20),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _solicitarTaxi,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00327D),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+
+                const SizedBox(height: 16),
+
+                // Botón Negro Grande Confirmar Destino
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() => _isPanelMinimized = false);
+                      _solicitarTaxi();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Confirm destination (${TariffService.formatearMonto(precio)})',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                  child: const Text('PEDIR TAXI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
                 ),
               ],
             ),
@@ -403,14 +523,14 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
 
         return Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black12,
                 blurRadius: 20,
-                offset: const Offset(0, 8),
+                offset: Offset(0, -6),
               ),
             ],
           ),
@@ -423,11 +543,11 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                 children: [
                   const Text(
                     '¿A dónde vamos en La Quiaca?',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.outline),
-                    tooltip: 'Minimizar para ver mapa',
+                    icon: const Icon(Icons.pin_drop_outlined, color: AppColors.primary),
+                    tooltip: 'Marcar en mapa estilo Uber',
                     onPressed: () => setState(() => _isPanelMinimized = true),
                   ),
                 ],
@@ -540,14 +660,14 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       case EstadoPasajero.buscandoTaxi:
         return Container(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black12,
                 blurRadius: 20,
-                offset: const Offset(0, 8),
+                offset: Offset(0, -6),
               ),
             ],
           ),
@@ -586,14 +706,14 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       case EstadoPasajero.taxiEnCamino:
         return Container(
           padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black12,
                 blurRadius: 20,
-                offset: const Offset(0, 8),
+                offset: Offset(0, -6),
               ),
             ],
           ),
@@ -638,7 +758,6 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
               const Divider(),
               const SizedBox(height: 12),
 
-              // CÓDIGO PIN DE SEGURIDAD OBLIGATORIO DE 4 DÍGITOS
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -708,14 +827,14 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       case EstadoPasajero.enViaje:
         return Container(
           padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black12,
                 blurRadius: 20,
-                offset: const Offset(0, 8),
+                offset: Offset(0, -6),
               ),
             ],
           ),
@@ -756,14 +875,14 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       case EstadoPasajero.viajeFinalizado:
         return Container(
           padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black12,
                 blurRadius: 20,
-                offset: const Offset(0, 8),
+                offset: Offset(0, -6),
               ),
             ],
           ),
@@ -794,14 +913,14 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       case EstadoPasajero.cancelado:
         return Container(
           padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black12,
                 blurRadius: 20,
-                offset: const Offset(0, 8),
+                offset: Offset(0, -6),
               ),
             ],
           ),

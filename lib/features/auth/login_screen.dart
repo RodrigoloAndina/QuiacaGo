@@ -15,28 +15,57 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController(text: '123456');
   bool _isLoading = false;
 
+  String? _errorMessage;
+
   Future<void> _handleLogin() async {
-    setState(() => _isLoading = true);
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (phone.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'Ingresá tu teléfono y contraseña.');
+      return;
+    }
+
+    setState(() { _isLoading = true; _errorMessage = null; });
 
     try {
       final supabase = SupabaseService().client;
-      final phone = _phoneController.text.trim();
 
-      // Consultar perfil de chofer en Supabase
+      // Buscar si el chofer existe en la base de datos profiles
       final data = await supabase
           .from('profiles')
           .select()
           .eq('phone', phone)
           .maybeSingle();
 
-      if (mounted) {
-        setState(() => _isLoading = false);
-        context.go('/home');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (data == null) {
+        // Usuario NO registrado
+        setState(() => _errorMessage = '⚠️ Tu número no se encuentra registrado. Regístrate para solicitar la habilitación municipal.');
+        return;
       }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isLoading = false);
+
+      // Verificar contraseña si fue configurada
+      if (data['password'] != null && data['password'] != password) {
+        setState(() => _errorMessage = '🔑 Contraseña incorrecta.');
+        return;
+      }
+
+      // Verificar si fue APROBADO por la municipalidad en el Panel Web
+      if (data['is_approved'] == true) {
         context.go('/home');
+      } else {
+        // Solicitud en revisión o no habilitado
+        context.go('/cuenta-pendiente');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Error al conectar con Supabase. Verifica tu conexión.';
+        });
       }
     }
   }
@@ -108,6 +137,30 @@ class _LoginScreenState extends State<LoginScreen> {
                         letterSpacing: 1,
                       ),
                     ),
+
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: const TextStyle(fontSize: 12, color: Color(0xFFEF4444), fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 16),
 
                     TextFormField(

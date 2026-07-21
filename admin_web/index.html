@@ -729,23 +729,12 @@
     </div>
   </div>
 
-  <!-- MODAL LEGAJO PDF -->
+  <!-- MODAL LEGAJO PDF Y DOCUMENTACIÓN REAL -->
   <div class="modal-overlay" id="docsModal">
-    <div class="modal-card">
-      <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;" id="docsTitle">Legajo Digital de Conductor</h3>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Inspección de archivos subidos al servidor municipal:</p>
-
-      <div style="background:#f8fafc; border:1px solid var(--border-color); padding:16px; border-radius:12px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
-        <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span><strong>DNI Frente y Dorso:</strong> DNI_Conductor_Verificado.pdf</span>
-      </div>
-      <div style="background:#f8fafc; border:1px solid var(--border-color); padding:16px; border-radius:12px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
-        <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span><strong>Licencia Cat. D1:</strong> Licencia_D1_Nacional.pdf (Vence 2027)</span>
-      </div>
-
-      <div style="text-align:right;">
-        <button class="btn-sm btn-blue" onclick="closeDocsModal()">Cerrar Visor</button>
+    <div class="modal-card" style="width:680px; max-width:90vw;">
+      <h3 style="font-size:18px; font-weight:800; margin-bottom:12px;" id="docsTitle">Legajo Digital de Conductor</h3>
+      <div id="docsModalContent">
+        <p style="font-size:13px; color:var(--text-muted);">Cargando documentos del legajo...</p>
       </div>
     </div>
   </div>
@@ -835,6 +824,8 @@
     const SUPABASE_URL = 'https://xxqumxhdpjtjdcnnjmdm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXVteGhkcGp0amRjbm5qbWRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1MjQ4NjgsImV4cCI6MjEwMDEwMDg2OH0.1L-wFBgeQHcTQIsBQWCFMUffjaaW1jRNfGQR7S_OOeI';
 
+    window.profilesList = [];
+
     // CARGAR TABLA REAL DE CHOFERES DESDE SUPABASE
     async function fetchDriversTable() {
       const tbody = document.getElementById('driversTableBody');
@@ -856,6 +847,7 @@
         }
 
         const profiles = await response.json();
+        window.profilesList = profiles || [];
 
         if (Array.isArray(profiles) && profiles.length > 0) {
           tbody.innerHTML = '';
@@ -880,7 +872,7 @@
                 <span style="color:${isApproved ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight:bold;">${isApproved ? 'Permiso Activo' : 'Pendiente de Habilitación'}</span>
               </td>
               <td>
-                <button class="btn-sm btn-blue" onclick="alert('Legajo digital de ${p.full_name || "Conductor"}')">Ver Legajo PDF</button>
+                <button class="btn-sm btn-blue" onclick="openDocsModal('${p.id}')">Ver Legajo PDF</button>
               </td>
               <td>${statusBadge}</td>
               <td>
@@ -898,6 +890,72 @@
         console.error(err);
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--accent-red);">Error al conectar con Supabase</td></tr>`;
       }
+    }
+
+    function openDocsModal(driverId) {
+      const modal = document.getElementById('docsModal');
+      const content = document.getElementById('docsModalContent');
+      modal.classList.add('active');
+
+      const driver = window.profilesList ? window.profilesList.find(p => p.id === driverId) : null;
+      if (!driver) {
+        content.innerHTML = `<p style="color:var(--text-muted);">No se encontraron los datos del conductor.</p>`;
+        return;
+      }
+
+      document.getElementById('docsTitle').innerText = 'Legajo Digital - ' + (driver.full_name || 'Conductor');
+
+      let html = `
+        <div style="margin-bottom:16px; font-size:13px; color:var(--text-muted);">
+          <strong>Teléfono:</strong> ${driver.phone || 'Sin datos'} | <strong>Vehículo:</strong> ${driver.vehicle_info || 'Móvil'}
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; max-height:420px; overflow-y:auto; padding-right:6px;">
+      `;
+
+      const docs = [
+        { label: 'DNI Frente y Dorso', url: driver.dni_url },
+        { label: 'Licencia Nacional D1', url: driver.licencia_url },
+        { label: 'Póliza de Seguro', url: driver.seguro_url },
+        { label: 'VTV / RTO Vigente', url: driver.vtv_url },
+      ];
+
+      docs.forEach(doc => {
+        html += `
+          <div style="border:1px solid var(--border-color); padding:12px; border-radius:12px; background:#fafafa;">
+            <strong style="font-size:12px; color:var(--primary); display:block; margin-bottom:8px;">${doc.label}</strong>
+        `;
+
+        if (doc.url && doc.url.startsWith('data:image')) {
+          html += `<img src="${doc.url}" style="width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer;" onclick="window.open('${doc.url}')" title="Clic para ampliar">`;
+        } else if (doc.url && doc.url.startsWith('data:application/pdf')) {
+          html += `<a href="${doc.url}" download="${doc.label}.pdf" class="btn-sm btn-blue" style="display:inline-block; text-decoration:none;">📄 Descargar PDF Adjunto</a>`;
+        } else if (doc.url) {
+          html += `<a href="${doc.url}" target="_blank" class="btn-sm btn-blue" style="display:inline-block; text-decoration:none;">🔗 Abrir Documento</a>`;
+        } else {
+          html += `<span style="font-size:12px; color:var(--accent-red); font-weight:bold;">⚠️ Documento no adjuntado</span>`;
+        }
+
+        html += `</div>`;
+      });
+
+      html += `</div>`;
+
+      html += `
+        <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:14px;">
+          <div>
+            ${driver.is_approved ? '<span class="badge badge-approved">HABILITADO</span>' : '<span class="badge badge-suspended">PENDIENTE DE HABILITACIÓN</span>'}
+          </div>
+          <div style="display:flex; gap:10px;">
+            ${driver.is_approved 
+              ? `<button class="btn-sm btn-red" onclick="toggleHabilitacionDriver('${driver.id}', false); closeDocsModal();">SUSPENDER TAXISTA</button>` 
+              : `<button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${driver.id}', true); closeDocsModal();">HABILITAR TAXISTA</button>`
+            }
+            <button class="btn-sm" style="background:#e2e8f0; color:#334155;" onclick="closeDocsModal()">Cerrar</button>
+          </div>
+        </div>
+      `;
+
+      content.innerHTML = html;
     }
 
     async function toggleHabilitacionDriver(driverId, habilitar) {

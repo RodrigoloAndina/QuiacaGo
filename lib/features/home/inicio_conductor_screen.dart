@@ -54,6 +54,8 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
     });
   }
 
+  Timer? _pollingTripsTimer;
+
   void _conectarse() {
     setState(() => _isConnected = true);
 
@@ -63,7 +65,15 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
     // 2. Publicar cada 5 segundos
     _gpsPublishTimer = Timer.periodic(const Duration(seconds: 5), (_) => _publicarGPS());
 
-    // 3. Escuchar viajes con status='requested' via Supabase Realtime
+    // 3. Polling activo de 2s + Stream Realtime para garantizar la llegada inmediata de pedidos reales
+    _pollingTripsTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+      if (!_isConnected || _modalAbierto) return;
+      final viajes = await TripService.obtenerViajesPendientes();
+      if (mounted && viajes.isNotEmpty && !_modalAbierto && _isConnected) {
+        _mostrarModalNuevoPedido(viajes.first);
+      }
+    });
+
     _tripSubscription = TripService.escucharViajesPendientes().listen((viajes) {
       if (mounted && viajes.isNotEmpty && !_modalAbierto && _isConnected) {
         _mostrarModalNuevoPedido(viajes.first);
@@ -76,6 +86,8 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
 
     _gpsPublishTimer?.cancel();
     _gpsPublishTimer = null;
+    _pollingTripsTimer?.cancel();
+    _pollingTripsTimer = null;
     _tripSubscription?.cancel();
     _tripSubscription = null;
 
@@ -235,28 +247,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
 
                   const SizedBox(height: 14),
 
-                  // Info del conductor
-                  if (_isConnected)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 14),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.wifi, color: AppColors.statusAvailable, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'GPS publicándose cada 5s en Supabase. Esperando solicitudes reales de pasajeros...',
-                              style: TextStyle(fontSize: 12, color: AppColors.outline),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+
 
                   SizedBox(
                     width: double.infinity,

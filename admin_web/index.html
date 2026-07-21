@@ -876,13 +876,46 @@
       alert('📅 Permiso de taxista RENOVADO por ' + days + ' DÍAS adicionales en PostgreSQL Supabase.');
     }
 
-    // MAPA DE TAXIS CON ICONOS DE AUTO SVG Y ANIMACIÓN EN TIEMPO REAL
+    // MAPA DE TAXIS REALES CONECTADOS DESDE SUPABASE
     let adminMap = null;
-    let marker042 = null;
-    let marker043 = null;
-    let timerSeconds = 15;
-    let pos042 = [-22.1023, -65.5982];
-    let pos043 = [-22.1055, -65.6015];
+    let driverMarkersGroup = null;
+
+    const SUPABASE_URL = 'https://xxqumxhdpjtjdcnnjmdm.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXVteGhkcGp0amRjbm5qbWRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1MjQ4NjgsImV4cCI6MjEwMDEwMDg2OH0.1L-wFBgeQHcTQIsBQWCFMUffjaaW1jRNfGQR7S_OOeI';
+
+    async function fetchRealDrivers() {
+      if (!adminMap) return;
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/driver_locations?is_online=eq.true`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (!response.ok) return;
+        const drivers = await response.json();
+
+        driverMarkersGroup.clearLayers();
+
+        if (Array.isArray(drivers) && drivers.length > 0) {
+          drivers.forEach(d => {
+            if (d.latitude && d.longitude) {
+              const carIcon = L.divIcon({
+                className: 'taxi-car-badge',
+                html: '<svg class="svg-icon" viewBox="0 0 24 24" style="stroke:white; width:24px; height:24px;"><path d="M19 17h2l.64-2.54a6 6 0 0 0-1.82-5.46M3 17h2"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M14 9V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10"/></svg>',
+                iconSize: [44, 44],
+                iconAnchor: [22, 22]
+              });
+              const marker = L.marker([d.latitude, d.longitude], { icon: carIcon })
+                .bindPopup(`<b style="color:#00327d;">🚖 ${d.driver_name || 'Conductor Habilitado'}</b><br>${d.vehicle_info || 'Móvil'}<br><span style="color:#10b981; font-weight:bold;">DISPONIBLE EN LA QUIACA</span>`);
+              driverMarkersGroup.addLayer(marker);
+            }
+          });
+        }
+      } catch (err) {
+        console.log('Error buscando choferes reales:', err);
+      }
+    }
 
     function initAdminMap() {
       if (adminMap !== null) {
@@ -892,44 +925,13 @@
 
       adminMap = L.map('adminMap').setView([-22.1040, -65.5995], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
+      driverMarkersGroup = L.layerGroup().addTo(adminMap);
 
-      // Iconos con forma de autito Taxi SVG Minimalista
-      const carIconSvg1 = L.divIcon({
-        className: 'taxi-car-badge',
-        html: '<svg class="svg-icon" viewBox="0 0 24 24" style="stroke:white; width:24px; height:24px;"><path d="M19 17h2l.64-2.54a6 6 0 0 0-1.82-5.46M3 17h2"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M14 9V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10"/></svg>',
-        iconSize: [44, 44],
-        iconAnchor: [22, 22]
-      });
+      // Cargar de inmediato choferes reales
+      fetchRealDrivers();
 
-      const carIconSvg2 = L.divIcon({
-        className: 'taxi-car-badge',
-        html: '<svg class="svg-icon" viewBox="0 0 24 24" style="stroke:white; width:24px; height:24px;"><path d="M19 17h2l.64-2.54a6 6 0 0 0-1.82-5.46M3 17h2"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M14 9V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10"/></svg>',
-        iconSize: [44, 44],
-        iconAnchor: [22, 22]
-      });
-
-      marker042 = L.marker(pos042, { icon: carIconSvg1 }).addTo(adminMap)
-        .bindPopup('<b style="color:#00327d;">🚖 Móvil 042 (Chevrolet Corsa)</b><br>Carlos Mamani<br><span style="color:#10b981; font-weight:bold;">DISPONIBLE EN LA QUIACA</span>');
-
-      marker043 = L.marker(pos043, { icon: carIconSvg2 }).addTo(adminMap)
-        .bindPopup('<b style="color:#9d4221;">🚖 Móvil 043 (Renault Kangoo)</b><br>Roberto Flores<br><span style="color:#3b82f6; font-weight:bold;">EN VIAJE (VIAJE #TQ-8840)</span>');
-
-      // Animación en tiempo real cada 15 segundos
-      setInterval(() => {
-        timerSeconds--;
-        if (timerSeconds <= 0) {
-          timerSeconds = 15;
-          // Mover ligeramente las posiciones GPS simulando traslado por calles de La Quiaca
-          pos042[0] += (Math.random() - 0.5) * 0.0012;
-          pos042[1] += (Math.random() - 0.5) * 0.0012;
-          marker042.setLatLng(pos042);
-
-          pos043[0] += (Math.random() - 0.5) * 0.0012;
-          pos043[1] += (Math.random() - 0.5) * 0.0012;
-          marker043.setLatLng(pos043);
-        }
-        document.getElementById('updateTimer').innerText = `Próxima actualización en ${timerSeconds}s`;
-      }, 1000);
+      // Actualizar automáticamente cada 5 segundos
+      setInterval(fetchRealDrivers, 5000);
     }
   </script>
 </body>

@@ -589,43 +589,43 @@
       </div>
     </div>
 
-    <!-- Metrics Row -->
+    <!-- Metrics Row (DATOS 100% REALES EN TIEMPO REAL DESDE SUPABASE) -->
     <div class="metrics-row">
       <div class="metric-card">
         <div class="metric-header">
           <span>Viajes del Día</span>
           <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--primary);">
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
-        <div class="metric-num">1,284</div>
-        <div class="metric-sub">↗ +12% vs ayer</div>
+        <div class="metric-num" id="metricViajesDia">0</div>
+        <div class="metric-sub" style="color:var(--text-muted);">Servicios registrados hoy</div>
       </div>
 
       <div class="metric-card">
         <div class="metric-header">
-          <span>Usuarios Registrados</span>
+          <span>Pasajeros Registrados</span>
           <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--accent-orange);">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
           </svg>
         </div>
-        <div class="metric-num">8,450</div>
-        <div class="metric-sub">↗ +45 nuevos hoy</div>
+        <div class="metric-num" id="metricUsuarios">0</div>
+        <div class="metric-sub" id="metricSubUsuarios" style="color:var(--text-muted);">Usuarios en la app</div>
       </div>
 
       <div class="metric-card">
         <div class="metric-header">
-          <span>Conductores Activos</span>
+          <span>Conductores Habilitados</span>
           <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--primary);">
             <path d="M19 17h2l.64-2.54a6 6 0 0 0-1.82-5.46M3 17h2" />
             <circle cx="6.5" cy="17.5" r="2.5" />
             <circle cx="17.5" cy="17.5" r="2.5" />
           </svg>
         </div>
-        <div class="metric-num" id="metricActivos">142</div>
-        <div class="metric-sub" style="color:var(--text-muted);">⏱ 85% de ocupación</div>
+        <div class="metric-num" id="metricConductoresActivos">0</div>
+        <div class="metric-sub" id="metricSubActivos" style="color:var(--text-muted);">Móviles habilitados</div>
       </div>
 
       <div class="metric-card">
@@ -636,10 +636,8 @@
             <polyline points="6 17 11 12 6 7" />
           </svg>
         </div>
-        <div class="metric-num">38</div>
-        <div style="height:4px; background:#e2e8f0; border-radius:2px; margin-top:8px; overflow:hidden;">
-          <div style="width:65%; height:100%; background:#3b82f6;"></div>
-        </div>
+        <div class="metric-num" id="metricViajesEnCurso">0</div>
+        <div class="metric-sub" style="color:#3b82f6;">Solicitudes activas</div>
       </div>
 
       <div class="metric-card">
@@ -650,8 +648,8 @@
             <line x1="15" y1="9" x2="9" y2="15" />
           </svg>
         </div>
-        <div class="metric-num">12</div>
-        <div class="metric-sub" style="color:var(--accent-red);">⚠ Ligeramente alto</div>
+        <div class="metric-num" id="metricViajesCancelados">0</div>
+        <div class="metric-sub" style="color:var(--text-muted);">Servicios no completados</div>
       </div>
     </div>
 
@@ -1137,8 +1135,67 @@
       };
     }
 
+    // ACTUALIZAR MÉTRICAS REALES DE PRODUCCIÓN DESDE SUPABASE
+    async function updateRealMetrics() {
+      try {
+        // 1. Conductores registrados y habilitados
+        const driversRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (driversRes.ok) {
+          const profiles = await driversRes.json();
+          if (Array.isArray(profiles)) {
+            const habilitados = profiles.filter(p => p.is_approved === true).length;
+            const elActivos = document.getElementById('metricConductoresActivos');
+            const elSubActivos = document.getElementById('metricSubActivos');
+            if (elActivos) elActivos.innerText = habilitados;
+            if (elSubActivos) elSubActivos.innerText = `${profiles.length} conductores en total`;
+          }
+        }
+
+        // 2. Pasajeros registrados
+        const passRes = await fetch(`${SUPABASE_URL}/rest/v1/passengers?select=*`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (passRes.ok) {
+          const passengers = await passRes.json();
+          if (Array.isArray(passengers)) {
+            const elUsuarios = document.getElementById('metricUsuarios');
+            const elSubUsuarios = document.getElementById('metricSubUsuarios');
+            if (elUsuarios) elUsuarios.innerText = passengers.length;
+            if (elSubUsuarios) elSubUsuarios.innerText = `${passengers.length} registrados`;
+          }
+        }
+
+        // 3. Viajes registrados en Supabase
+        const tripsRes = await fetch(`${SUPABASE_URL}/rest/v1/trips?select=*`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (tripsRes.ok) {
+          const trips = await tripsRes.json();
+          if (Array.isArray(trips)) {
+            const hoyStr = new Date().toISOString().split('T')[0];
+            const viajesHoy = trips.filter(t => t.created_at && t.created_at.startsWith(hoyStr)).length;
+            const enCurso = trips.filter(t => ['requested', 'accepted', 'arrived', 'in_progress'].includes(t.status)).length;
+            const cancelados = trips.filter(t => t.status === 'cancelled').length;
+
+            const elViajesDia = document.getElementById('metricViajesDia');
+            const elEnCurso = document.getElementById('metricViajesEnCurso');
+            const elCancelados = document.getElementById('metricViajesCancelados');
+
+            if (elViajesDia) elViajesDia.innerText = viajesHoy;
+            if (elEnCurso) elEnCurso.innerText = enCurso;
+            if (elCancelados) elCancelados.innerText = cancelados;
+          }
+        }
+      } catch (err) {
+        console.error('Error actualizando métricas reales:', err);
+      }
+    }
+
     // CARGAR TABLA REAL DE CHOFERES DESDE SUPABASE
     async function fetchDriversTable() {
+      updateRealMetrics();
       const tbody = document.getElementById('driversTableBody');
       if (!tbody) return;
 
@@ -1426,8 +1483,10 @@
       }
     }
 
-    // Inicializar tabla de choferes al abrir
+    // Inicializar tabla de choferes y métricas en tiempo real al abrir
     setTimeout(fetchDriversTable, 500);
+    setTimeout(updateRealMetrics, 800);
+    setInterval(updateRealMetrics, 5000);
 
     async function fetchRealDrivers() {
       if (!adminMap) return;

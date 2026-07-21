@@ -1104,6 +1104,39 @@
 
     window.profilesList = [];
 
+    function calcularProximoVencimiento(p) {
+      const ahora = new Date();
+      const items = [];
+
+      if (p.licencia_expiration) {
+        items.push({ nombre: 'Licencia D1', fecha: new Date(p.licencia_expiration) });
+      }
+      if (p.vtv_expiration) {
+        items.push({ nombre: 'RTO / VTV', fecha: new Date(p.vtv_expiration) });
+      }
+      if (p.seguro_expiration) {
+        items.push({ nombre: 'Póliza de Seguro', fecha: new Date(p.seguro_expiration) });
+      }
+      if (p.approved_until) {
+        items.push({ nombre: 'Permiso Municipal', fecha: new Date(p.approved_until) });
+      }
+
+      if (items.length === 0) {
+        return { diffDias: null, motivo: 'Permiso Activo (30 Días)', fechaStr: '', estaVencido: false };
+      }
+
+      items.sort((a, b) => a.fecha - b.fecha);
+      const proximo = items[0];
+      const diffDias = Math.ceil((proximo.fecha - ahora) / (1000 * 60 * 60 * 24));
+
+      return {
+        diffDias: diffDias,
+        motivo: proximo.nombre,
+        fechaStr: proximo.fecha.toLocaleDateString(),
+        estaVencido: diffDias <= 0
+      };
+    }
+
     // CARGAR TABLA REAL DE CHOFERES DESDE SUPABASE
     async function fetchDriversTable() {
       const tbody = document.getElementById('driversTableBody');
@@ -1130,21 +1163,24 @@
         if (Array.isArray(profiles) && profiles.length > 0) {
           tbody.innerHTML = '';
           profiles.forEach(p => {
-            const isApproved = p.is_approved === true;
+            const venc = calcularProximoVencimiento(p);
+            const isApproved = p.is_approved === true && !venc.estaVencido;
+
             const statusBadge = isApproved
               ? '<span class="badge badge-approved">HABILITADO</span>'
-              : '<span class="badge badge-suspended">PENDIENTE / REVISIÓN</span>';
+              : (venc.estaVencido 
+                  ? `<span class="badge badge-suspended">SUSPENDIDO</span><br><span style="font-size:10px; color:var(--accent-red); font-weight:bold;">Vencimiento de ${venc.motivo}</span>` 
+                  : '<span class="badge badge-suspended">PENDIENTE / REVISIÓN</span>');
 
             let vencimientoText = '<span style="color:var(--accent-red); font-weight:bold;">Pendiente de Habilitación</span>';
             if (isApproved) {
-              if (p.approved_until) {
-                const vence = new Date(p.approved_until);
-                const hoy = new Date();
-                const diff = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24));
-                vencimientoText = `<span style="color:var(--accent-green); font-weight:bold;">Vence: ${vence.toLocaleDateString()} (${diff > 0 ? diff + ' días' : 'VENCIDO'})</span>`;
+              if (venc.diffDias !== null) {
+                vencimientoText = `<span style="color:var(--accent-green); font-weight:bold;">Faltan ${venc.diffDias} días</span><br><span style="font-size:11px; color:var(--text-muted);">Próximo vencimiento: ${venc.motivo} (${venc.fechaStr})</span>`;
               } else {
                 vencimientoText = '<span style="color:var(--accent-green); font-weight:bold;">Permiso Activo (30 Días)</span>';
               }
+            } else if (venc.estaVencido) {
+              vencimientoText = `<span style="color:var(--accent-red); font-weight:bold;">VENCIDO (${venc.motivo})</span><br><span style="font-size:11px; color:var(--accent-red);">Requiere actualización de legajo</span>`;
             }
 
             const actionBtns = isApproved
@@ -1154,9 +1190,8 @@
                    <button class="btn-sm btn-red" onclick="toggleHabilitacionDriver('${p.id}', false)">SUSPENDER</button>
                  </div>`
               : `<div style="display:flex; gap:6px;">
-                   <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true, 30)">+30 Días</button>
-                   <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true, 60)">+60 Días</button>
-                   <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true, 90)">+90 Días</button>
+                   <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true, 30)">Habilitar (30D)</button>
+                   <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true, 60)">Habilitar (60D)</button>
                  </div>`;
 
             const tr = document.createElement('tr');
@@ -1168,7 +1203,7 @@
               <td>${p.vehicle_info || 'Móvil Registrado'}</td>
               <td>${vencimientoText}</td>
               <td>
-                <button class="btn-sm btn-blue" onclick="openDocsModal('${p.id}')">Ver Legajo PDF</button>
+                <button class="btn-sm btn-blue" onclick="openDocsModal('${p.id}')">Ver Legajo Digital</button>
               </td>
               <td>${statusBadge}</td>
               <td>${actionBtns}</td>
@@ -1184,7 +1219,7 @@
       }
     }
 
-    // LIGHTBOX VISOR DE IMÁGENES REALES (SIN ABOUT:BLANK)
+    // LIGHTBOX VISOR DE IMÁGENES REALES (SIN ABOUT:BLANK NI EMOJIS)
     function openImageViewerModal(imgUrl, label) {
       document.getElementById('imageViewerTitle').innerText = label || 'Documento Ampliado';
       document.getElementById('imageViewerImg').src = imgUrl;
@@ -1208,28 +1243,46 @@
 
       document.getElementById('docsTitle').innerText = 'Legajo Digital - ' + (driver.full_name || driver.name || 'Conductor');
 
-      let vencimientoInfo = 'No registrado';
-      if (driver.approved_until) {
-        const vence = new Date(driver.approved_until);
-        const hoy = new Date();
-        const diffDias = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24));
-        vencimientoInfo = `${vence.toLocaleDateString()} (${diffDias > 0 ? diffDias + ' días restantes' : 'VENCIDO'})`;
-      }
+      const venc = calcularProximoVencimiento(driver);
+
+      // Fecha actual más 1 año por defecto para fecha de vencimiento si no tiene
+      const defaultDate = new Date();
+      defaultDate.setFullYear(defaultDate.getFullYear() + 1);
+      const defaultDateStr = defaultDate.toISOString().split('T')[0];
 
       let html = `
-        <div style="margin-bottom:16px; font-size:13px; color:var(--text-muted);">
+        <div style="margin-bottom:16px; font-size:13px; color:var(--text-muted); background:#f8fafc; padding:12px; border-radius:10px; border:1px solid var(--border-color);">
           <strong>Teléfono:</strong> ${driver.phone || 'Sin datos'} | <strong>Vehículo:</strong> ${driver.vehicle_info || 'Móvil'}<br>
-          <strong>Estado Vencimiento Habilitación:</strong> <span style="color:var(--primary); font-weight:bold;">${vencimientoInfo}</span>
+          <strong>Próximo Vencimiento Registrado:</strong> <span style="color:${venc.estaVencido ? 'var(--accent-red)' : 'var(--primary)'}; font-weight:bold;">${venc.motivo} ${venc.fechaStr ? '(' + venc.fechaStr + ')' : ''} ${venc.diffDias !== null ? '- Faltan ' + venc.diffDias + ' días' : ''}</span>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; max-height:420px; overflow-y:auto; padding-right:6px;">
+
+        <div style="margin-bottom:16px; background:#fff; border:1px solid var(--border-color); padding:12px; border-radius:10px;">
+          <h4 style="font-size:12px; font-weight:bold; color:var(--primary); margin-bottom:8px;">REGISTRAR / ACTUALIZAR FECHAS DE VENCIMIENTO DE DOCUMENTACIÓN:</h4>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+            <div>
+              <label style="font-size:11px; font-weight:bold; display:block; color:#475569;">Vencimiento Licencia D1:</label>
+              <input type="date" id="inputLicenciaVenc_${driver.id}" value="${driver.licencia_expiration || defaultDateStr}" style="width:100%; padding:6px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:bold; display:block; color:#475569;">Vencimiento RTO / VTV:</label>
+              <input type="date" id="inputVtvVenc_${driver.id}" value="${driver.vtv_expiration || defaultDateStr}" style="width:100%; padding:6px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:bold; display:block; color:#475569;">Vencimiento Póliza Seguro:</label>
+              <input type="date" id="inputSeguroVenc_${driver.id}" value="${driver.seguro_expiration || defaultDateStr}" style="width:100%; padding:6px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;">
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; max-height:360px; overflow-y:auto; padding-right:6px;">
       `;
 
       const docs = [
-        { label: '🪪 DNI Frente', url: driver.dni_frente_url || driver.dni_url },
-        { label: '🪪 DNI Dorso', url: driver.dni_dorso_url },
-        { label: '🪪 Licencia Nacional D1', url: driver.licencia_frente_url || driver.licencia_url },
-        { label: '📄 Póliza de Seguro', url: driver.seguro_url },
-        { label: '🚗 VTV / RTO Vigente', url: driver.vtv_url },
+        { label: 'DNI Frente', url: driver.dni_frente_url || driver.dni_url },
+        { label: 'DNI Dorso', url: driver.dni_dorso_url },
+        { label: 'Licencia Nacional D1', url: driver.licencia_frente_url || driver.licencia_url },
+        { label: 'Póliza de Seguro', url: driver.seguro_url },
+        { label: 'VTV / RTO Vigente', url: driver.vtv_url },
       ];
 
       docs.forEach(doc => {
@@ -1239,13 +1292,13 @@
         `;
 
         if (doc.url && doc.url.startsWith('data:image')) {
-          html += `<img src="${doc.url}" style="width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer;" onclick="openImageViewerModal('${doc.url}', '${doc.label}')" title="Clic para ampliar">`;
+          html += `<img src="${doc.url}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer;" onclick="openImageViewerModal('${doc.url}', '${doc.label}')" title="Clic para ampliar">`;
         } else if (doc.url && doc.url.startsWith('data:application/pdf')) {
-          html += `<a href="${doc.url}" download="${doc.label}.pdf" class="btn-sm btn-blue" style="display:inline-block; text-decoration:none;">📄 Descargar PDF Adjunto</a>`;
+          html += `<a href="${doc.url}" download="${doc.label}.pdf" class="btn-sm btn-blue" style="display:inline-block; text-decoration:none;">Descargar PDF Adjunto</a>`;
         } else if (doc.url) {
-          html += `<button class="btn-sm btn-blue" onclick="openImageViewerModal('${doc.url}', '${doc.label}')">🔍 Abrir Documento</button>`;
+          html += `<button class="btn-sm btn-blue" onclick="openImageViewerModal('${doc.url}', '${doc.label}')">Abrir Documento</button>`;
         } else {
-          html += `<span style="font-size:12px; color:var(--accent-red); font-weight:bold;">⚠️ Documento no adjuntado</span>`;
+          html += `<span style="font-size:12px; color:var(--accent-red); font-weight:bold;">Documento no adjuntado</span>`;
         }
 
         html += `</div>`;
@@ -1254,13 +1307,13 @@
       html += `</div>`;
 
       html += `
-        <div style="margin-top:20px; border-top:1px solid var(--border-color); padding-top:14px;">
-          <label style="font-size:12px; font-weight:bold; color:var(--primary); display:block; margin-bottom:8px;">HABILITAR POR PERÍODO DE DÍAS:</label>
+        <div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:14px;">
+          <label style="font-size:12px; font-weight:bold; color:var(--primary); display:block; margin-bottom:8px;">DAR DE ALTA Y HABILITAR POR PERÍODO DE DÍAS:</label>
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
             <div style="display:flex; gap:6px;">
-              <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${driver.id}', true, 30); closeDocsModal();">+30 Días</button>
-              <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${driver.id}', true, 60); closeDocsModal();">+60 Días</button>
-              <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${driver.id}', true, 90); closeDocsModal();">+90 Días</button>
+              <button class="btn-sm btn-green" onclick="guardarLegajoYHabilitar('${driver.id}', 30); closeDocsModal();">Dar Alta (+30 Días)</button>
+              <button class="btn-sm btn-green" onclick="guardarLegajoYHabilitar('${driver.id}', 60); closeDocsModal();">Dar Alta (+60 Días)</button>
+              <button class="btn-sm btn-green" onclick="guardarLegajoYHabilitar('${driver.id}', 90); closeDocsModal();">Dar Alta (+90 Días)</button>
             </div>
             <div style="display:flex; gap:8px;">
               <button class="btn-sm btn-red" onclick="toggleHabilitacionDriver('${driver.id}', false); closeDocsModal();">SUSPENDER</button>
@@ -1271,6 +1324,59 @@
       `;
 
       content.innerHTML = html;
+    }
+
+    async function guardarLegajoYHabilitar(driverId, dias = 30) {
+      const licVenc = document.getElementById(`inputLicenciaVenc_${driverId}`)?.value;
+      const vtvVenc = document.getElementById(`inputVtvVenc_${driverId}`)?.value;
+      const seguroVenc = document.getElementById(`inputSeguroVenc_${driverId}`)?.value;
+
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + dias);
+
+      const updateData = {
+        is_approved: true,
+        approved_until: expirationDate.toISOString(),
+        licencia_expiration: licVenc || null,
+        vtv_expiration: vtvVenc || null,
+        seguro_expiration: seguroVenc || null
+      };
+
+      try {
+        let response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+          // Fallback por si en Supabase faltan las columnas de fechas opcionales
+          response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ is_approved: true, approved_until: expirationDate.toISOString() })
+          });
+        }
+
+        if (response.ok) {
+          alert(`Conductor dado de Alta y HABILITADO por ${dias} DÍAS correctamente.`);
+          fetchDriversTable();
+        } else {
+          alert('Error: No se pudo actualizar el registro en Supabase.');
+        }
+      } catch (err) {
+        alert('Error al conectar con Supabase.');
+      }
     }
 
     async function toggleHabilitacionDriver(driverId, habilitar, dias = 30) {
@@ -1294,7 +1400,6 @@
         });
 
         if (!response.ok && habilitar) {
-          // Retry de respaldo en caso de que en Supabase aún no exista la columna approved_until
           response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
             method: 'PATCH',
             headers: {
@@ -1308,7 +1413,7 @@
         }
 
         if (response.ok) {
-          alert(habilitar ? `✅ Conductor HABILITADO correctamente (${dias} DÍAS asignados).` : '⛔ Conductor INHABILITADO en Supabase.');
+          alert(habilitar ? `Conductor HABILITADO correctamente (${dias} DÍAS asignados).` : 'Conductor INHABILITADO en Supabase.');
           fetchDriversTable();
         } else {
           alert('Error: No se pudo actualizar el registro en Supabase.');

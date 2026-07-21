@@ -65,21 +65,32 @@ class _LoginScreenState extends State<LoginScreen> {
         approvedUntil: data['approved_until']?.toString(),
       );
 
-      // Verificar si fue APROBADO por la municipalidad y no está vencido
+      // Verificar si fue APROBADO y si NINGUNO de sus documentos o habilitación venció
       final bool isApproved = data['is_approved'] == true;
-      bool isExpired = false;
+      String? motivoVencimiento;
+      final now = DateTime.now();
 
       if (data['approved_until'] != null) {
-        final dateVenc = DateTime.tryParse(data['approved_until'].toString());
-        if (dateVenc != null && dateVenc.isBefore(DateTime.now())) {
-          isExpired = true;
-        }
+        final d = DateTime.tryParse(data['approved_until'].toString());
+        if (d != null && d.isBefore(now)) motivoVencimiento = 'Permiso Municipal vencido';
+      }
+      if (data['licencia_expiration'] != null) {
+        final d = DateTime.tryParse(data['licencia_expiration'].toString());
+        if (d != null && d.isBefore(now)) motivoVencimiento = 'Licencia Nacional D1 vencida';
+      }
+      if (data['vtv_expiration'] != null) {
+        final d = DateTime.tryParse(data['vtv_expiration'].toString());
+        if (d != null && d.isBefore(now)) motivoVencimiento = 'Revisión RTO/VTV vencida';
+      }
+      if (data['seguro_expiration'] != null) {
+        final d = DateTime.tryParse(data['seguro_expiration'].toString());
+        if (d != null && d.isBefore(now)) motivoVencimiento = 'Póliza de Seguro vencida';
       }
 
-      if (isApproved && !isExpired) {
+      if (isApproved && motivoVencimiento == null) {
         context.go('/home');
-      } else if (isExpired) {
-        setState(() => _errorMessage = '⚠️ Tu habilitación de 30/60/90 días ha vencido. Contacta a la Municipalidad.');
+      } else if (motivoVencimiento != null) {
+        setState(() => _errorMessage = 'Acceso suspendido: $motivoVencimiento. Presenta la documentación actualizada en la Municipalidad de La Quiaca.');
       } else {
         context.go('/cuenta-pendiente');
       }

@@ -55,29 +55,51 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
       final dni = _dniCtrl.text.trim();
       final fechaNac = _fechaNacCtrl.text.trim();
       final telefono = _telefonoCtrl.text.trim();
+      final password = _passwordCtrl.text.trim();
 
-      // Guardar en Supabase tabla profiles con role = 'passenger'
       final supabase = SupabaseService().client;
-      await supabase.from('profiles').insert({
+
+      // Verificar si el DNI o teléfono ya existe
+      final existente = await supabase
+          .from('passengers')
+          .select('id')
+          .or('dni.eq.$dni,phone.eq.$telefono')
+          .maybeSingle();
+
+      if (existente != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ya existe un pasajero con ese DNI o teléfono.'), backgroundColor: Color(0xFFEF4444)),
+          );
+          setState(() => _isLoading = false);
+        }
+        return;
+      }
+
+      // Guardar en Supabase tabla passengers
+      await supabase.from('passengers').insert({
         'full_name': nombre,
+        'dni': dni,
+        'birth_date': fechaNac,
         'phone': telefono,
-        'role': 'passenger',
-        'is_approved': true,
-        'created_at': DateTime.now().toIso8601String(),
-      }).catchError((_) {});
+        'password': password,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Bienvenido a QuiacaGo, $nombre. Registro completado.'),
+            content: Text('✅ Bienvenido a QuiacaGo, $nombre. Ahora ingresá con tu DNI o teléfono.'),
             backgroundColor: AppColors.statusAvailable,
           ),
         );
-        context.go('/pasajero-home');
+        context.go('/login-pasajero');
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        context.go('/pasajero-home');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al registrar: $e'), backgroundColor: const Color(0xFFEF4444)),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

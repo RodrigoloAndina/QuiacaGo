@@ -7,14 +7,17 @@ class SupabaseService {
 
   SupabaseService._internal();
 
-  // URL de Proyecto y Publishable Key Oficial de Supabase para QuiacaGo
+  // URL de Proyecto Supabase para QuiacaGo
   static const String supabaseUrl = 'https://xxqumxhdpjtjdcnnjmdm.supabase.co';
-  static const String supabasePublishableKey = 'sb_publishable_OC59lTtwS710LNHbk1mBIA_UlTRguIN';
+
+  // Anon Key JWT oficial (reemplaza la key legacy anterior que no funcionaba)
+  static const String supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXVteGhkcGp0amRjbm5qbWRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1MjQ4NjgsImV4cCI6MjEwMDEwMDg2OH0.1L-wFBgeQHcTQIsBQWCFMUffjaaW1jRNfGQR7S_OOeI';
 
   Future<void> initialize() async {
     await Supabase.initialize(
       url: supabaseUrl,
-      anonKey: supabasePublishableKey,
+      anonKey: supabaseAnonKey,
     );
   }
 

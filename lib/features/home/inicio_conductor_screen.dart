@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/location_service.dart';
+import '../../services/driver_location_service.dart';
 import '../../services/trip_service.dart';
 import '../trips/nuevo_pedido_modal.dart';
 
@@ -21,10 +22,16 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
   int _currentIndex = 0;
   LatLng _conductorPos = const LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng);
   StreamSubscription<LatLng>? _locationSubscription;
-  Timer? _pollingTimerTrips;
+  StreamSubscription<List<TripModel>>? _tripSubscription;
+  Timer? _gpsPublishTimer;
   final MapController _mapController = MapController();
   bool _modalAbierto = false;
-  TripModel? _viajePendienteEncontrado;
+
+  // Identificación del conductor logueado (en producción vendrá del login/auth)
+  final String _driverId = 'conductor_01';
+  final String _driverName = 'Carlos Mendoza';
+  final String _vehicleInfo = 'Chevrolet Corsa - Móvil 045';
+  final String _plate = 'ABC 123';
 
   @override
   void initState() {
@@ -35,67 +42,82 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
   Future<void> _iniciarCapturaGPSReal() async {
     final posIncial = await LocationService.getCurrentLocation();
     if (mounted) {
-      setState(() {
-        _conductorPos = posIncial;
-      });
+      setState(() => _conductorPos = posIncial);
       _mapController.move(posIncial, 16.0);
     }
 
     _locationSubscription = LocationService.getRealtimeLocationStream().listen((nuevaPos) {
       if (mounted) {
-        setState(() {
-          _conductorPos = nuevaPos;
-        });
+        setState(() => _conductorPos = nuevaPos);
         _mapController.move(nuevaPos, _mapController.camera.zoom);
       }
     });
   }
 
-  void _iniciarVerificacionViajesContinuos(bool conectar) {
-    _pollingTimerTrips?.cancel();
+  void _conectarse() {
+    setState(() => _isConnected = true);
 
-    if (conectar) {
-      _pollingTimerTrips = Timer.periodic(const Duration(seconds: 2), (_) async {
-        if (!_isConnected || _modalAbierto) return;
+    // 1. Publicar ubicación GPS inmediatamente en Supabase
+    _publicarGPS();
 
-        final viajes = await TripService.obtenerViajesPendientes();
-        if (mounted && viajes.isNotEmpty && !_modalAbierto && _isConnected) {
-          _mostrarModalNuevoPedido(viajes.first);
-        }
-      });
-    }
+    // 2. Publicar cada 5 segundos
+    _gpsPublishTimer = Timer.periodic(const Duration(seconds: 5), (_) => _publicarGPS());
+
+    // 3. Escuchar viajes con status='requested' via Supabase Realtime
+    _tripSubscription = TripService.escucharViajesPendientes().listen((viajes) {
+      if (mounted && viajes.isNotEmpty && !_modalAbierto && _isConnected) {
+        _mostrarModalNuevoPedido(viajes.first);
+      }
+    });
   }
 
-  void _mostrarModalNuevoPedido([TripModel? viaje]) async {
-    TripModel? viajeAMostrar = viaje ?? _viajePendienteEncontrado;
-    
-    if (viajeAMostrar == null) {
-      final viajes = await TripService.obtenerViajesPendientes();
-      if (viajes.isNotEmpty) {
-        viajeAMostrar = viajes.first;
-      }
-    }
+  void _desconectarse() {
+    setState(() => _isConnected = false);
 
-    if (!mounted) return;
+    _gpsPublishTimer?.cancel();
+    _gpsPublishTimer = null;
+    _tripSubscription?.cancel();
+    _tripSubscription = null;
 
+    DriverLocationService.desconectar(_driverId);
+  }
+
+  Future<void> _publicarGPS() async {
+    await DriverLocationService.publicarUbicacion(
+      driverId: _driverId,
+      latitude: _conductorPos.latitude,
+      longitude: _conductorPos.longitude,
+      driverName: _driverName,
+      vehicleInfo: _vehicleInfo,
+      plate: _plate,
+    );
+  }
+
+  void _mostrarModalNuevoPedido(TripModel viaje) {
+    if (_modalAbierto) return;
     setState(() => _modalAbierto = true);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
       backgroundColor: Colors.transparent,
-      builder: (context) => NuevoPedidoModal(trip: viajeAMostrar),
+      builder: (context) => NuevoPedidoModal(
+        trip: viaje,
+        driverId: _driverId,
+        driverName: _driverName,
+        vehicleInfo: _vehicleInfo,
+      ),
     ).then((_) {
-      if (mounted) {
-        setState(() => _modalAbierto = false);
-      }
+      if (mounted) setState(() => _modalAbierto = false);
     });
   }
 
   @override
   void dispose() {
     _locationSubscription?.cancel();
-    _pollingTimerTrips?.cancel();
+    _gpsPublishTimer?.cancel();
+    _tripSubscription?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -113,34 +135,40 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
             SizedBox(width: 8),
             Text(
               'QuiacaGo Conductor',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
+              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 20),
             ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: AppColors.onSurface, size: 24),
-            onPressed: () {},
-          ),
+          if (_isConnected)
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.statusAvailable.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.statusAvailable, shape: BoxShape.circle)),
+                  const SizedBox(width: 6),
+                  const Text('EN LÍNEA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.statusAvailable)),
+                ],
+              ),
+            ),
         ],
       ),
       body: Stack(
         children: [
-          // MAPA INTERACTIVO HD CON ALINEACIÓN CENTRADA
+          // MAPA
           FlutterMap(
             mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _conductorPos,
-              initialZoom: 16.0,
-            ),
+            options: MapOptions(initialCenter: _conductorPos, initialZoom: 16.0),
             children: [
               TileLayer(
                 urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-                userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
+                userAgentPackageName: 'com.quiacago.conductor',
               ),
               MarkerLayer(
                 markers: [
@@ -153,17 +181,9 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.25),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 4))],
                       ),
-                      child: const Center(
-                        child: Icon(Icons.directions_car, color: Colors.white, size: 24),
-                      ),
+                      child: const Center(child: Icon(Icons.directions_car, color: Colors.white, size: 24)),
                     ),
                   ),
                 ],
@@ -171,32 +191,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
             ],
           ),
 
-          // BOTÓN FLOTANTE SUPERIOR CUANDO EL CHOFER ESTÁ CONECTADO
-          if (_isConnected)
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () => _mostrarModalNuevoPedido(),
-                  icon: const Icon(Icons.notifications_active, color: Colors.white, size: 20),
-                  label: const Text(
-                    'VER SOLICITUDES DE VIAJE EN LA QUIACA',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00327D),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    elevation: 6,
-                  ),
-                ),
-              ),
-            ),
-
-          // BOTTOM SHEET CONECTARSE
+          // BOTTOM SHEET
           Positioned(
             left: 0,
             right: 0,
@@ -206,64 +201,31 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 20,
-                    offset: Offset(0, -5),
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, -5))],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.outlineVariant, borderRadius: BorderRadius.circular(2))),
                   const SizedBox(height: 16),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Tu estado',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.onSurface,
-                        ),
-                      ),
+                      const Text('Tu estado', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.onSurface)),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _isConnected
-                              ? AppColors.statusAvailable.withOpacity(0.15)
-                              : AppColors.badgeCancelledBackground,
+                          color: _isConnected ? AppColors.statusAvailable.withOpacity(0.15) : AppColors.badgeCancelledBackground,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: _isConnected ? AppColors.statusAvailable : AppColors.statusCancelled,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
+                            Container(width: 8, height: 8, decoration: BoxDecoration(color: _isConnected ? AppColors.statusAvailable : AppColors.statusCancelled, shape: BoxShape.circle)),
                             const SizedBox(width: 6),
                             Text(
                               _isConnected ? 'Disponible' : 'No disponible',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: _isConnected ? AppColors.statusAvailable : AppColors.statusCancelled,
-                              ),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _isConnected ? AppColors.statusAvailable : AppColors.statusCancelled),
                             ),
                           ],
                         ),
@@ -271,19 +233,44 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
-                  // BOTÓN CONECTARSE
+                  // Info del conductor
+                  if (_isConnected)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.wifi, color: AppColors.statusAvailable, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'GPS publicándose cada 5s en Supabase. Esperando solicitudes reales de pasajeros...',
+                              style: TextStyle(fontSize: 12, color: AppColors.outline),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        setState(() => _isConnected = !_isConnected);
-                        _iniciarVerificacionViajesContinuos(_isConnected);
+                        if (_isConnected) {
+                          _desconectarse();
+                        } else {
+                          _conectarse();
+                        }
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(_isConnected ? '🟢 Estás DISPONIBLE para recibir viajes reales en La Quiaca.' : '🔴 Estás DESCONECTADO.'),
+                            content: Text(_isConnected ? 'Disponible. Esperando solicitudes reales...' : 'Desconectado.'),
                             backgroundColor: _isConnected ? AppColors.statusAvailable : AppColors.outline,
                             duration: const Duration(seconds: 2),
                           ),
@@ -296,9 +283,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _isConnected ? AppColors.statusCancelled : AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
                       ),
                     ),
                   ),
@@ -310,32 +295,17 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                          decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(20)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
-                              Row(
-                                children: [
-                                  Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppColors.outline),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Ganancias hoy',
-                                    style: TextStyle(fontSize: 12, color: AppColors.outline),
-                                  ),
-                                ],
-                              ),
+                              Row(children: [
+                                Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppColors.outline),
+                                SizedBox(width: 4),
+                                Text('Ganancias hoy', style: TextStyle(fontSize: 12, color: AppColors.outline)),
+                              ]),
                               SizedBox(height: 4),
-                              Text(
-                                '\$0.00',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
-                              ),
+                              Text('\$0.00', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
                             ],
                           ),
                         ),
@@ -344,32 +314,17 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                          decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(20)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
-                              Row(
-                                children: [
-                                  Icon(Icons.access_time, size: 16, color: AppColors.outline),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Viajes',
-                                    style: TextStyle(fontSize: 12, color: AppColors.outline),
-                                  ),
-                                ],
-                              ),
+                              Row(children: [
+                                Icon(Icons.access_time, size: 16, color: AppColors.outline),
+                                SizedBox(width: 4),
+                                Text('Viajes', style: TextStyle(fontSize: 12, color: AppColors.outline)),
+                              ]),
                               SizedBox(height: 4),
-                              Text(
-                                '0',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
-                              ),
+                              Text('0', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
                             ],
                           ),
                         ),
@@ -391,24 +346,16 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
         onTap: (index) {
           setState(() => _currentIndex = index);
           switch (index) {
-            case 0:
-              context.go('/home');
-              break;
-            case 1:
-              context.push('/ganancias');
-              break;
-            case 2:
-              context.push('/historial');
-              break;
-            case 3:
-              context.push('/perfil');
-              break;
+            case 0: context.go('/home'); break;
+            case 1: context.push('/ganancias'); break;
+            case 2: context.push('/historial'); break;
+            case 3: context.push('/perfil'); break;
           }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.attach_money), activeIcon: Icon(Icons.attach_money), label: 'Ganancias'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), activeIcon: Icon(Icons.history), label: 'Historial'),
+          BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Ganancias'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Historial'),
           BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),

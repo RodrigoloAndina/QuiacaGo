@@ -34,10 +34,24 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
   String get _vehicleInfo => DriverSessionService().vehicleInfo;
   String get _plate => DriverSessionService().plate;
 
+  double _gananciasHoy = 0.0;
+  int _viajesHoy = 0;
+
   @override
   void initState() {
     super.initState();
     _iniciarCapturaGPSReal();
+    _cargarMetricasInicio();
+  }
+
+  Future<void> _cargarMetricasInicio() async {
+    final res = await TripService.obtenerMetricasConductor(_driverId);
+    if (mounted) {
+      setState(() {
+        _gananciasHoy = (res['gananciasHoy'] as num?)?.toDouble() ?? 0.0;
+        _viajesHoy = (res['viajesHoy'] as num?)?.toInt() ?? 0;
+      });
+    }
   }
 
   Future<void> _iniciarCapturaGPSReal() async {
@@ -290,14 +304,14 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                           decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(20)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Row(children: [
+                            children: [
+                              const Row(children: [
                                 Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppColors.outline),
                                 SizedBox(width: 4),
                                 Text('Ganancias hoy', style: TextStyle(fontSize: 12, color: AppColors.outline)),
                               ]),
-                              SizedBox(height: 4),
-                              Text('\$0.00', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                              const SizedBox(height: 4),
+                              Text('\$${_gananciasHoy.toStringAsFixed(2)}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
                             ],
                           ),
                         ),
@@ -309,14 +323,14 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                           decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(20)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Row(children: [
+                            children: [
+                              const Row(children: [
                                 Icon(Icons.access_time, size: 16, color: AppColors.outline),
                                 SizedBox(width: 4),
                                 Text('Viajes', style: TextStyle(fontSize: 12, color: AppColors.outline)),
                               ]),
-                              SizedBox(height: 4),
-                              Text('0', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                              const SizedBox(height: 4),
+                              Text('$_viajesHoy', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary)),
                             ],
                           ),
                         ),

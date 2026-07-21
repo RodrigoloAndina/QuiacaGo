@@ -245,4 +245,77 @@ class TripService {
         .eq('status', 'requested')
         .map((list) => list.map((item) => TripModel.fromMap(item)).toList());
   }
+
+  /// Obtiene el historial de viajes asignados o completados por el conductor actual
+  static Future<List<TripModel>> obtenerHistorialConductor(String driverId) async {
+    try {
+      final data = await _supabase
+          .from('trips')
+          .select()
+          .or('driver_id.eq.$driverId,status.eq.completed')
+          .order('created_at', ascending: false)
+          .limit(50);
+
+      if (data is List && data.isNotEmpty) {
+        return data.map((item) => TripModel.fromMap(item)).toList();
+      }
+    } catch (e) {
+      print('[TripService] Error obteniendo historial del conductor: $e');
+    }
+    return [];
+  }
+
+  /// Obtiene métricas reales de ganancias (Hoy, Semana, Total) para el conductor
+  static Future<Map<String, dynamic>> obtenerMetricasConductor(String driverId) async {
+    double gananciasHoy = 0.0;
+    int viajesHoyCount = 0;
+    double gananciasSemana = 0.0;
+    double gananciasTotal = 0.0;
+    int totalViajes = 0;
+
+    try {
+      final data = await _supabase
+          .from('trips')
+          .select();
+
+      if (data is List) {
+        final now = DateTime.now();
+        final todayStr = now.toIso8601String().split('T')[0];
+
+        for (var item in data) {
+          final trip = TripModel.fromMap(item);
+          final createdAt = item['created_at'] != null ? DateTime.tryParse(item['created_at'].toString()) : null;
+          final isCompleted = trip.status == 'completed' || trip.status == 'in_progress';
+          final isMyTrip = trip.driverId == driverId || trip.driverId == null;
+
+          if (isCompleted && isMyTrip) {
+            gananciasTotal += trip.fareAmount;
+            totalViajes++;
+
+            if (createdAt != null) {
+              final tripDateStr = createdAt.toIso8601String().split('T')[0];
+              if (tripDateStr == todayStr) {
+                gananciasHoy += trip.fareAmount;
+                viajesHoyCount++;
+              }
+              final diffDays = now.difference(createdAt).inDays;
+              if (diffDays <= 7) {
+                gananciasSemana += trip.fareAmount;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('[TripService] Error calculando métricas del conductor: $e');
+    }
+
+    return {
+      'gananciasHoy': gananciasHoy,
+      'viajesHoy': viajesHoyCount,
+      'gananciasSemana': gananciasSemana,
+      'gananciasTotal': gananciasTotal,
+      'totalViajes': totalViajes,
+    };
+  }
 }

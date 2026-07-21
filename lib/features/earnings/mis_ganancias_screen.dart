@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/trip_service.dart';
+import '../../services/driver_session_service.dart';
 
 class MisGananciasScreen extends StatefulWidget {
   const MisGananciasScreen({super.key});
@@ -10,6 +12,45 @@ class MisGananciasScreen extends StatefulWidget {
 
 class _MisGananciasScreenState extends State<MisGananciasScreen> {
   int _selectedTab = 0;
+  bool _isLoading = true;
+  double _gananciasHoy = 0.0;
+  double _gananciasSemana = 0.0;
+  double _gananciasTotal = 0.0;
+  int _totalViajes = 0;
+  int _viajesHoy = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarMetricas();
+  }
+
+  Future<void> _cargarMetricas() async {
+    final driverId = DriverSessionService().id;
+    final data = await TripService.obtenerMetricasConductor(driverId);
+    if (mounted) {
+      setState(() {
+        _gananciasHoy = (data['gananciasHoy'] as num?)?.toDouble() ?? 0.0;
+        _gananciasSemana = (data['gananciasSemana'] as num?)?.toDouble() ?? 0.0;
+        _gananciasTotal = (data['gananciasTotal'] as num?)?.toDouble() ?? 0.0;
+        _totalViajes = (data['totalViajes'] as num?)?.toInt() ?? 0;
+        _viajesHoy = (data['viajesHoy'] as num?)?.toInt() ?? 0;
+        _isLoading = false;
+      });
+    }
+  }
+
+  double get _montoActual {
+    if (_selectedTab == 0) return _gananciasHoy;
+    if (_selectedTab == 1) return _gananciasSemana;
+    return _gananciasTotal;
+  }
+
+  String get _labelMonto {
+    if (_selectedTab == 0) return 'Ganancias de hoy';
+    if (_selectedTab == 1) return 'Ganancias de esta semana';
+    return 'Ganancias acumuladas totales';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,62 +73,58 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: AppColors.primary, size: 24),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            // Tab Segmented Hoy / Semana / Mes
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
                 children: [
-                  _buildTab(0, 'Hoy'),
-                  _buildTab(1, 'Semana'),
-                  _buildTab(2, 'Mes'),
-                ],
-              ),
-            ),
+                  // Tab Segmented Hoy / Semana / Mes
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildTab(0, 'Hoy'),
+                        _buildTab(1, 'Semana'),
+                        _buildTab(2, 'Total'),
+                      ],
+                    ),
+                  ),
 
-            const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-            // Header Ganancias
-            const Text('Ganancias de hoy', style: TextStyle(fontSize: 13, color: AppColors.outline)),
-            const SizedBox(height: 4),
-            const Text(
-              '\$ 45.250',
-              style: TextStyle(
-                fontSize: 42,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE6F4EA),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                '↗ +12% vs ayer',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF137333),
-                ),
-              ),
-            ),
+                  // Header Ganancias Dinámico
+                  Text(_labelMonto, style: const TextStyle(fontSize: 13, color: AppColors.outline)),
+                  const SizedBox(height: 4),
+                  Text(
+                    '\$ ${_montoActual.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE6F4EA),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _selectedTab == 0 ? '$_viajesHoy servicio(s) realizados hoy' : '$_totalViajes servicio(s) en total',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF137333),
+                      ),
+                    ),
+                  ),
 
             const SizedBox(height: 24),
 

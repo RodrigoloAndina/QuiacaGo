@@ -1,8 +1,35 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/trip_service.dart';
+import '../../services/driver_session_service.dart';
 
-class HistorialViajesScreen extends StatelessWidget {
+class HistorialViajesScreen extends StatefulWidget {
   const HistorialViajesScreen({super.key});
+
+  @override
+  State<HistorialViajesScreen> createState() => _HistorialViajesScreenState();
+}
+
+class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
+  bool _isLoading = true;
+  List<TripModel> _trips = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarHistorial();
+  }
+
+  Future<void> _cargarHistorial() async {
+    final driverId = DriverSessionService().id;
+    final historial = await TripService.obtenerHistorialConductor(driverId);
+    if (mounted) {
+      setState(() {
+        _trips = historial;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,98 +38,87 @@ class HistorialViajesScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const Icon(Icons.menu, color: AppColors.onSurface, size: 28),
         title: const Text(
-          'QuiacaGo',
+          'QuiacaGo Conductor',
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.w800,
-            fontSize: 22,
+            fontSize: 20,
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              backgroundColor: AppColors.primary,
-              child: const Text('👤', style: TextStyle(fontSize: 18)),
-            ),
-          ),
-        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Mis Viajes',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Revisa tu historial de recorridos por la región.',
-              style: TextStyle(fontSize: 14, color: AppColors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 24),
-
-            // Card 1
-            _buildTripCard(
-              date: '📅 12 OCT 2023 • 14:30',
-              amount: '\$1,250',
-              origin: 'Plaza de la República',
-              destination: 'Terminal de Ómnibus',
-              driver: 'Conductor: Carlos M. ⭐⭐⭐⭐⭐',
-              hasBorderLeft: true,
-            ),
-            const SizedBox(height: 16),
-
-            // Card 2
-            _buildTripCard(
-              date: '📅 08 OCT 2023 • 09:15',
-              amount: '\$850',
-              origin: 'Mercado Central',
-              destination: 'Barrio Santa Clara',
-              driver: 'Conductora: Laura G. ⭐⭐⭐⭐⭐',
-            ),
-            const SizedBox(height: 16),
-
-            // Card 3 (Cancelado)
-            _buildTripCard(
-              date: '📅 05 OCT 2023 • 18:45',
-              amount: 'Cancelado',
-              origin: 'Hospital Jorge Uro',
-              destination: 'Centro Cívico',
-              isCancelled: true,
-            ),
-
-            const SizedBox(height: 28),
-
-            // Cargar más viajes
-            Center(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(200, 48),
-                  side: const BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Historial de Viajes',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
-                child: const Text(
-                  'Cargar más viajes',
-                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Registro real de servicios asignados y completados en La Quiaca.',
+                    style: TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 20),
+
+                  if (_trips.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.surfaceContainerHigh),
+                      ),
+                      child: Column(
+                        children: const [
+                          Icon(Icons.history_outlined, size: 48, color: AppColors.outline),
+                          SizedBox(height: 12),
+                          Text(
+                            'Sin viajes registrados aún',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Los servicios aceptados y finalizados aparecerán aquí en tiempo real.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: AppColors.outline),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _trips.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final t = _trips[index];
+                        final isCancelled = t.status == 'cancelled';
+                        return _buildTripCard(
+                          date: t.id.length > 8 ? 'ID: ${t.id.substring(0, 8)}...' : 'Viaje #${t.id}',
+                          amount: isCancelled ? 'Cancelado' : '\$${t.fareAmount.toStringAsFixed(2)}',
+                          origin: t.pickupAddress,
+                          destination: t.destinationAddress,
+                          passenger: 'Pasajero: ${t.passengerName} (${t.passengerPhone})',
+                          isCancelled: isCancelled,
+                        );
+                      },
+                    ),
+
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
-            const SizedBox(height: 80),
-          ],
-        ),
-      ),
     );
   }
 
@@ -111,7 +127,7 @@ class HistorialViajesScreen extends StatelessWidget {
     required String amount,
     required String origin,
     required String destination,
-    String? driver,
+    String? passenger,
     bool hasBorderLeft = false,
     bool isCancelled = false,
   }) {
@@ -170,9 +186,12 @@ class HistorialViajesScreen extends StatelessWidget {
             children: [
               const Icon(Icons.circle, size: 12, color: AppColors.secondary),
               const SizedBox(width: 8),
-              Text(
-                'Origen: $origin',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.onSurface),
+              Expanded(
+                child: Text(
+                  'Origen: $origin',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.onSurface),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -181,35 +200,20 @@ class HistorialViajesScreen extends StatelessWidget {
             children: [
               const Icon(Icons.circle, size: 12, color: AppColors.primary),
               const SizedBox(width: 8),
-              Text(
-                'Destino: $destination',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.onSurfaceVariant),
+              Expanded(
+                child: Text(
+                  'Destino: $destination',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.onSurfaceVariant),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-          if (driver != null) ...[
-            const SizedBox(height: 16),
+          if (passenger != null) ...[
+            const SizedBox(height: 12),
             const Divider(),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(driver, style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant)),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surfaceContainerHigh,
-                    foregroundColor: AppColors.primary,
-                    minimumSize: const Size(90, 32),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  child: const Text('Ver Detalles', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
+            const SizedBox(height: 4),
+            Text(passenger, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
           ],
         ],
       ),

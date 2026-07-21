@@ -91,8 +91,10 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                 markers: [
                   Marker(
                     point: _conductorPos,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF00327D),
                         shape: BoxShape.circle,
@@ -104,13 +106,15 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.navigation, color: Colors.white, size: 24),
+                      child: const Center(child: Icon(Icons.navigation, color: Colors.white, size: 24)),
                     ),
                   ),
                   Marker(
                     point: _destinoPos,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEF4444),
                         shape: BoxShape.circle,
@@ -122,7 +126,7 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.location_on, color: Colors.white, size: 26),
+                      child: const Center(child: Icon(Icons.location_on, color: Colors.white, size: 26)),
                     ),
                   ),
                 ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
-import 'features/pasajero/inicio_pasajero_screen.dart';
+import 'features/pasajero/login_pasajero_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +21,7 @@ class QuiacaGoPasajeroApp extends StatelessWidget {
       title: 'QuiacaGo Pasajero',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const InicioPasajeroScreen(),
+      home: const LoginPasajeroScreen(),
     );
   }
 }

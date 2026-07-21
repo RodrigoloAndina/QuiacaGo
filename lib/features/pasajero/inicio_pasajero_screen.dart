@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/location_service.dart';
 import '../../services/tariff_service.dart';
+import '../../services/trip_service.dart';
 
 enum EstadoPasajero {
   inicio,           // Seleccionando origen y destino
@@ -53,8 +54,9 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
 
   // Código PIN de 4 dígitos único
   String _codigoPinSeguridad = '4821';
-  bool _esFeriado = false;
   String _motivoCancelacion = '';
+  bool _isPanelMinimized = false; // Estado para replegar el panel y ver bien el mapa
+  String? _tripIdActual;
 
   // LISTA OFICIAL DE DESTINOS FAVORITOS PREDEFINIDOS DE LA QUIACA
   final List<DestinoPredefinido> _destinosFavoritos = const [
@@ -97,7 +99,6 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
   }
 
   Future<void> _iniciarGPSReal() async {
-    // Captura inicial de posición GPS precisa del dispositivo
     final posGps = await LocationService.getCurrentLocation();
     if (mounted) {
       setState(() {
@@ -106,7 +107,6 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       _mapController.move(posGps, 16.2);
     }
 
-    // Escuchar movimiento del dispositivo en tiempo real
     _gpsSubscription = LocationService.getRealtimeLocationStream().listen((pos) {
       if (mounted && _estado == EstadoPasajero.inicio) {
         setState(() {
@@ -128,13 +128,31 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
     if (_estado != EstadoPasajero.inicio) return;
     setState(() {
       _destinoPos = puntoTocado;
-      _destinoCtrl.text = 'Punto Marcado en Mapa (${puntoTocado.latitude.toStringAsFixed(4)}, ${puntoTocado.longitude.toStringAsFixed(4)})';
+      _destinoCtrl.text = 'Punto Marcado (${puntoTocado.latitude.toStringAsFixed(4)}, ${puntoTocado.longitude.toStringAsFixed(4)})';
+      _isPanelMinimized = true; // Minimizar panel para ver bien el mapa
     });
   }
 
-  void _solicitarTaxi() {
+  Future<void> _solicitarTaxi() async {
+    final precio = TariffService.calcularPrecio();
+
     setState(() {
       _estado = EstadoPasajero.buscandoTaxi;
+      _isPanelMinimized = false;
+    });
+
+    // Registrar solicitud real en Supabase DB
+    final tripId = await TripService.solicitarViaje(
+      passengerName: 'María Gómez',
+      passengerPhone: '+54 3885 401234',
+      pickupAddress: _origenCtrl.text,
+      destinationAddress: _destinoCtrl.text,
+      fareAmount: precio,
+      pinCode: _codigoPinSeguridad,
+    );
+
+    setState(() {
+      _tripIdActual = tripId;
     });
   }
 
@@ -148,13 +166,13 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Indica el motivo de cancelación. El motivo quedará registrado en el historial de auditoría municipal.'),
+              const Text('Indica el motivo de cancelación. Se registrará en el historial de auditoría municipal.'),
               const SizedBox(height: 12),
               TextField(
                 controller: ctrl,
                 decoration: InputDecoration(
                   labelText: 'Motivo de cancelación',
-                  hintText: 'Ej: Demora prolongada del móvil',
+                  hintText: 'Ej: Demora del móvil',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -174,7 +192,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('⚠️ Viaje cancelado. Se registró el motivo en el historial municipal.'),
+                    content: Text('⚠️ Viaje cancelado. Registrado en el historial municipal.'),
                     backgroundColor: AppColors.statusCancelled,
                   ),
                 );
@@ -206,8 +224,8 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final precioCalculado = TariffService.calcularPrecio(esFeriado: _esFeriado);
-    final descTarifa = TariffService.getDescripcionTarifa(esFeriado: _esFeriado);
+    final precioCalculado = TariffService.calcularPrecio();
+    final descTarifa = TariffService.getDescripcionTarifa();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -228,27 +246,10 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(_esFeriado ? Icons.event_available : Icons.event_outlined, color: _esFeriado ? AppColors.secondary : AppColors.primary),
-            tooltip: 'Alternar Tarifa Feriado/Nocturna',
-            onPressed: () {
-              setState(() {
-                _esFeriado = !_esFeriado;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_esFeriado ? '🌙 Tarifa Nocturna/Feriado Activada (\$3.000)' : '☀️ Tarifa Diurna Municipal Activada (\$2.500)'),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: Stack(
         children: [
-          // MAPA INTERACTIVO HD CON CAPTURA DE TOQUE DIRECTO PARA ELEGIR DESTINO
+          // MAPA INTERACTIVO HD CON ALINEACIÓN CENTRADA PERFECTA DE ICONOS
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -263,34 +264,63 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
               ),
               MarkerLayer(
                 markers: [
-                  // Marcador Verde GPS Exacto del Pasajero
+                  // Marcador Verde Ubicación GPS Exacta Pasajero (ALINEADO AL CENTRO)
                   Marker(
                     point: _pasajeroPos,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF10B981),
                         shape: BoxShape.circle,
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
                         ],
                       ),
-                      child: const Icon(Icons.person_pin_circle, color: Colors.white, size: 28),
+                      child: const Center(
+                        child: Icon(Icons.person_pin_circle, color: Colors.white, size: 26),
+                      ),
                     ),
                   ),
-                  // Marcador Rojo de Destino Seleccionado
+
+                  // Marcador Rojo Destino Seleccionado (ALINEADO AL CENTRO)
                   Marker(
                     point: _destinoPos,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEF4444),
                         shape: BoxShape.circle,
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
                         ],
                       ),
-                      child: const Icon(Icons.location_on, color: Colors.white, size: 28),
+                      child: const Center(
+                        child: Icon(Icons.location_on, color: Colors.white, size: 26),
+                      ),
+                    ),
+                  ),
+
+                  // Marcador Taxi Cercano Móvil 045 (ALINEADO AL CENTRO)
+                  Marker(
+                    point: _conductorPos,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.directions_car, color: Colors.white, size: 24),
+                      ),
                     ),
                   ),
                 ],
@@ -298,11 +328,11 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
             ],
           ),
 
-          // PANEL INFERIOR DINÁMICO
+          // PANEL INFERIOR REPLEGABLE
           Positioned(
             left: 16,
             right: 16,
-            bottom: 24,
+            bottom: 20,
             child: _buildPanelSegunEstado(precioCalculado, descTarifa),
           ),
         ],
@@ -313,6 +343,45 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
   Widget _buildPanelSegunEstado(double precio, String descTarifa) {
     switch (_estado) {
       case EstadoPasajero.inicio:
+        if (_isPanelMinimized) {
+          // PANEL MINIMIZADO PARA VER PERFECTAMENTE EL MAPA COMPLETO
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 15, offset: const Offset(0, 5)),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.location_on, color: Color(0xFFEF4444), size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_destinoCtrl.text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(TariffService.formatearMonto(precio), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _isPanelMinimized = false),
+                  child: const Text('AMPLIAR DETALLES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+                ElevatedButton(
+                  onPressed: _solicitarTaxi,
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(horizontal: 14)),
+                  child: const Text('PEDIR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+              ],
+            ),
+          );
+        }
+
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -337,17 +406,14 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                     '¿A dónde vamos en La Quiaca?',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryFixedDim.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text('Toca el mapa', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.outline),
+                    tooltip: 'Minimizar para ver mapa',
+                    onPressed: () => setState(() => _isPanelMinimized = true),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
 
               // Campo Origen (GPS)
               TextField(
@@ -373,9 +439,9 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
               ),
               const SizedBox(height: 14),
 
-              // DESTINOS FAVORITOS PREDEFINIDOS EN LA QUIACA
+              // DESTINOS FAVORITOS PREDEFINIDOS
               const Text(
-                'DESTINOS FAVORITOS PREDEFINIDOS:',
+                'DESTINOS PREDEFINIDOS EN LA QUIACA:',
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.outline, letterSpacing: 0.8),
               ),
               const SizedBox(height: 8),
@@ -406,7 +472,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
               const Divider(),
               const SizedBox(height: 10),
 
-              // TARIFA MUNICIPAL DE LA QUIACA ($2500 / $3000)
+              // TARIFA MUNICIPAL AUTOMÁTICA GMT-3
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -430,7 +496,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
               SizedBox(
                 width: double.infinity,

@@ -93,8 +93,10 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                 markers: [
                   Marker(
                     point: _conductorPos,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF00327D),
                         shape: BoxShape.circle,
@@ -106,13 +108,15 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.directions_car_filled, color: Colors.white, size: 24),
+                      child: const Center(child: Icon(Icons.directions_car_filled, color: Colors.white, size: 24)),
                     ),
                   ),
                   Marker(
                     point: _pasajeroPos,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF10B981),
                         shape: BoxShape.circle,
@@ -124,7 +128,7 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.person_pin_circle, color: Colors.white, size: 26),
+                      child: const Center(child: Icon(Icons.person_pin_circle, color: Colors.white, size: 26)),
                     ),
                   ),
                 ],

@@ -3,45 +3,40 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/supabase_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginPasajeroScreen extends StatefulWidget {
+  const LoginPasajeroScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginPasajeroScreen> createState() => _LoginPasajeroScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController(text: '+54 3885 401234');
-  final _passwordController = TextEditingController(text: '123456');
+class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
+  final _telefonoDniCtrl = TextEditingController(text: '38450123');
+  final _passwordCtrl = TextEditingController(text: '123456');
   bool _isLoading = false;
 
-  Future<void> _handleLogin() async {
+  Future<void> _ingresarPasajero() async {
     setState(() => _isLoading = true);
-    
+
     try {
+      final input = _telefonoDniCtrl.text.trim();
       final supabase = SupabaseService().client;
-      final phone = _phoneController.text.trim();
-      
-      // Consultar si el chofer está registrado y si fue aprobado por la municipalidad
+
+      // Buscar perfil en Supabase
       final data = await supabase
           .from('profiles')
           .select()
-          .eq('phone', phone)
+          .or('phone.eq.$input,email.eq.$input')
           .maybeSingle();
 
       if (mounted) {
         setState(() => _isLoading = false);
-        if (data != null && data['is_approved'] == true) {
-          context.go('/home');
-        } else {
-          // Si no está aprobado por la municipalidad o es un registro nuevo
-          context.go('/cuenta-pendiente');
-        }
+        context.go('/pasajero-home');
       }
     } catch (_) {
       if (mounted) {
         setState(() => _isLoading = false);
-        context.go('/home');
+        context.go('/pasajero-home');
       }
     }
   }
@@ -64,14 +59,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 72,
                       height: 72,
                       decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                        color: Color(0xFF10B981),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.local_taxi, size: 40, color: Colors.white),
+                      child: const Icon(Icons.hail, size: 40, color: Colors.white),
                     ),
                     const SizedBox(height: 14),
                     const Text(
-                      'QuiacaGo Conductor',
+                      'QuiacaGo Pasajero',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
@@ -79,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const Text(
-                      'Aplicación Exclusiva para Taxis Habilitados',
+                      'Solicita Taxis Habilitados en La Quiaca',
                       style: TextStyle(fontSize: 13, color: AppColors.outline),
                     ),
                   ],
@@ -105,33 +100,33 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'ACCESO CONDUCTORES',
+                      'ACCESO PASAJEROS',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
+                        color: Color(0xFF10B981),
                         letterSpacing: 1,
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     TextFormField(
-                      controller: _phoneController,
+                      controller: _telefonoDniCtrl,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
-                        labelText: 'Teléfono Celular Habilitado',
-                        prefixIcon: const Icon(Icons.phone_android, color: AppColors.primary),
+                        labelText: 'Teléfono Celular o DNI',
+                        prefixIcon: const Icon(Icons.phone_android, color: Color(0xFF10B981)),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
                     const SizedBox(height: 14),
 
                     TextFormField(
-                      controller: _passwordController,
+                      controller: _passwordCtrl,
                       obscureText: true,
                       decoration: InputDecoration(
-                        labelText: 'Contraseña de Conductor',
-                        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
+                        labelText: 'Contraseña de Pasajero',
+                        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF10B981)),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
@@ -142,16 +137,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
+                        onPressed: _isLoading ? null : _ingresarPasajero,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: const Color(0xFF10B981),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
                         ),
                         child: _isLoading
                             ? const CircularProgressIndicator(color: Colors.white)
                             : const Text(
-                                'INGRESAR COMO CONDUCTOR',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                'INGRESAR A QUIACAGO PASAJERO',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
@@ -164,14 +159,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 48,
                       child: OutlinedButton.icon(
-                        onPressed: () => context.push('/registro-conductor'),
-                        icon: const Icon(Icons.person_add_alt_1, color: AppColors.primary),
+                        onPressed: () => context.push('/registro-pasajero'),
+                        icon: const Icon(Icons.person_add, color: Color(0xFF10B981)),
                         label: const Text(
-                          '¿Nuevo Conductor? Registrate aquí',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                          '¿Nuevo Pasajero? Registrate aquí',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF10B981)),
                         ),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary, width: 1.5),
+                          side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
                         ),
                       ),

@@ -6,6 +6,8 @@ import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/location_service.dart';
+import '../../services/trip_service.dart';
+import '../trips/nuevo_pedido_modal.dart';
 
 class InicioConductorScreen extends StatefulWidget {
   const InicioConductorScreen({super.key});
@@ -19,6 +21,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
   int _currentIndex = 0;
   LatLng _conductorPos = const LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng);
   StreamSubscription<LatLng>? _locationSubscription;
+  StreamSubscription<List<TripModel>>? _tripSubscription;
   final MapController _mapController = MapController();
 
   @override
@@ -28,7 +31,6 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
   }
 
   Future<void> _iniciarCapturaGPSReal() async {
-    // 1. Obtener primera posición conocida o precisa
     final posIncial = await LocationService.getCurrentLocation();
     if (mounted) {
       setState(() {
@@ -37,7 +39,6 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
       _mapController.move(posIncial, 16.0);
     }
 
-    // 2. Suscribirse a cambios continuos de GPS a medida que el auto avanza
     _locationSubscription = LocationService.getRealtimeLocationStream().listen((nuevaPos) {
       if (mounted) {
         setState(() {
@@ -48,9 +49,29 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
     });
   }
 
+  void _escucharViajesEnTiempoReal(bool conectar) {
+    _tripSubscription?.cancel();
+
+    if (conectar) {
+      // Suscribirse al stream Supabase Realtime de solicitudes de viaje
+      _tripSubscription = TripService.escucharViajesPendientes().listen((viajes) {
+        if (mounted && viajes.isNotEmpty && _isConnected) {
+          // Mostrar modal emergente de viaje en la pantalla del chofer
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const NuevoPedidoModal(),
+          );
+        }
+      });
+    }
+  }
+
   @override
   void dispose() {
     _locationSubscription?.cancel();
+    _tripSubscription?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -85,7 +106,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
       ),
       body: Stack(
         children: [
-          // Mapa Interactivo HD de La Quiaca con seguimiento GPS real
+          // MAPA INTERACTIVO HD CON ALINEACIÓN AL CENTRO EXACTO DEL ICONO DEL VEHÍCULO
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -101,8 +122,10 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                 markers: [
                   Marker(
                     point: _conductorPos,
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
@@ -114,7 +137,9 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.directions_car, color: Colors.white, size: 24),
+                      child: const Center(
+                        child: Icon(Icons.directions_car, color: Colors.white, size: 24),
+                      ),
                     ),
                   ),
                 ],
@@ -122,7 +147,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
             ],
           ),
 
-          // Bottom Sheet Stitch Conductor
+          // BOTTOM SHEET CONECTARSE
           Positioned(
             left: 0,
             right: 0,
@@ -143,7 +168,6 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle
                   Container(
                     width: 40,
                     height: 4,
@@ -154,7 +178,6 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Estado del Conductor
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -201,13 +224,14 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Botón CONECTARSE
+                  // BOTÓN CONECTARSE
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: () {
                         setState(() => _isConnected = !_isConnected);
+                        _escucharViajesEnTiempoReal(_isConnected);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(_isConnected ? '🟢 Estás DISPONIBLE para recibir viajes reales en La Quiaca.' : '🔴 Estás DESCONECTADO.'),
@@ -232,7 +256,6 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Tarjetas de Métricas (100% SIN EMOJIS, CON ICONOS MATERIAL)
                   Row(
                     children: [
                       Expanded(
@@ -250,7 +273,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                                   Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppColors.outline),
                                   SizedBox(width: 4),
                                   Text(
-                                    'Ganancias de hoy',
+                                    'Ganancias hoy',
                                     style: TextStyle(fontSize: 12, color: AppColors.outline),
                                   ),
                                 ],

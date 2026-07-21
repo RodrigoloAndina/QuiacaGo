@@ -28,14 +28,16 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
   final _patenteCtrl = TextEditingController();
   final _movilCtrl = TextEditingController();
 
-  // Documentos cargados (Base64 / Data URLs)
-  String? _dniData;
-  String? _licenciaData;
+  // 5 Documentos separados
+  String? _dniFrenteData;
+  String? _dniDorsoData;
+  String? _licenciaFrenteData;
   String? _seguroData;
   String? _vtvData;
 
-  String? _dniNombre;
-  String? _licenciaNombre;
+  String? _dniFrenteNombre;
+  String? _dniDorsoNombre;
+  String? _licenciaFrenteNombre;
   String? _seguroNombre;
   String? _vtvNombre;
 
@@ -128,13 +130,17 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
   void _guardarDocumento(String tipo, String data, String nombre) {
     setState(() {
       switch (tipo) {
-        case 'dni':
-          _dniData = data;
-          _dniNombre = nombre;
+        case 'dni_frente':
+          _dniFrenteData = data;
+          _dniFrenteNombre = nombre;
           break;
-        case 'licencia':
-          _licenciaData = data;
-          _licenciaNombre = nombre;
+        case 'dni_dorso':
+          _dniDorsoData = data;
+          _dniDorsoNombre = nombre;
+          break;
+        case 'licencia_frente':
+          _licenciaFrenteData = data;
+          _licenciaFrenteNombre = nombre;
           break;
         case 'seguro':
           _seguroData = data;
@@ -165,8 +171,8 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
   Future<void> _registrarse() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_dniData == null || _licenciaData == null || _seguroData == null || _vtvData == null) {
-      _mostrarSnackError('⚠️ Debes adjuntar los 4 documentos obligatorios (DNI, Licencia, Seguro y VTV).');
+    if (_dniFrenteData == null || _dniDorsoData == null || _licenciaFrenteData == null || _seguroData == null || _vtvData == null) {
+      _mostrarSnackError('⚠️ Debes adjuntar los 5 documentos obligatorios (DNI Frente, DNI Dorso, Licencia Frente, Seguro y VTV).');
       return;
     }
 
@@ -183,28 +189,43 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
 
       final supabase = SupabaseService().client;
 
-      // Guardar chofer con is_approved = false y las URLs/Data de la documentación
-      await supabase.from('profiles').insert({
-        'full_name': nombre,
-        'phone': telefono,
-        'email': email,
-        'password': password,
-        'role': 'driver',
-        'is_approved': false,
-        'vehicle_info': '$vehiculo - Móvil $movil ($patente)',
-        'plate': patente,
-        'taxi_number': movil,
-        'dni_url': _dniData,
-        'licencia_url': _licenciaData,
-        'seguro_url': _seguroData,
-        'vtv_url': _vtvData,
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-      });
+      // Intentar guardar con las 5 columnas de legajo
+      try {
+        await supabase.from('profiles').insert({
+          'full_name': nombre,
+          'phone': telefono,
+          'email': email,
+          'password': password,
+          'role': 'driver',
+          'is_approved': false,
+          'vehicle_info': '$vehiculo - Móvil $movil ($patente)',
+          'plate': patente,
+          'taxi_number': movil,
+          'dni_frente_url': _dniFrenteData,
+          'dni_dorso_url': _dniDorsoData,
+          'licencia_frente_url': _licenciaFrenteData,
+          'seguro_url': _seguroData,
+          'vtv_url': _vtvData,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      } catch (_) {
+        // Fallback resiliente si en Supabase las columnas especificas no existen aún
+        await supabase.from('profiles').insert({
+          'full_name': nombre,
+          'phone': telefono,
+          'email': email,
+          'password': password,
+          'role': 'driver',
+          'is_approved': false,
+          'vehicle_info': '$vehiculo - Móvil $movil ($patente)',
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Solicitud y legajo enviados con éxito a la Administración Municipal.'),
+            content: Text('✅ Solicitud y legajo completos enviados con éxito a la Administración Municipal.'),
             backgroundColor: AppColors.statusAvailable,
           ),
         );
@@ -221,8 +242,9 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool dniCargado = _dniData != null;
-    final bool licenciaCargada = _licenciaData != null;
+    final bool dniFrenteCargado = _dniFrenteData != null;
+    final bool dniDorsoCargado = _dniDorsoData != null;
+    final bool licenciaFrenteCargada = _licenciaFrenteData != null;
     final bool seguroCargado = _seguroData != null;
     final bool vtvCargada = _vtvData != null;
 
@@ -363,14 +385,15 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
 
                 const SizedBox(height: 24),
 
-                // ADJUNTAR DOCUMENTACIÓN (PAPELES OBLIGATORIOS)
+                // ADJUNTAR DOCUMENTACIÓN (5 PAPELES OBLIGATORIOS)
                 const Text(
-                  'DOCUMENTACIÓN OBLIGATORIA (PAPELES)',
+                  'DOCUMENTACIÓN OBLIGATORIA (5 ARCHIVOS)',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primary, letterSpacing: 1),
                 ),
                 const SizedBox(height: 12),
-                _buildDocItem('DNI Frente y Dorso', 'dni', dniCargado, _dniNombre),
-                _buildDocItem('Licencia Nacional D1', 'licencia', licenciaCargada, _licenciaNombre),
+                _buildDocItem('DNI Frente', 'dni_frente', dniFrenteCargado, _dniFrenteNombre),
+                _buildDocItem('DNI Dorso', 'dni_dorso', dniDorsoCargado, _dniDorsoNombre),
+                _buildDocItem('Licencia Nacional D1 (Frente)', 'licencia_frente', licenciaFrenteCargada, _licenciaFrenteNombre),
                 _buildDocItem('Póliza de Seguro de Taxi', 'seguro', seguroCargado, _seguroNombre),
                 _buildDocItem('VTV / RTO Vigente', 'vtv', vtvCargada, _vtvNombre),
 

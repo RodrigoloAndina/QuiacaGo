@@ -93,7 +93,7 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => context.go('/login'),
+          onPressed: () => context.go('/login-pasajero'),
         ),
         title: const Text(
           'Registro de Pasajero',

@@ -203,6 +203,7 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
       final payloadCompleto = {
         'id': newDriverId,
         'full_name': nombre,
+        'name': nombre,
         'phone': telefono,
         'email': email,
         'password': password,
@@ -228,6 +229,7 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
           await supabase.from('profiles').insert({
             'id': newDriverId,
             'full_name': nombre,
+            'name': nombre,
             'phone': telefono,
             'role': 'driver',
             'is_approved': false,
@@ -239,6 +241,7 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
           await supabase.from('profiles').insert({
             'id': newDriverId,
             'full_name': nombre,
+            'name': nombre,
             'phone': telefono,
             'role': 'driver',
             'is_approved': false,

@@ -1334,37 +1334,42 @@
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + dias);
 
-      const updateData = {
-        is_approved: true,
-        approved_until: expirationDate.toISOString(),
-        licencia_expiration: licVenc || null,
-        vtv_expiration: vtvVenc || null,
-        seguro_expiration: seguroVenc || null
+      const headers = {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
       };
 
       try {
+        // Nivel 1: Intentar guardar con todas las fechas de vencimiento de documentos
         let response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
           method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify(updateData)
+          headers: headers,
+          body: JSON.stringify({
+            is_approved: true,
+            approved_until: expirationDate.toISOString(),
+            licencia_expiration: licVenc || null,
+            vtv_expiration: vtvVenc || null,
+            seguro_expiration: seguroVenc || null
+          })
         });
 
+        // Nivel 2: Si faltan columnas de fechas especificas, intentar con approved_until
         if (!response.ok) {
-          // Fallback por si en Supabase faltan las columnas de fechas opcionales
           response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
             method: 'PATCH',
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
+            headers: headers,
             body: JSON.stringify({ is_approved: true, approved_until: expirationDate.toISOString() })
+          });
+        }
+
+        // Nivel 3: Ultra defensivo (actualización básica is_approved = true)
+        if (!response.ok) {
+          response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({ is_approved: true })
           });
         }
 
@@ -1380,35 +1385,33 @@
     }
 
     async function toggleHabilitacionDriver(driverId, habilitar, dias = 30) {
-      try {
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + dias);
-        
-        const updateDataFull = habilitar 
-          ? { is_approved: true, approved_until: expirationDate.toISOString() }
-          : { is_approved: false };
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + dias);
 
+      const headers = {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      };
+
+      try {
         let response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
           method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify(updateDataFull)
+          headers: headers,
+          body: JSON.stringify(
+            habilitar 
+              ? { is_approved: true, approved_until: expirationDate.toISOString() }
+              : { is_approved: false }
+          )
         });
 
-        if (!response.ok && habilitar) {
+        // Fallback si approved_until no existe en la BD Supabase
+        if (!response.ok) {
           response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
             method: 'PATCH',
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ is_approved: true })
+            headers: headers,
+            body: JSON.stringify({ is_approved: habilitar })
           });
         }
 

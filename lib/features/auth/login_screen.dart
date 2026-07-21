@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/supabase_service.dart';
+import '../../services/driver_session_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -53,11 +54,33 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Verificar si fue APROBADO por la municipalidad en el Panel Web
-      if (data['is_approved'] == true) {
+      // Guardar datos reales en DriverSessionService
+      DriverSessionService().setSession(
+        id: data['id']?.toString() ?? 'driver_${data['phone']}',
+        fullName: data['full_name'] ?? data['name'] ?? 'Conductor Habilitado',
+        phone: data['phone'] ?? phone,
+        vehicleInfo: data['vehicle_info'] ?? 'Taxi Habilitado',
+        plate: data['plate'] ?? '',
+        taxiNumber: data['taxi_number'] ?? '',
+        approvedUntil: data['approved_until']?.toString(),
+      );
+
+      // Verificar si fue APROBADO por la municipalidad y no está vencido
+      final bool isApproved = data['is_approved'] == true;
+      bool isExpired = false;
+
+      if (data['approved_until'] != null) {
+        final dateVenc = DateTime.tryParse(data['approved_until'].toString());
+        if (dateVenc != null && dateVenc.isBefore(DateTime.now())) {
+          isExpired = true;
+        }
+      }
+
+      if (isApproved && !isExpired) {
         context.go('/home');
+      } else if (isExpired) {
+        setState(() => _errorMessage = '⚠️ Tu habilitación de 30/60/90 días ha vencido. Contacta a la Municipalidad.');
       } else {
-        // Solicitud en revisión o no habilitado
         context.go('/cuenta-pendiente');
       }
     } catch (e) {

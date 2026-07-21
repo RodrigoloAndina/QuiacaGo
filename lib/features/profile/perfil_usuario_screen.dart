@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/driver_session_service.dart';
 
 class PerfilUsuarioScreen extends StatelessWidget {
   const PerfilUsuarioScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final session = DriverSessionService();
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
@@ -42,14 +45,14 @@ class PerfilUsuarioScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Carlos Mamani',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  Text(
+                    session.fullName,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Conductor Habilitado - La Quiaca',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  Text(
+                    session.phone.isNotEmpty ? session.phone : 'Conductor Habilitado - La Quiaca',
+                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -64,7 +67,7 @@ class PerfilUsuarioScreen extends StatelessWidget {
                         Icon(Icons.star, color: Colors.amber, size: 16),
                         SizedBox(width: 4),
                         Text(
-                          '4.95 Calificación',
+                          '5.0 Habilitación Activa',
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.statusAvailable),
                         ),
                       ],
@@ -81,8 +84,8 @@ class PerfilUsuarioScreen extends StatelessWidget {
               title: 'Información Personal',
               icon: Icons.badge_outlined,
               children: [
-                _buildInfoRow('Teléfono:', '+54 3885 401234'),
-                _buildInfoRow('DNI:', '32.145.678'),
+                _buildInfoRow('Nombre completo:', session.fullName),
+                _buildInfoRow('Teléfono:', session.phone.isNotEmpty ? session.phone : 'No registrado'),
                 _buildInfoRow('Licencia Nacional:', 'Cat. D1 - Habilitada'),
               ],
             ),
@@ -94,11 +97,9 @@ class PerfilUsuarioScreen extends StatelessWidget {
               title: 'Taxi Habilitado Asignado',
               icon: Icons.local_taxi_outlined,
               children: [
-                _buildInfoRow('Número Interno:', 'INT-04'),
-                _buildInfoRow('Patente / Dominio:', 'AB 123 CD'),
-                _buildInfoRow('Vehículo:', 'Toyota Etios (Sedán)'),
-                _buildInfoRow('Color:', 'Blanco / Techo Amarillo'),
-                _buildInfoRow('Año:', '2022'),
+                _buildInfoRow('Móvil asignado:', session.taxiNumber.isNotEmpty ? session.taxiNumber : 'Móvil Registrado'),
+                _buildInfoRow('Patente / Dominio:', session.plate.isNotEmpty ? session.plate : 'Registrada'),
+                _buildInfoRow('Vehículo:', session.vehicleInfo),
               ],
             ),
           ],

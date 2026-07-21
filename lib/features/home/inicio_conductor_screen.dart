@@ -8,6 +8,7 @@ import '../../core/constants/app_constants.dart';
 import '../../services/location_service.dart';
 import '../../services/driver_location_service.dart';
 import '../../services/trip_service.dart';
+import '../../services/driver_session_service.dart';
 import '../trips/nuevo_pedido_modal.dart';
 
 class InicioConductorScreen extends StatefulWidget {
@@ -27,11 +28,11 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
   final MapController _mapController = MapController();
   bool _modalAbierto = false;
 
-  // Identificación del conductor logueado (en producción vendrá del login/auth)
-  final String _driverId = 'conductor_01';
-  final String _driverName = 'Carlos Mendoza';
-  final String _vehicleInfo = 'Chevrolet Corsa - Móvil 045';
-  final String _plate = 'ABC 123';
+  // Identificación dinámica del conductor logueado desde DriverSessionService
+  String get _driverId => DriverSessionService().id.isNotEmpty ? DriverSessionService().id : 'conductor_01';
+  String get _driverName => DriverSessionService().fullName;
+  String get _vehicleInfo => DriverSessionService().vehicleInfo;
+  String get _plate => DriverSessionService().plate;
 
   @override
   void initState() {

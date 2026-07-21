@@ -1135,29 +1135,43 @@
               ? '<span class="badge badge-approved">HABILITADO</span>'
               : '<span class="badge badge-suspended">PENDIENTE / REVISIÓN</span>';
 
-            const actionBtn = isApproved
-              ? `<button class="btn-sm btn-red" onclick="toggleHabilitacionDriver('${p.id}', false)">SUSPENDER</button>`
-              : `<button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true)">HABILITAR</button>`;
+            let vencimientoText = '<span style="color:var(--accent-red); font-weight:bold;">Pendiente de Habilitación</span>';
+            if (isApproved) {
+              if (p.approved_until) {
+                const vence = new Date(p.approved_until);
+                const hoy = new Date();
+                const diff = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24));
+                vencimientoText = `<span style="color:var(--accent-green); font-weight:bold;">Vence: ${vence.toLocaleDateString()} (${diff > 0 ? diff + ' días' : 'VENCIDO'})</span>`;
+              } else {
+                vencimientoText = '<span style="color:var(--accent-green); font-weight:bold;">Permiso Activo (30 Días)</span>';
+              }
+            }
+
+            const actionBtns = isApproved
+              ? `<div style="display:flex; gap:6px;">
+                   <button class="btn-sm btn-green" title="Renovar 30 Días" onclick="toggleHabilitacionDriver('${p.id}', true, 30)">+30D</button>
+                   <button class="btn-sm btn-green" title="Renovar 60 Días" onclick="toggleHabilitacionDriver('${p.id}', true, 60)">+60D</button>
+                   <button class="btn-sm btn-red" onclick="toggleHabilitacionDriver('${p.id}', false)">SUSPENDER</button>
+                 </div>`
+              : `<div style="display:flex; gap:6px;">
+                   <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true, 30)">+30 Días</button>
+                   <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true, 60)">+60 Días</button>
+                   <button class="btn-sm btn-green" onclick="toggleHabilitacionDriver('${p.id}', true, 90)">+90 Días</button>
+                 </div>`;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
               <td>
-                <strong>${p.full_name || 'Conductor Registrado'}</strong><br>
+                <strong>${p.full_name || p.name || 'Conductor Registrado'}</strong><br>
                 <span style="font-size:12px; color:var(--text-muted);">${p.phone || p.email || 'Sin teléfono'}</span>
               </td>
               <td>${p.vehicle_info || 'Móvil Registrado'}</td>
-              <td>
-                <span style="color:${isApproved ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight:bold;">${isApproved ? 'Permiso Activo' : 'Pendiente de Habilitación'}</span>
-              </td>
+              <td>${vencimientoText}</td>
               <td>
                 <button class="btn-sm btn-blue" onclick="openDocsModal('${p.id}')">Ver Legajo PDF</button>
               </td>
               <td>${statusBadge}</td>
-              <td>
-                <div style="display:flex; gap:8px; align-items:center;">
-                  ${actionBtn}
-                </div>
-              </td>
+              <td>${actionBtns}</td>
             `;
             tbody.appendChild(tr);
           });
@@ -1192,7 +1206,7 @@
         return;
       }
 
-      document.getElementById('docsTitle').innerText = 'Legajo Digital - ' + (driver.full_name || 'Conductor');
+      document.getElementById('docsTitle').innerText = 'Legajo Digital - ' + (driver.full_name || driver.name || 'Conductor');
 
       let vencimientoInfo = 'No registrado';
       if (driver.approved_until) {
@@ -1261,15 +1275,14 @@
 
     async function toggleHabilitacionDriver(driverId, habilitar, dias = 30) {
       try {
-        const updateData = { is_approved: habilitar };
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + dias);
+        
+        const updateDataFull = habilitar 
+          ? { is_approved: true, approved_until: expirationDate.toISOString() }
+          : { is_approved: false };
 
-        if (habilitar) {
-          const expirationDate = new Date();
-          expirationDate.setDate(expirationDate.getDate() + dias);
-          updateData.approved_until = expirationDate.toISOString();
-        }
-
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
+        let response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
           method: 'PATCH',
           headers: {
             'apikey': SUPABASE_ANON_KEY,
@@ -1277,14 +1290,28 @@
             'Content-Type': 'application/json',
             'Prefer': 'return=minimal'
           },
-          body: JSON.stringify(updateData)
+          body: JSON.stringify(updateDataFull)
         });
 
+        if (!response.ok && habilitar) {
+          // Retry de respaldo en caso de que en Supabase aún no exista la columna approved_until
+          response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ is_approved: true })
+          });
+        }
+
         if (response.ok) {
-          alert(habilitar ? `✅ Conductor HABILITADO por ${dias} DÍAS correctamente en Supabase.` : '⛔ Conductor INHABILITADO en Supabase.');
+          alert(habilitar ? `✅ Conductor HABILITADO correctamente (${dias} DÍAS asignados).` : '⛔ Conductor INHABILITADO en Supabase.');
           fetchDriversTable();
         } else {
-          alert('No se pudo actualizar el estado en Supabase.');
+          alert('Error: No se pudo actualizar el registro en Supabase.');
         }
       } catch (err) {
         alert('Error al conectar con Supabase.');

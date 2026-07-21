@@ -200,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Divider(),
                       const SizedBox(height: 8),
 
-                      // BOTÓN DE REGISTRO PARA NUEVOS CONDUCTORES Y CARGA DE PAPELES
+                      // BOTÓN DE REGISTRO PARA NUEVOS CONDUCTORES
                       SizedBox(
                         width: double.infinity,
                         height: 48,
@@ -208,11 +208,30 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () => context.push('/registro-conductor'),
                           icon: const Icon(Icons.person_add_alt_1, color: AppColors.primary),
                           label: const Text(
-                            '¿Nuevo conductor? Registrate aquí',
+                            '¿Nuevo Conductor? Registrate aquí',
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
                           ),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: AppColors.primary, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // BOTÓN DE ACCESO / REGISTRO PARA PASAJEROS
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: () => context.push('/registro-pasajero'),
+                          icon: const Icon(Icons.hail, color: Colors.white),
+                          label: const Text(
+                            '¿Eres Pasajero? Registrate aquí',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
                           ),
                         ),

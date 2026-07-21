@@ -208,9 +208,13 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         setState(() => _isConnected = !_isConnected);
-                        if (_isConnected) {
-                          context.push('/nuevo-pedido');
-                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_isConnected ? '🟢 Estás DISPONIBLE para recibir viajes reales en La Quiaca.' : '🔴 Estás DESCONECTADO.'),
+                            backgroundColor: _isConnected ? AppColors.statusAvailable : AppColors.outline,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.power_settings_new, color: Colors.white),
                       label: Text(

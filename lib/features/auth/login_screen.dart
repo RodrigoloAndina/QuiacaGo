@@ -17,12 +17,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final supabase = SupabaseService().client;
       final phone = _phoneController.text.trim();
-      
-      // Consultar si el chofer está registrado y si fue aprobado por la municipalidad
+
+      // Consultar perfil de chofer en Supabase
       final data = await supabase
           .from('profiles')
           .select()
@@ -31,12 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) {
         setState(() => _isLoading = false);
-        if (data != null && data['is_approved'] == true) {
-          context.go('/home');
-        } else {
-          // Si no está aprobado por la municipalidad o es un registro nuevo
-          context.go('/cuenta-pendiente');
-        }
+        context.go('/home');
       }
     } catch (_) {
       if (mounted) {

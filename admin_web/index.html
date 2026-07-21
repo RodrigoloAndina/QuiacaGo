@@ -658,21 +658,21 @@
     <!-- TAB 1: DASHBOARD OVERVIEW -->
     <div id="tab-dashboard" class="content-grid">
 
-      <!-- Enriched Demanda por Hora Chart -->
+      <!-- Enriched Demanda por Hora Chart REAL -->
       <div class="card-box">
         <div class="card-title">
           <span>Demanda por Hora (Viajes Realizados)</span>
           <div style="display:flex; gap:12px; font-size:11px; font-weight:700; color:var(--text-muted);">
-            <span><strong style="color:#00327d;">■</strong> Tarifa Normal</span>
-            <span><strong style="color:#9d4221;">■</strong> Pico de Demanda</span>
+            <span><strong style="color:#00327d;">■</strong> Franja Operativa</span>
+            <span><strong style="color:#9d4221;">■</strong> Pico de Solicitudes</span>
           </div>
         </div>
 
         <div class="chart-wrapper">
-          <div class="chart-y-axis">
-            <span>150</span>
-            <span>100</span>
-            <span>50</span>
+          <div class="chart-y-axis" id="chartYAxis">
+            <span>--</span>
+            <span>--</span>
+            <span>--</span>
             <span>0</span>
           </div>
 
@@ -683,115 +683,34 @@
             <div class="grid-line"></div>
           </div>
 
-          <div class="chart-container">
-            <div class="chart-col" title="00:00 - 02:00: 25 viajes"><span class="val-label">25</span>
-              <div class="chart-bar" style="height:17%;"></div>
-            </div>
-            <div class="chart-col" title="02:00 - 04:00: 18 viajes"><span class="val-label">18</span>
-              <div class="chart-bar" style="height:12%;"></div>
-            </div>
-            <div class="chart-col" title="04:00 - 06:00: 10 viajes"><span class="val-label">10</span>
-              <div class="chart-bar" style="height:7%;"></div>
-            </div>
-            <div class="chart-col" title="06:00 - 08:00: 55 viajes"><span class="val-label">55</span>
-              <div class="chart-bar" style="height:36%;"></div>
-            </div>
-            <div class="chart-col" title="08:00 - 10:00: 108 viajes"><span class="val-label">108</span>
-              <div class="chart-bar active-blue" style="height:72%;"></div>
-            </div>
-            <div class="chart-col" title="10:00 - 12:00: 138 viajes (Pico)"><span class="val-label">138</span>
-              <div class="chart-bar active-blue" style="height:92%;"></div>
-            </div>
-            <div class="chart-col" title="12:00 - 14:00: 124 viajes"><span class="val-label">124</span>
-              <div class="chart-bar active-blue" style="height:82%;"></div>
-            </div>
-            <div class="chart-col" title="14:00 - 16:00: 85 viajes"><span class="val-label">85</span>
-              <div class="chart-bar" style="height:56%;"></div>
-            </div>
-            <div class="chart-col" title="16:00 - 18:00: 70 viajes"><span class="val-label">70</span>
-              <div class="chart-bar" style="height:46%;"></div>
-            </div>
-            <div class="chart-col" title="18:00 - 20:00: 92 viajes"><span class="val-label">92</span>
-              <div class="chart-bar" style="height:61%;"></div>
-            </div>
-            <div class="chart-col" title="20:00 - 22:00: 116 viajes (Hora Pico Tarde)"><span
-                class="val-label">116</span>
-              <div class="chart-bar active-orange" style="height:77%;"></div>
-            </div>
-            <div class="chart-col" title="22:00 - 24:00: 38 viajes"><span class="val-label">38</span>
-              <div class="chart-bar" style="height:25%;"></div>
-            </div>
+          <div class="chart-container" id="chartContainer">
+            <div style="text-align:center; width:100%; color:var(--text-muted); font-size:12px; padding:40px;">Cargando gráfico de demanda real...</div>
           </div>
         </div>
 
-        <div
-          style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:10px; padding-left:35px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:10px; padding-left:35px;">
           <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
         </div>
       </div>
 
-      <!-- Recent Activity Card -->
+      <!-- Recent Activity Card REAL -->
       <div class="card-box">
         <div class="card-title">Actividad Reciente</div>
 
-        <div class="activity-list">
-          <div class="activity-item">
-            <div class="activity-icon-bg">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="8.5" cy="7" r="4" />
-                <line x1="20" y1="8" x2="20" y2="14" />
-                <line x1="23" y1="11" x2="17" y2="11" />
-              </svg>
-            </div>
-            <div>
-              <h5 style="font-size:13px; font-weight:800; color:#0f172a;">Nuevo Conductor registrado</h5>
-              <p style="font-size:12px; color:var(--text-muted);">Carlos M. completó verificación</p>
-              <span style="font-size:11px; color:#94a3b8;">Hace 5 min</span>
-            </div>
-          </div>
-
-          <div class="activity-item">
-            <div class="activity-icon-bg" style="background:#fee2e2; color:#b91c1c;">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-            </div>
-            <div>
-              <h5 style="font-size:13px; font-weight:800; color:#0f172a;">Reporte de Usuario</h5>
-              <p style="font-size:12px; color:var(--text-muted);">Problema con pago Viaje #4892</p>
-              <span style="font-size:11px; color:#94a3b8;">Hace 18 min</span>
-            </div>
-          </div>
-
-          <div class="activity-item">
-            <div class="activity-icon-bg" style="background:#ffedd5; color:#c2410c;">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-            </div>
-            <div>
-              <h5 style="font-size:13px; font-weight:800; color:#0f172a;">Alerta Zonal emitida</h5>
-              <p style="font-size:12px; color:var(--text-muted);">Corte de calle en Av. principal</p>
-              <span style="font-size:11px; color:#94a3b8;">Hace 1 hora</span>
-            </div>
-          </div>
+        <div class="activity-list" id="activityList">
+          <div style="text-align:center; color:var(--text-muted); font-size:12px; padding:20px;">Cargando registro de actividad...</div>
         </div>
 
         <!-- Minimalist Button (NO EMOJIS) -->
         <div style="margin-top:20px; text-align:center;">
-          <button class="btn-record-link" onclick="openActivityModal()">
+          <button class="btn-record-link" onclick="fetchDriversTable(); switchTab('tab-conductores', document.querySelectorAll('.nav-item')[1]);">
             <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--primary);">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
               <line x1="16" y1="13" x2="8" y2="13" />
               <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
-            <span>Ver Todo el Registro de Actividad</span> ➔
+            <span>Ver Registro Completo de Usuarios</span> ➔
           </button>
         </div>
       </div>
@@ -1135,15 +1054,152 @@
       };
     }
 
+    function renderRealChart(trips = []) {
+      const container = document.getElementById('chartContainer');
+      const yAxis = document.getElementById('chartYAxis');
+      if (!container) return;
+
+      const counts = new Array(12).fill(0);
+
+      trips.forEach(t => {
+        if (t.created_at) {
+          const date = new Date(t.created_at);
+          const hour = date.getHours();
+          const bucketIndex = Math.floor(hour / 2);
+          if (bucketIndex >= 0 && bucketIndex < 12) {
+            counts[bucketIndex]++;
+          }
+        }
+      });
+
+      const maxVal = Math.max(...counts, 5);
+
+      if (yAxis) {
+        yAxis.innerHTML = `
+          <span>${maxVal}</span>
+          <span>${Math.round(maxVal * 0.66)}</span>
+          <span>${Math.round(maxVal * 0.33)}</span>
+          <span>0</span>
+        `;
+      }
+
+      let html = '';
+      const hourLabels = [
+        '00:00 - 02:00', '02:00 - 04:00', '04:00 - 06:00',
+        '06:00 - 08:00', '08:00 - 10:00', '10:00 - 12:00',
+        '12:00 - 14:00', '14:00 - 16:00', '16:00 - 18:00',
+        '18:00 - 20:00', '20:00 - 22:00', '22:00 - 24:00'
+      ];
+
+      counts.forEach((count, i) => {
+        const pct = Math.round((count / maxVal) * 100);
+        const isPeak = pct >= 75 && count > 0;
+        const barClass = isPeak ? 'active-orange' : (pct >= 50 ? 'active-blue' : '');
+        html += `
+          <div class="chart-col" title="${hourLabels[i]}: ${count} viajes">
+            <span class="val-label">${count}</span>
+            <div class="chart-bar ${barClass}" style="height:${pct === 0 ? 4 : pct}%;"></div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function formatTimeAgo(date) {
+      if (!date || isNaN(date.getTime())) return 'Recientemente';
+      const now = new Date();
+      const diffMin = Math.floor((now - date) / (1000 * 60));
+
+      if (diffMin < 1) return 'Hace un instante';
+      if (diffMin < 60) return `Hace ${diffMin} min`;
+      const diffHours = Math.floor(diffMin / 60);
+      if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+    }
+
+    function renderRealActivity(profiles = [], passengers = [], trips = []) {
+      const listEl = document.getElementById('activityList');
+      if (!listEl) return;
+
+      const events = [];
+
+      profiles.forEach(p => {
+        events.push({
+          type: 'driver',
+          title: 'Nuevo Conductor Registrado',
+          desc: `${p.full_name || p.name || 'Chofer'} - ${p.vehicle_info || 'Móvil'}`,
+          time: p.created_at ? new Date(p.created_at) : new Date()
+        });
+      });
+
+      passengers.forEach(pass => {
+        events.push({
+          type: 'passenger',
+          title: 'Nuevo Pasajero Registrado',
+          desc: `${pass.name || pass.phone || 'Pasajero'}`,
+          time: pass.created_at ? new Date(pass.created_at) : new Date()
+        });
+      });
+
+      trips.forEach(t => {
+        events.push({
+          type: 'trip',
+          title: `Servicio de Taxi: ${t.status || 'Solicitado'}`,
+          desc: `Origen: ${t.pickup_address || 'La Quiaca'} -> Destino: ${t.destination_address || 'Centro'}`,
+          time: t.created_at ? new Date(t.created_at) : new Date()
+        });
+      });
+
+      events.sort((a, b) => b.time - a.time);
+      const topEvents = events.slice(0, 5);
+
+      if (topEvents.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:12px; padding:20px;">Sin actividad reciente en Supabase.</div>`;
+        return;
+      }
+
+      let html = '';
+      topEvents.forEach(ev => {
+        const timeAgo = formatTimeAgo(ev.time);
+        let iconBg = 'background:#e0e7ff; color:#00327d;';
+        if (ev.type === 'passenger') iconBg = 'background:#ffedd5; color:#c2410c;';
+        if (ev.type === 'trip') iconBg = 'background:#dcfce7; color:#15803d;';
+
+        html += `
+          <div class="activity-item">
+            <div class="activity-icon-bg" style="${iconBg}">
+              <svg class="svg-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <div>
+              <h5 style="font-size:13px; font-weight:800; color:#0f172a;">${ev.title}</h5>
+              <p style="font-size:12px; color:var(--text-muted); margin:2px 0;">${ev.desc}</p>
+              <span style="font-size:11px; color:#94a3b8;">${timeAgo}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = html;
+    }
+
     // ACTUALIZAR MÉTRICAS REALES DE PRODUCCIÓN DESDE SUPABASE
     async function updateRealMetrics() {
       try {
-        // 1. Conductores registrados y habilitados
+        let profiles = [];
+        let passengers = [];
+        let trips = [];
+
+        // 1. Conductores
         const driversRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         if (driversRes.ok) {
-          const profiles = await driversRes.json();
+          profiles = await driversRes.json();
           if (Array.isArray(profiles)) {
             const habilitados = profiles.filter(p => p.is_approved === true).length;
             const elActivos = document.getElementById('metricConductoresActivos');
@@ -1153,12 +1209,12 @@
           }
         }
 
-        // 2. Pasajeros registrados
+        // 2. Pasajeros
         const passRes = await fetch(`${SUPABASE_URL}/rest/v1/passengers?select=*`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         if (passRes.ok) {
-          const passengers = await passRes.json();
+          passengers = await passRes.json();
           if (Array.isArray(passengers)) {
             const elUsuarios = document.getElementById('metricUsuarios');
             const elSubUsuarios = document.getElementById('metricSubUsuarios');
@@ -1167,12 +1223,12 @@
           }
         }
 
-        // 3. Viajes registrados en Supabase
+        // 3. Viajes
         const tripsRes = await fetch(`${SUPABASE_URL}/rest/v1/trips?select=*`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         if (tripsRes.ok) {
-          const trips = await tripsRes.json();
+          trips = await tripsRes.json();
           if (Array.isArray(trips)) {
             const hoyStr = new Date().toISOString().split('T')[0];
             const viajesHoy = trips.filter(t => t.created_at && t.created_at.startsWith(hoyStr)).length;
@@ -1188,6 +1244,11 @@
             if (elCancelados) elCancelados.innerText = cancelados;
           }
         }
+
+        // Renderizar gráfico de demanda real y actividad reciente
+        renderRealChart(trips);
+        renderRealActivity(profiles, passengers, trips);
+
       } catch (err) {
         console.error('Error actualizando métricas reales:', err);
       }

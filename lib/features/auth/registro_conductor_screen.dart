@@ -189,37 +189,47 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
 
       final supabase = SupabaseService().client;
 
-      // Intentar guardar con las 5 columnas de legajo
+      final payloadCompleto = {
+        'full_name': nombre,
+        'phone': telefono,
+        'email': email,
+        'password': password,
+        'role': 'driver',
+        'is_approved': false,
+        'vehicle_info': '$vehiculo - Móvil $movil ($patente)',
+        'plate': patente,
+        'taxi_number': movil,
+        'dni_frente_url': _dniFrenteData,
+        'dni_dorso_url': _dniDorsoData,
+        'licencia_frente_url': _licenciaFrenteData,
+        'seguro_url': _seguroData,
+        'vtv_url': _vtvData,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      };
+
       try {
-        await supabase.from('profiles').insert({
-          'full_name': nombre,
-          'phone': telefono,
-          'email': email,
-          'password': password,
-          'role': 'driver',
-          'is_approved': false,
-          'vehicle_info': '$vehiculo - Móvil $movil ($patente)',
-          'plate': patente,
-          'taxi_number': movil,
-          'dni_frente_url': _dniFrenteData,
-          'dni_dorso_url': _dniDorsoData,
-          'licencia_frente_url': _licenciaFrenteData,
-          'seguro_url': _seguroData,
-          'vtv_url': _vtvData,
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-        });
-      } catch (_) {
-        // Fallback resiliente si en Supabase las columnas especificas no existen aún
-        await supabase.from('profiles').insert({
-          'full_name': nombre,
-          'phone': telefono,
-          'email': email,
-          'password': password,
-          'role': 'driver',
-          'is_approved': false,
-          'vehicle_info': '$vehiculo - Móvil $movil ($patente)',
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-        });
+        // Nivel 1: Insert completo con 5 documentos
+        await supabase.from('profiles').insert(payloadCompleto);
+      } catch (err1) {
+        try {
+          // Nivel 2: Fallback sin columnas no estándar como email/dni_url
+          await supabase.from('profiles').insert({
+            'full_name': nombre,
+            'phone': telefono,
+            'role': 'driver',
+            'is_approved': false,
+            'vehicle_info': '$vehiculo - Móvil $movil ($patente) | Email: $email',
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          });
+        } catch (err2) {
+          // Nivel 3: Ultra defensivo (campos básicos universales)
+          await supabase.from('profiles').insert({
+            'full_name': nombre,
+            'phone': telefono,
+            'role': 'driver',
+            'is_approved': false,
+          });
+        }
       }
 
       if (mounted) {

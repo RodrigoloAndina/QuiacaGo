@@ -21,8 +21,9 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
   int _currentIndex = 0;
   LatLng _conductorPos = const LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng);
   StreamSubscription<LatLng>? _locationSubscription;
-  StreamSubscription<List<TripModel>>? _tripSubscription;
+  Timer? _pollingTimerTrips;
   final MapController _mapController = MapController();
+  bool _modalAbierto = false;
 
   @override
   void initState() {
@@ -49,29 +50,40 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
     });
   }
 
-  void _escucharViajesEnTiempoReal(bool conectar) {
-    _tripSubscription?.cancel();
+  void _iniciarVerificacionViajesContinuos(bool conectar) {
+    _pollingTimerTrips?.cancel();
 
     if (conectar) {
-      // Suscribirse al stream Supabase Realtime de solicitudes de viaje
-      _tripSubscription = TripService.escucharViajesPendientes().listen((viajes) {
-        if (mounted && viajes.isNotEmpty && _isConnected) {
-          // Mostrar modal emergente de viaje en la pantalla del chofer
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => const NuevoPedidoModal(),
-          );
+      // Polling activo cada 2 segundos para verificar si hay solicitudes de pasajeros en La Quiaca
+      _pollingTimerTrips = Timer.periodic(const Duration(seconds: 2), (_) async {
+        if (!_isConnected || _modalAbierto) return;
+
+        final viajes = await TripService.obtenerViajesPendientes();
+        if (mounted && viajes.isNotEmpty && !_modalAbierto && _isConnected) {
+          _mostrarModalNuevoPedido();
         }
       });
     }
   }
 
+  void _mostrarModalNuevoPedido() {
+    setState(() => _modalAbierto = true);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const NuevoPedidoModal(),
+    ).then((_) {
+      if (mounted) {
+        setState(() => _modalAbierto = false);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _locationSubscription?.cancel();
-    _tripSubscription?.cancel();
+    _pollingTimerTrips?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -106,7 +118,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
       ),
       body: Stack(
         children: [
-          // MAPA INTERACTIVO HD CON ALINEACIÓN AL CENTRO EXACTO DEL ICONO DEL VEHÍCULO
+          // MAPA INTERACTIVO HD CON CENTRADO DE MARCADOR DE VEHÍCULO
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -146,6 +158,28 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
               ),
             ],
           ),
+
+          // BOTÓN FLOTANTE SI HAY PEDIDOS PENDIENTES
+          if (_isConnected)
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: ElevatedButton.icon(
+                onPressed: _mostrarModalNuevoPedido,
+                icon: const Icon(Icons.notifications_active, color: Colors.white),
+                label: const Text(
+                  'VER SOLICITUDES DE VIAJE EN LA QUIACA',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  elevation: 6,
+                ),
+              ),
+            ),
 
           // BOTTOM SHEET CONECTARSE
           Positioned(
@@ -231,7 +265,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         setState(() => _isConnected = !_isConnected);
-                        _escucharViajesEnTiempoReal(_isConnected);
+                        _iniciarVerificacionViajesContinuos(_isConnected);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(_isConnected ? '🟢 Estás DISPONIBLE para recibir viajes reales en La Quiaca.' : '🔴 Estás DESCONECTADO.'),

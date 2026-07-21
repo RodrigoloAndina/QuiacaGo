@@ -2,28 +2,56 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/tariff_service.dart';
+import '../../services/trip_service.dart';
 
 class NuevoPedidoModal extends StatefulWidget {
-  const NuevoPedidoModal({super.key});
+  final TripModel? trip;
+
+  const NuevoPedidoModal({super.key, this.trip});
 
   @override
   State<NuevoPedidoModal> createState() => _NuevoPedidoModalState();
 }
 
 class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
-  int _secondsRemaining = 13;
+  int _secondsRemaining = 15;
   Timer? _timer;
+  TripModel? _activeTrip;
+  bool _isLoadingTrip = true;
 
   @override
   void initState() {
     super.initState();
+    _cargarViajeReal();
     _startTimer();
+  }
+
+  Future<void> _cargarViajeReal() async {
+    if (widget.trip != null) {
+      if (mounted) {
+        setState(() {
+          _activeTrip = widget.trip;
+          _isLoadingTrip = false;
+        });
+      }
+      return;
+    }
+
+    // Traer la solicitud real desde Supabase DB o Servidor REST local
+    final lista = await TripService.obtenerViajesPendientes();
+    if (mounted) {
+      setState(() {
+        _activeTrip = lista.isNotEmpty ? lista.first : null;
+        _isLoadingTrip = false;
+      });
+    }
   }
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining > 1) {
-        setState(() => _secondsRemaining--);
+        if (mounted) setState(() => _secondsRemaining--);
       } else {
         _timer?.cancel();
         if (mounted) {
@@ -41,6 +69,12 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
 
   @override
   Widget build(BuildContext context) {
+    final trip = _activeTrip;
+    final nombrePasajero = trip?.passengerName ?? 'María Gómez';
+    final origen = trip?.pickupAddress ?? 'Av. Sarmiento 450, La Quiaca';
+    final destino = trip?.destinationAddress ?? 'Terminal de Ómnibus';
+    final monto = trip != null ? TariffService.formatearMonto(trip.fareAmount) : TariffService.formatearMonto(TariffService.calcularPrecio());
+
     return Scaffold(
       backgroundColor: Colors.black54,
       body: Center(
@@ -62,33 +96,40 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Badge Solicitud Entrante
+                // Badge Solicitud Entrante Real
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.primaryFixedDim.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'SOLICITUD ENTRANTE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                      letterSpacing: 1.0,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.hail, color: AppColors.primary, size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        'SOLICITUD ENTRANTE REAL',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
-                // Circle 13 Seconds
+                // Círculo Contador de Tiempo para Aceptar
                 Container(
-                  width: 130,
-                  height: 130,
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primary, width: 8),
+                    border: Border.all(color: AppColors.primary, width: 7),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -96,8 +137,8 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
                       Text(
                         '$_secondsRemaining',
                         style: const TextStyle(
-                          fontSize: 38,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
                           color: AppColors.primary,
                           height: 1,
                         ),
@@ -106,7 +147,7 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
                       const Text(
                         'SEGUNDOS',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.w800,
                           color: AppColors.outline,
                           letterSpacing: 1.0,
@@ -116,26 +157,33 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
-                // Price
-                const Text(
-                  '\$1.200',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.onSurface,
-                  ),
+                // Nombre Pasajero
+                Text(
+                  nombrePasajero,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 4),
+
+                // Monto Real
+                Text(
+                  monto,
+                  style: const TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
                 const Text(
-                  'ARS - Pago en Efectivo',
-                  style: TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
+                  'Tarifa Oficial Municipal • Efectivo',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
-                // Route Box
+                // Caja de Ruta Real (Origen -> Destino)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -146,35 +194,45 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
                   child: Column(
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.adjust, color: AppColors.secondary, size: 20),
-                          SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Origen', style: TextStyle(fontSize: 11, color: AppColors.outline)),
-                              Text(
-                                'Plaza Central',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.onSurface),
-                              ),
-                            ],
+                        children: [
+                          const Icon(Icons.my_location, color: Color(0xFF10B981), size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('ORIGEN / RECOGIDA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.outline)),
+                                Text(
+                                  origen,
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 12),
                       Row(
-                        children: const [
-                          Icon(Icons.location_on, color: AppColors.primary, size: 20),
-                          SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Destino', style: TextStyle(fontSize: 11, color: AppColors.outline)),
-                              Text(
-                                'Terminal',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.onSurface),
-                              ),
-                            ],
+                        children: [
+                          const Icon(Icons.location_on, color: Color(0xFFEF4444), size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('DESTINO FINAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.outline)),
+                                Text(
+                                  destino,
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -184,7 +242,7 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
 
                 const SizedBox(height: 24),
 
-                // Action Buttons
+                // Botones Aceptar / Rechazar
                 Row(
                   children: [
                     Expanded(
@@ -196,39 +254,34 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
                           side: const BorderSide(color: AppColors.statusCancelled, width: 1.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
                         ),
                         child: const Text(
                           '✕ RECHAZAR',
-                          style: TextStyle(
-                            color: AppColors.statusCancelled,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: AppColors.statusCancelled, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           _timer?.cancel();
-                          context.go('/taxi-asignado');
+                          if (trip != null) {
+                            await TripService.aceptarViaje(trip.id, 'Móvil 045 - Carlos M.');
+                          }
+                          if (mounted) {
+                            context.go('/taxi-asignado');
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
+                          backgroundColor: const Color(0xFF10B981),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
                         ),
                         child: const Text(
                           '✓ ACEPTAR',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),

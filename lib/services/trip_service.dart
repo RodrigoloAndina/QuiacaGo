@@ -124,4 +124,18 @@ class TripService {
 
     return resultados;
   }
+
+  /// Acepta el viaje por el chofer habilitado asignado
+  static Future<bool> aceptarViaje(String tripId, String driverInfo) async {
+    try {
+      final supabase = SupabaseService().client;
+      await supabase.from('trips').update({
+        'status': 'accepted',
+        'driver_info': driverInfo,
+      }).eq('id', tripId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }

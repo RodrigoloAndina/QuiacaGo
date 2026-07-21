@@ -24,6 +24,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
   Timer? _pollingTimerTrips;
   final MapController _mapController = MapController();
   bool _modalAbierto = false;
+  TripModel? _viajePendienteEncontrado;
 
   @override
   void initState() {
@@ -54,25 +55,36 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
     _pollingTimerTrips?.cancel();
 
     if (conectar) {
-      // Polling activo cada 2 segundos para verificar si hay solicitudes de pasajeros en La Quiaca
       _pollingTimerTrips = Timer.periodic(const Duration(seconds: 2), (_) async {
         if (!_isConnected || _modalAbierto) return;
 
         final viajes = await TripService.obtenerViajesPendientes();
         if (mounted && viajes.isNotEmpty && !_modalAbierto && _isConnected) {
-          _mostrarModalNuevoPedido();
+          _mostrarModalNuevoPedido(viajes.first);
         }
       });
     }
   }
 
-  void _mostrarModalNuevoPedido() {
+  void _mostrarModalNuevoPedido([TripModel? viaje]) async {
+    TripModel? viajeAMostrar = viaje ?? _viajePendienteEncontrado;
+    
+    if (viajeAMostrar == null) {
+      final viajes = await TripService.obtenerViajesPendientes();
+      if (viajes.isNotEmpty) {
+        viajeAMostrar = viajes.first;
+      }
+    }
+
+    if (!mounted) return;
+
     setState(() => _modalAbierto = true);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const NuevoPedidoModal(),
+      builder: (context) => NuevoPedidoModal(trip: viajeAMostrar),
     ).then((_) {
       if (mounted) {
         setState(() => _modalAbierto = false);
@@ -118,7 +130,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
       ),
       body: Stack(
         children: [
-          // MAPA INTERACTIVO HD CON CENTRADO DE MARCADOR DE VEHÍCULO
+          // MAPA INTERACTIVO HD CON ALINEACIÓN CENTRADA
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -159,24 +171,27 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
             ],
           ),
 
-          // BOTÓN FLOTANTE SI HAY PEDIDOS PENDIENTES
+          // BOTÓN FLOTANTE SUPERIOR CUANDO EL CHOFER ESTÁ CONECTADO
           if (_isConnected)
             Positioned(
               top: 16,
               left: 16,
               right: 16,
-              child: ElevatedButton.icon(
-                onPressed: _mostrarModalNuevoPedido,
-                icon: const Icon(Icons.notifications_active, color: Colors.white),
-                label: const Text(
-                  'VER SOLICITUDES DE VIAJE EN LA QUIACA',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  elevation: 6,
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () => _mostrarModalNuevoPedido(),
+                  icon: const Icon(Icons.notifications_active, color: Colors.white, size: 20),
+                  label: const Text(
+                    'VER SOLICITUDES DE VIAJE EN LA QUIACA',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00327D),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    elevation: 6,
+                  ),
                 ),
               ),
             ),

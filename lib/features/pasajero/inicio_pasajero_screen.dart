@@ -344,38 +344,57 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
     switch (_estado) {
       case EstadoPasajero.inicio:
         if (_isPanelMinimized) {
-          // PANEL MINIMIZADO PARA VER PERFECTAMENTE EL MAPA COMPLETO
+          // PANEL MINIMIZADO PREMIUM ESTILO UBER SLATE DARK
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              color: const Color(0xFF0F172A),
+              borderRadius: BorderRadius.circular(30),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 15, offset: const Offset(0, 5)),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
+                ),
               ],
             ),
             child: Row(
               children: [
-                const Icon(Icons.location_on, color: Color(0xFFEF4444), size: 22),
-                const SizedBox(width: 8),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.open_in_full, color: Color(0xFF94A3B8), size: 20),
+                  tooltip: 'Ampliar detalles',
+                  onPressed: () => setState(() => _isPanelMinimized = false),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_destinoCtrl.text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text(TariffService.formatearMonto(precio), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                      Text(
+                        _destinoCtrl.text,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        TariffService.formatearMonto(precio),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF10B981)),
+                      ),
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: () => setState(() => _isPanelMinimized = false),
-                  child: const Text('AMPLIAR DETALLES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                ),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _solicitarTaxi,
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(horizontal: 14)),
-                  child: const Text('PEDIR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00327D),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  child: const Text('PEDIR TAXI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
                 ),
               ],
             ),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +8,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/supabase_service.dart';
+
+String generateUuidV4() {
+  final Random random = Random();
+  final List<int> bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  final String hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}';
+}
 
 class RegistroConductorScreen extends StatefulWidget {
   const RegistroConductorScreen({super.key});
@@ -188,8 +198,10 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
       final password = _passwordCtrl.text.trim();
 
       final supabase = SupabaseService().client;
+      final newDriverId = generateUuidV4();
 
       final payloadCompleto = {
+        'id': newDriverId,
         'full_name': nombre,
         'phone': telefono,
         'email': email,
@@ -208,12 +220,13 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
       };
 
       try {
-        // Nivel 1: Insert completo con 5 documentos
+        // Nivel 1: Insert completo con ID UUID v4 generado y 5 documentos
         await supabase.from('profiles').insert(payloadCompleto);
       } catch (err1) {
         try {
-          // Nivel 2: Fallback sin columnas no estándar como email/dni_url
+          // Nivel 2: Fallback sin columnas no estándar
           await supabase.from('profiles').insert({
+            'id': newDriverId,
             'full_name': nombre,
             'phone': telefono,
             'role': 'driver',
@@ -222,8 +235,9 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
             'created_at': DateTime.now().toUtc().toIso8601String(),
           });
         } catch (err2) {
-          // Nivel 3: Ultra defensivo (campos básicos universales)
+          // Nivel 3: Ultra defensivo con ID
           await supabase.from('profiles').insert({
+            'id': newDriverId,
             'full_name': nombre,
             'phone': telefono,
             'role': 'driver',

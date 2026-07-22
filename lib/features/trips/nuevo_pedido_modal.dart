@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/tariff_service.dart';
 import '../../services/trip_service.dart';
+import '../../services/current_trip_session.dart';
 
 class NuevoPedidoModal extends StatefulWidget {
   final TripModel? trip;
@@ -205,8 +206,11 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
                       child: ElevatedButton(
                         onPressed: () async {
                           _timer?.cancel();
+                          if (trip != null) {
+                            CurrentTripSession().setTrip(trip);
+                          }
                           final ok = await TripService.aceptarViaje(
-                            tripId: trip.id,
+                            tripId: trip?.id ?? '',
                             driverId: widget.driverId,
                             driverName: widget.driverName,
                             vehicleInfo: widget.vehicleInfo,

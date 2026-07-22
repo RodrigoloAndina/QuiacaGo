@@ -7,6 +7,8 @@ import '../../core/theme/app_colors.dart';
 import '../../services/location_service.dart';
 import '../../services/routing_service.dart';
 
+import '../../services/current_trip_session.dart';
+
 class TaxiAsignadoScreen extends StatefulWidget {
   const TaxiAsignadoScreen({super.key});
 
@@ -15,8 +17,8 @@ class TaxiAsignadoScreen extends StatefulWidget {
 }
 
 class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
-  LatLng _conductorPos = const LatLng(-22.1055, -65.5985);
-  final LatLng _pasajeroPos = const LatLng(-22.1024, -65.5998); // Av. Sarmiento 450
+  LatLng _conductorPos = const LatLng(0, 0);
+  LatLng _pasajeroPos = const LatLng(0, 0);
   List<LatLng> _rutaPuntos = [];
   bool _isLoadingRoute = true;
 
@@ -27,15 +29,22 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
   }
 
   Future<void> _cargarRutaReal() async {
-    // 1. Obtener ubicación GPS actual del dispositivo del conductor
+    final trip = CurrentTripSession().currentTrip;
     final posGps = await LocationService.getCurrentLocation();
+
+    LatLng pasajeroPosReal = posGps;
+    if (trip != null && trip.pickupLat != 0.0 && trip.pickupLng != 0.0) {
+      pasajeroPosReal = LatLng(trip.pickupLat, trip.pickupLng);
+    } else {
+      pasajeroPosReal = LatLng(posGps.latitude + 0.003, posGps.longitude + 0.003);
+    }
     
-    // 2. Consultar el motor de ruteo OSRM para trazar la línea exactamente por las calles
-    final puntosCalculados = await RoutingService.getRoutePoints(posGps, _pasajeroPos);
+    final puntosCalculados = await RoutingService.getRoutePoints(posGps, pasajeroPosReal);
 
     if (mounted) {
       setState(() {
         _conductorPos = posGps;
+        _pasajeroPos = pasajeroPosReal;
         _rutaPuntos = puntosCalculados;
         _isLoadingRoute = false;
       });
@@ -235,31 +244,37 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                 children: [
                   Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 24,
-                        backgroundColor: Color(0xFF00327D),
+                        backgroundColor: const Color(0xFF00327D),
                         child: Text(
-                          'MG',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          (CurrentTripSession().currentTrip?.passengerName.isNotEmpty == true)
+                              ? CurrentTripSession().currentTrip!.passengerName.substring(0, 1).toUpperCase()
+                              : 'P',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),
                       const SizedBox(width: 14),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'María Gómez',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                              CurrentTripSession().currentTrip?.passengerName.isNotEmpty == true
+                                  ? CurrentTripSession().currentTrip!.passengerName
+                                  : 'Pasajero QuiacaGo',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Row(
                               children: [
-                                Icon(Icons.star, color: Colors.amber, size: 16),
-                                SizedBox(width: 4),
+                                const Icon(Icons.star, color: Colors.amber, size: 16),
+                                const SizedBox(width: 4),
                                 Text(
-                                  '4.9 (12 viajes)',
-                                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                  CurrentTripSession().currentTrip?.passengerPhone.isNotEmpty == true
+                                      ? CurrentTripSession().currentTrip!.passengerPhone
+                                      : 'Pasajero Registrado',
+                                  style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                                 ),
                               ],
                             ),
@@ -286,20 +301,22 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                   const SizedBox(height: 14),
 
                   Row(
-                    children: const [
-                      Icon(Icons.location_on, color: Color(0xFF10B981), size: 22),
-                      SizedBox(width: 10),
+                    children: [
+                      const Icon(Icons.location_on, color: Color(0xFF10B981), size: 22),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'PUNTO DE RECOGIDA (GPS ACTIVO)',
                               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8)),
                             ),
                             Text(
-                              'Av. Sarmiento 450, La Quiaca',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                              CurrentTripSession().currentTrip?.pickupAddress.isNotEmpty == true
+                                  ? CurrentTripSession().currentTrip!.pickupAddress
+                                  : 'Ubicación GPS del Pasajero',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                             ),
                           ],
                         ),

@@ -6,10 +6,34 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 
-class ConfirmacionLlegadaScreen extends StatelessWidget {
+import '../../services/current_trip_session.dart';
+import '../../services/location_service.dart';
+
+class ConfirmacionLlegadaScreen extends StatefulWidget {
   const ConfirmacionLlegadaScreen({super.key});
 
-  final LatLng lugarEncuentro = const LatLng(-22.1024, -65.5998);
+  @override
+  State<ConfirmacionLlegadaScreen> createState() => _ConfirmacionLlegadaScreenState();
+}
+
+class _ConfirmacionLlegadaScreenState extends State<ConfirmacionLlegadaScreen> {
+  LatLng _lugarEncuentro = const LatLng(0, 0);
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarUbicacionReal();
+  }
+
+  Future<void> _cargarUbicacionReal() async {
+    final trip = CurrentTripSession().currentTrip;
+    if (trip != null && trip.pickupLat != 0.0 && trip.pickupLng != 0.0) {
+      if (mounted) setState(() => _lugarEncuentro = LatLng(trip.pickupLat, trip.pickupLng));
+    } else {
+      final pos = await LocationService.getCurrentLocation();
+      if (mounted) setState(() => _lugarEncuentro = pos);
+    }
+  }
 
   Future<void> _hacerLlamada() async {
     final Uri url = Uri.parse('tel:+5493885401234');
@@ -19,7 +43,9 @@ class ConfirmacionLlegadaScreen extends StatelessWidget {
   }
 
   Future<void> _abrirWhatsApp() async {
-    final Uri url = Uri.parse('https://wa.me/5493885401234?text=Hola%20María,%20soy%20el%20conductor%20de%20QuiacaGo.%20Ya%20estoy%20afuera%20esperándote%20en%20Av.%20Sarmiento%20450.');
+    final name = CurrentTripSession().currentTrip?.passengerName ?? 'Pasajero';
+    final addr = CurrentTripSession().currentTrip?.pickupAddress ?? 'su ubicación';
+    final Uri url = Uri.parse('https://wa.me/5493885401234?text=Hola%20$name,%20soy%20el%20conductor%20de%20QuiacaGo.%20Ya%20estoy%20esperándote%20en%20$addr.');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
@@ -37,7 +63,7 @@ class ConfirmacionLlegadaScreen extends StatelessWidget {
           // Mapa Enfocado en el Punto de Encuentro
           FlutterMap(
             options: MapOptions(
-              initialCenter: lugarEncuentro,
+              initialCenter: _lugarEncuentro.latitude == 0 ? const LatLng(-22.1024, -65.5998) : _lugarEncuentro,
               initialZoom: 17.5,
             ),
             children: [
@@ -48,7 +74,7 @@ class ConfirmacionLlegadaScreen extends StatelessWidget {
               MarkerLayer(
                 markers: [
                   Marker(
-                    point: lugarEncuentro,
+                    point: _lugarEncuentro,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: const BoxDecoration(

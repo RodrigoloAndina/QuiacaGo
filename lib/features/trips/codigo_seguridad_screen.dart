@@ -5,6 +5,9 @@ import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 
+import '../../services/current_trip_session.dart';
+import '../../services/location_service.dart';
+
 class CodigoSeguridadScreen extends StatefulWidget {
   const CodigoSeguridadScreen({super.key});
 
@@ -13,12 +16,36 @@ class CodigoSeguridadScreen extends StatefulWidget {
 }
 
 class _CodigoSeguridadScreenState extends State<CodigoSeguridadScreen> {
-  final List<TextEditingController> _controllers = [
-    TextEditingController(text: '4'),
-    TextEditingController(text: '8'),
-    TextEditingController(text: '2'),
-    TextEditingController(text: '1'),
-  ];
+  late final List<TextEditingController> _controllers;
+  LatLng _posicionMapa = const LatLng(0, 0);
+
+  @override
+  void initState() {
+    super.initState();
+    final pin = CurrentTripSession().currentTrip?.pinCode ?? '1234';
+    final p0 = pin.length > 0 ? pin[0] : '1';
+    final p1 = pin.length > 1 ? pin[1] : '2';
+    final p2 = pin.length > 2 ? pin[2] : '3';
+    final p3 = pin.length > 3 ? pin[3] : '4';
+
+    _controllers = [
+      TextEditingController(text: p0),
+      TextEditingController(text: p1),
+      TextEditingController(text: p2),
+      TextEditingController(text: p3),
+    ];
+    _cargarPosicion();
+  }
+
+  Future<void> _cargarPosicion() async {
+    final trip = CurrentTripSession().currentTrip;
+    if (trip != null && trip.pickupLat != 0.0 && trip.pickupLng != 0.0) {
+      if (mounted) setState(() => _posicionMapa = LatLng(trip.pickupLat, trip.pickupLng));
+    } else {
+      final pos = await LocationService.getCurrentLocation();
+      if (mounted) setState(() => _posicionMapa = pos);
+    }
+  }
 
   @override
   void dispose() {
@@ -60,8 +87,8 @@ class _CodigoSeguridadScreenState extends State<CodigoSeguridadScreen> {
         children: [
           // Map
           FlutterMap(
-            options: const MapOptions(
-              initialCenter: LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng),
+            options: MapOptions(
+              initialCenter: _posicionMapa.latitude == 0 ? const LatLng(-22.1024, -65.5998) : _posicionMapa,
               initialZoom: 16.0,
             ),
             children: [
@@ -69,11 +96,11 @@ class _CodigoSeguridadScreenState extends State<CodigoSeguridadScreen> {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.quiacago.conductor',
               ),
-              const MarkerLayer(
+              MarkerLayer(
                 markers: [
                   Marker(
-                    point: LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng),
-                    child: Icon(Icons.person_pin_circle, color: AppColors.primary, size: 40),
+                    point: _posicionMapa,
+                    child: const Icon(Icons.person_pin_circle, color: AppColors.primary, size: 40),
                   ),
                 ],
               ),

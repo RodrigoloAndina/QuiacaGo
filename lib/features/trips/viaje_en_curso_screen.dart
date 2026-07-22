@@ -7,6 +7,8 @@ import '../../core/theme/app_colors.dart';
 import '../../services/location_service.dart';
 import '../../services/routing_service.dart';
 
+import '../../services/current_trip_session.dart';
+
 class ViajeEnCursoScreen extends StatefulWidget {
   const ViajeEnCursoScreen({super.key});
 
@@ -15,8 +17,8 @@ class ViajeEnCursoScreen extends StatefulWidget {
 }
 
 class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
-  LatLng _conductorPos = const LatLng(-22.1024, -65.5998); // Av. Sarmiento 450
-  final LatLng _destinoPos = const LatLng(-22.1085, -65.5940); // Terminal de Ómnibus
+  LatLng _conductorPos = const LatLng(0, 0);
+  LatLng _destinoPos = const LatLng(0, 0);
   List<LatLng> _rutaPuntos = [];
   bool _isLoadingRoute = true;
 
@@ -27,15 +29,22 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
   }
 
   Future<void> _cargarRutaRealOSRM() async {
-    // 1. Capturar la ubicación GPS en vivo del celular del conductor
+    final trip = CurrentTripSession().currentTrip;
     final posGps = await LocationService.getCurrentLocation();
+
+    LatLng destinoReal = posGps;
+    if (trip != null && trip.destinationLat != 0.0 && trip.destinationLng != 0.0) {
+      destinoReal = LatLng(trip.destinationLat, trip.destinationLng);
+    } else {
+      destinoReal = LatLng(posGps.latitude + 0.005, posGps.longitude + 0.005);
+    }
     
-    // 2. Traer la geometría vial OSRM alineada 100% al asfalto de las calles
-    final puntos = await RoutingService.getRoutePoints(posGps, _destinoPos);
+    final puntos = await RoutingService.getRoutePoints(posGps, destinoReal);
 
     if (mounted) {
       setState(() {
         _conductorPos = posGps;
+        _destinoPos = destinoReal;
         _rutaPuntos = puntos;
         _isLoadingRoute = false;
       });

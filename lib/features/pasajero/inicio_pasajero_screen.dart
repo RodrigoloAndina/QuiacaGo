@@ -69,7 +69,16 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
   Future<void> _iniciarGPSReal() async {
     final posGps = await LocationService.getCurrentLocation();
     if (mounted) {
-      setState(() => _pasajeroPos = posGps);
+      final destinoDefecto = const LatLng(-22.1085, -65.5940);
+      final distLat = (posGps.latitude - destinoDefecto.latitude).abs();
+
+      setState(() {
+        _pasajeroPos = posGps;
+        if (distLat > 0.5) {
+          _destinoPos = LatLng(posGps.latitude + 0.005, posGps.longitude + 0.005);
+          _destinoCtrl.text = 'Destino Cercano';
+        }
+      });
       _mapController.move(posGps, 16.2);
     }
     _gpsSubscription = LocationService.getRealtimeLocationStream().listen((pos) {
@@ -96,7 +105,15 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
     final precio = TariffService.calcularPrecio();
     setState(() { _estado = EstadoPasajero.buscandoTaxi; _isPanelMinimized = false; });
 
-    final trip = await TripService.solicitarViaje(
+    print('[Pasajero] Solicitando viaje - Nombre: ${InicioPasajeroScreen.passengerName}, Tel: ${InicioPasajeroScreen.passengerPhone}');
+    print('[Pasajero] Origen: ${_origenCtrl.text} (${_pasajeroPos.latitude}, ${_pasajeroPos.longitude})');
+    print('[Pasajero] Destino: ${_destinoCtrl.text} (${_destinoPos.latitude}, ${_destinoPos.longitude})');
+    print('[Pasajero] Precio: $precio');
+
+    TripModel? trip;
+    
+    // Intento 1
+    trip = await TripService.solicitarViaje(
       passengerName: InicioPasajeroScreen.passengerName,
       passengerPhone: InicioPasajeroScreen.passengerPhone,
       pickupAddress: _origenCtrl.text,
@@ -108,9 +125,37 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       fareAmount: precio,
     );
 
+    // Intento 2 si falló
+    if (trip == null) {
+      print('[Pasajero] Intento 1 falló, reintentando...');
+      await Future.delayed(const Duration(seconds: 1));
+      trip = await TripService.solicitarViaje(
+        passengerName: InicioPasajeroScreen.passengerName,
+        passengerPhone: InicioPasajeroScreen.passengerPhone,
+        pickupAddress: _origenCtrl.text,
+        pickupLat: _pasajeroPos.latitude,
+        pickupLng: _pasajeroPos.longitude,
+        destinationAddress: _destinoCtrl.text,
+        destinationLat: _destinoPos.latitude,
+        destinationLng: _destinoPos.longitude,
+        fareAmount: precio,
+      );
+    }
+
     if (trip != null && mounted) {
+      print('[Pasajero] Viaje creado exitosamente con ID: ${trip.id}, status: ${trip.status}');
       setState(() => _viajeActual = trip);
-      _escucharEstadoViaje(trip.id);
+      _escucharEstadoViaje(trip!.id);
+    } else if (mounted) {
+      print('[Pasajero] ERROR: No se pudo crear el viaje en Supabase');
+      setState(() => _estado = EstadoPasajero.inicio);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error al solicitar taxi. Verifique su conexión e intente nuevamente.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
     }
   }
 

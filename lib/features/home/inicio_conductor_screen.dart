@@ -80,7 +80,14 @@ class _InicioConductorScreenState extends State<InicioConductorScreen> {
     // 2. Publicar cada 5 segundos
     _gpsPublishTimer = Timer.periodic(const Duration(seconds: 5), (_) => _publicarGPS());
 
-    // 3. Polling activo de 2s + Stream Realtime para garantizar la llegada inmediata de pedidos reales
+    // 3. Chequeo instantáneo al momento de conectarse
+    TripService.obtenerViajesPendientes().then((viajes) {
+      if (mounted && viajes.isNotEmpty && !_modalAbierto && _isConnected) {
+        _mostrarModalNuevoPedido(viajes.first);
+      }
+    });
+
+    // 4. Polling activo de 2s + Stream Realtime para recibir solicitudes de taxi inmediatamente
     _pollingTripsTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
       if (!_isConnected || _modalAbierto) return;
       final viajes = await TripService.obtenerViajesPendientes();

@@ -199,9 +199,9 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
                         const SizedBox(height: 12),
                         const Text('Viajes realizados', style: TextStyle(fontSize: 12, color: AppColors.outline)),
                         const SizedBox(height: 4),
-                        const Text(
-                          '14',
-                          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.onSurface),
+                        Text(
+                          '${_selectedTab == 0 ? _viajesHoy : _totalViajes}',
+                          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.onSurface),
                         ),
                       ],
                     ),
@@ -231,9 +231,9 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
                         const SizedBox(height: 12),
                         const Text('Calificación', style: TextStyle(fontSize: 12, color: AppColors.outline)),
                         const SizedBox(height: 4),
-                        const Text(
-                          '4.9 / 5',
-                          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.onSurface),
+                        Text(
+                          _totalViajes > 0 ? '5.0 / 5' : 'Sin viajes',
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.onSurface),
                         ),
                       ],
                     ),
@@ -269,19 +269,15 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
                       const SizedBox(width: 14),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Tiempo conectado', style: TextStyle(fontSize: 12, color: AppColors.outline)),
+                        children: [
+                          const Text('Tiempo conectado', style: TextStyle(fontSize: 12, color: AppColors.outline)),
                           Text(
-                            '5h 30m',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.onSurface),
+                            _totalViajes > 0 ? 'Activo en servicio' : '0h 00m',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.onSurface),
                           ),
                         ],
                       ),
                     ],
-                  ),
-                  const Text(
-                    'Detalle',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary),
                   ),
                 ],
               ),

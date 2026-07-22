@@ -684,11 +684,13 @@
           </div>
 
           <div class="chart-container" id="chartContainer">
-            <div style="text-align:center; width:100%; color:var(--text-muted); font-size:12px; padding:40px;">Cargando gráfico de demanda real...</div>
+            <div style="text-align:center; width:100%; color:var(--text-muted); font-size:12px; padding:40px;">Cargando
+              gráfico de demanda real...</div>
           </div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:10px; padding-left:35px;">
+        <div
+          style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:10px; padding-left:35px;">
           <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
         </div>
       </div>
@@ -698,12 +700,14 @@
         <div class="card-title">Actividad Reciente</div>
 
         <div class="activity-list" id="activityList">
-          <div style="text-align:center; color:var(--text-muted); font-size:12px; padding:20px;">Cargando registro de actividad...</div>
+          <div style="text-align:center; color:var(--text-muted); font-size:12px; padding:20px;">Cargando registro de
+            actividad...</div>
         </div>
 
         <!-- Minimalist Button (NO EMOJIS) -->
         <div style="margin-top:20px; text-align:center;">
-          <button class="btn-record-link" onclick="fetchDriversTable(); switchTab('tab-conductores', document.querySelectorAll('.nav-item')[1]);">
+          <button class="btn-record-link"
+            onclick="fetchDriversTable(); switchTab('tab-conductores', document.querySelectorAll('.nav-item')[1]);">
             <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--primary);">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
@@ -739,7 +743,7 @@
         <tbody id="driversTableBody">
           <tr>
             <td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">
-              Cargando solicitudes de habilitación registradas en Supabase...
+              Cargando solicitudes de habilitación registradas...
             </td>
           </tr>
         </tbody>
@@ -752,8 +756,8 @@
         <div>
           <h3 style="font-size:17px; font-weight:800; color:#0f172a;">Monitoreo GPS de Taxis Habilitados en La Quiaca
           </h3>
-          <p style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">Transmisión activa de posiciones en vivo
-            desde Supabase Realtime.</p>
+          <p style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">Transmisión activa de posiciones en
+            vivo.</p>
         </div>
         <div
           style="background:#dcfce7; color:#15803d; padding:6px 14px; border-radius:12px; font-weight:800; font-size:12px; display:flex; align-items:center; gap:8px;">
@@ -923,12 +927,14 @@
 
   <!-- MODAL LIGHTBOX VISOR DE IMÁGENES AMPLIADAS (SIN ABOUT:BLANK) -->
   <div class="modal-overlay" id="imageViewerModal" style="z-index:9999;">
-    <div class="modal-card" style="width:800px; max-width:95vw; background:#0f172a; color:white; text-align:center; padding:16px;">
+    <div class="modal-card"
+      style="width:800px; max-width:95vw; background:#0f172a; color:white; text-align:center; padding:16px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h4 id="imageViewerTitle" style="color:white; font-size:16px; margin:0;">Documento Ampliado</h4>
         <button class="btn-sm btn-red" onclick="closeImageViewerModal()">✕ Cerrar Visor</button>
       </div>
-      <div style="max-height:75vh; overflow:auto; display:flex; justify-content:center; align-items:center; background:#020617; border-radius:12px; padding:10px;">
+      <div
+        style="max-height:75vh; overflow:auto; display:flex; justify-content:center; align-items:center; background:#020617; border-radius:12px; padding:10px;">
         <img id="imageViewerImg" src="" style="max-width:100%; max-height:70vh; object-fit:contain; border-radius:8px;">
       </div>
     </div>
@@ -1286,9 +1292,9 @@
 
             const statusBadge = isApproved
               ? '<span class="badge badge-approved">HABILITADO</span>'
-              : (venc.estaVencido 
-                  ? `<span class="badge badge-suspended">SUSPENDIDO</span><br><span style="font-size:10px; color:var(--accent-red); font-weight:bold;">Vencimiento de ${venc.motivo}</span>` 
-                  : '<span class="badge badge-suspended">PENDIENTE / REVISIÓN</span>');
+              : (venc.estaVencido
+                ? `<span class="badge badge-suspended">SUSPENDIDO</span><br><span style="font-size:10px; color:var(--accent-red); font-weight:bold;">Vencimiento de ${venc.motivo}</span>`
+                : '<span class="badge badge-suspended">PENDIENTE / REVISIÓN</span>');
 
             let vencimientoText = '<span style="color:var(--accent-red); font-weight:bold;">Pendiente de Habilitación</span>';
             if (isApproved) {
@@ -1518,7 +1524,7 @@
           method: 'PATCH',
           headers: headers,
           body: JSON.stringify(
-            habilitar 
+            habilitar
               ? { is_approved: true, approved_until: expirationDate.toISOString() }
               : { is_approved: false }
           )

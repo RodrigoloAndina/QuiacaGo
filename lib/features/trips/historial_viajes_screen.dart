@@ -21,13 +21,22 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
   }
 
   Future<void> _cargarHistorial() async {
-    final driverId = DriverSessionService().id;
-    final historial = await TripService.obtenerHistorialConductor(driverId);
-    if (mounted) {
-      setState(() {
-        _trips = historial;
-        _isLoading = false;
-      });
+    try {
+      final driverId = DriverSessionService().id;
+      final historial = await TripService.obtenerHistorialConductor(driverId);
+      if (mounted) {
+        setState(() {
+          _trips = historial;
+        });
+      }
+    } catch (e) {
+      print('[HistorialScreen] Error cargando historial: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

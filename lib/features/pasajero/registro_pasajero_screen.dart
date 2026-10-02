@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../services/supabase_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/registration_validator.dart';
 import 'inicio_pasajero_screen.dart';
 
 class RegistroPasajeroScreen extends StatefulWidget {
@@ -18,7 +20,9 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
   final _dniCtrl = TextEditingController();
   final _fechaNacCtrl = TextEditingController();
   final _telefonoCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _confirmPasswordCtrl = TextEditingController();
 
   bool _isLoading = false;
 
@@ -41,7 +45,8 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
     );
     if (picked != null) {
       setState(() {
-        _fechaNacCtrl.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+        _fechaNacCtrl.text =
+            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       });
     }
   }
@@ -55,30 +60,34 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
       final nombre = _nombreCtrl.text.trim();
       final dni = _dniCtrl.text.trim();
       final fechaNac = _fechaNacCtrl.text.trim();
-      final telefono = _telefonoCtrl.text.trim();
+      final telefono =
+          RegistrationValidator.digitsOnly(_telefonoCtrl.text.trim());
+      final email = _emailCtrl.text.trim();
       final password = _passwordCtrl.text.trim();
 
-      final supabase = SupabaseService().client;
-
-      // Intentar guardar en tabla 'passengers' o en 'profiles' como fallback
-      try {
-        await supabase.from('passengers').insert({
-          'full_name': nombre,
-          'dni': dni,
-          'birth_date': fechaNac,
-          'phone': telefono,
-          'password': password,
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-        });
-      } catch (err) {
-        // Fallback a tabla 'profiles' si 'passengers' no está creada en Supabase
-        await supabase.from('profiles').insert({
-          'full_name': nombre,
-          'phone': telefono,
-          'role': 'passenger',
-          'is_approved': true,
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-        });
+      // La contraseña queda exclusivamente en Supabase Auth (hash seguro).
+      final response = await AuthService().signUp(
+        email: email,
+        password: password,
+        fullName: nombre,
+        phone: telefono,
+        role: 'passenger',
+        extraData: {
+          'dni': RegistrationValidator.digitsOnly(dni),
+          'birth_date': _dateToIso(fechaNac),
+        },
+      );
+      final isConfirmed = response.user?.emailConfirmedAt != null;
+      if (!isConfirmed) {
+        await AuthService().logout();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Revisá tu correo para confirmar la cuenta y luego ingresá.'),
+          ));
+          context.go('/login-pasajero');
+        }
+        return;
       }
 
       // Guardar localmente los datos para inicio de sesión inmediato
@@ -88,7 +97,8 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Bienvenido a QuiacaGo, $nombre. Registro completado.'),
+            content:
+                Text('✅ Bienvenido a QuiacaGo, $nombre. Registro completado.'),
             backgroundColor: AppColors.statusAvailable,
           ),
         );
@@ -97,12 +107,31 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al registrar: $e'), backgroundColor: const Color(0xFFEF4444)),
+          SnackBar(
+              content: Text('Error al registrar: $e'),
+              backgroundColor: const Color(0xFFEF4444)),
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _dateToIso(String value) {
+    final parts = value.split('/');
+    return '${parts[2]}-${parts[1]}-${parts[0]}';
+  }
+
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _dniCtrl.dispose();
+    _fechaNacCtrl.dispose();
+    _telefonoCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -118,7 +147,10 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
         ),
         title: const Text(
           'Registro de Pasajero',
-          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 18),
         ),
       ),
       body: SafeArea(
@@ -131,7 +163,10 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
               children: [
                 const Text(
                   'Crea tu cuenta de Pasajero',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary),
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary),
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -139,32 +174,35 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
                   style: TextStyle(fontSize: 13, color: AppColors.outline),
                 ),
                 const SizedBox(height: 28),
-
                 TextFormField(
                   controller: _nombreCtrl,
                   decoration: InputDecoration(
                     labelText: 'Nombre y Apellido completo',
                     hintText: 'Ej: María Gómez',
-                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.primary),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    prefixIcon: const Icon(Icons.person_outline,
+                        color: AppColors.primary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
-                  validator: (v) => v == null || v.isEmpty ? 'Campo obligatorio' : null,
+                  validator: (v) =>
+                      RegistrationValidator.requiredText(v, 'El nombre'),
                 ),
                 const SizedBox(height: 14),
-
                 TextFormField(
                   controller: _dniCtrl,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
                     labelText: 'Documento Nacional de Identidad (DNI)',
                     hintText: 'Ej: 38450123',
-                    prefixIcon: const Icon(Icons.badge_outlined, color: AppColors.primary),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    prefixIcon: const Icon(Icons.badge_outlined,
+                        color: AppColors.primary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
-                  validator: (v) => v == null || v.isEmpty ? 'Campo obligatorio' : null,
+                  validator: RegistrationValidator.dni,
                 ),
                 const SizedBox(height: 14),
-
                 TextFormField(
                   controller: _fechaNacCtrl,
                   readOnly: true,
@@ -172,55 +210,98 @@ class _RegistroPasajeroScreenState extends State<RegistroPasajeroScreen> {
                   decoration: InputDecoration(
                     labelText: 'Fecha de Nacimiento',
                     hintText: 'DD/MM/AAAA',
-                    prefixIcon: const Icon(Icons.calendar_today_outlined, color: AppColors.primary),
-                    suffixIcon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    prefixIcon: const Icon(Icons.calendar_today_outlined,
+                        color: AppColors.primary),
+                    suffixIcon: const Icon(Icons.arrow_drop_down,
+                        color: AppColors.primary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
-                  validator: (v) => v == null || v.isEmpty ? 'Selecciona tu fecha de nacimiento' : null,
+                  validator: (v) => v == null || v.isEmpty
+                      ? 'Selecciona tu fecha de nacimiento'
+                      : null,
                 ),
                 const SizedBox(height: 14),
-
                 TextFormField(
                   controller: _telefonoCtrl,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ()-]')),
+                  ],
                   decoration: InputDecoration(
                     labelText: 'Número de Teléfono Celular',
                     hintText: '+54 3885 401234',
-                    prefixIcon: const Icon(Icons.phone_android, color: AppColors.primary),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    prefixIcon: const Icon(Icons.phone_android,
+                        color: AppColors.primary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
-                  validator: (v) => v == null || v.isEmpty ? 'Campo obligatorio' : null,
+                  validator: RegistrationValidator.phone,
                 ),
                 const SizedBox(height: 14),
-
+                TextFormField(
+                  controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Correo electrónico',
+                    prefixIcon: const Icon(Icons.email_outlined,
+                        color: AppColors.primary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                  validator: RegistrationValidator.email,
+                ),
+                const SizedBox(height: 14),
                 TextFormField(
                   controller: _passwordCtrl,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Contraseña de acceso',
-                    prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    prefixIcon: const Icon(Icons.lock_outline,
+                        color: AppColors.primary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
-                  validator: (v) => v == null || v.length < 6 ? 'Mínimo 6 caracteres' : null,
+                  validator: RegistrationValidator.password,
                 ),
-
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: _confirmPasswordCtrl,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Repetir contraseña',
+                    prefixIcon: const Icon(Icons.lock_reset_outlined,
+                        color: AppColors.primary),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                  validator: (v) => RegistrationValidator.passwordConfirmation(
+                      v, _passwordCtrl.text),
+                ),
                 const SizedBox(height: 32),
-
                 SizedBox(
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton.icon(
                     onPressed: _isLoading ? null : _registrarsePasajero,
                     icon: _isLoading
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
                         : const Icon(Icons.arrow_forward, color: Colors.white),
                     label: Text(
-                      _isLoading ? 'CREANDO CUENTA...' : 'CREAR MI CUENTA E INGRESAR',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      _isLoading
+                          ? 'CREANDO CUENTA...'
+                          : 'CREAR MI CUENTA E INGRESAR',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
                     ),
                   ),
                 ),

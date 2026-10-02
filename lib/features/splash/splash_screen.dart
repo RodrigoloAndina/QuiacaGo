@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/auth_service.dart';
+import '../../services/driver_session_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -9,7 +11,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -33,11 +36,46 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _controller.forward();
 
     // Navegación automática a Login después de 2.5s
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) {
-        context.go('/login');
+    Future.delayed(const Duration(milliseconds: 2500), _resolveSession);
+  }
+
+  Future<void> _resolveSession() async {
+    Map<String, dynamic>? profile;
+    try {
+      profile = await AuthService().currentProfile();
+    } catch (_) {
+      if (AuthService().hasSession && await DriverSessionService().restore()) {
+        if (mounted) context.go('/home');
+        return;
       }
-    });
+    }
+    if (!mounted) return;
+    if (profile?['role'] == 'driver') {
+      if (AuthService.suspensionMessage(profile) != null) {
+        await AuthService().logout();
+        if (mounted) context.go('/login');
+        return;
+      }
+      DriverSessionService().setSession(
+        id: profile!['id'].toString(),
+        fullName: profile['full_name']?.toString() ?? 'Conductor',
+        phone: profile['phone']?.toString() ?? '',
+        vehicleInfo: profile['vehicle_info']?.toString() ?? '',
+        plate: profile['plate']?.toString() ?? '',
+        taxiNumber: profile['taxi_number']?.toString() ?? '',
+        approvedUntil: profile['approved_until']?.toString(),
+      );
+      final approvedUntil =
+          DateTime.tryParse(profile['approved_until']?.toString() ?? '');
+      final enabled = profile['is_approved'] == true &&
+          (approvedUntil == null || approvedUntil.isAfter(DateTime.now()));
+      context.go(enabled ? '/home' : '/cuenta-pendiente');
+    } else if (AuthService().hasSession &&
+        await DriverSessionService().restore()) {
+      if (mounted) context.go('/home');
+    } else {
+      context.go('/login');
+    }
   }
 
   @override

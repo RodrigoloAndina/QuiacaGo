@@ -1,8 +1,4 @@
-enum DriverStatus {
-  OFFLINE,
-  AVAILABLE,
-  ON_TRIP
-}
+enum DriverStatus { OFFLINE, AVAILABLE, ON_TRIP }
 
 enum TripStatus {
   REQUESTED,
@@ -14,11 +10,7 @@ enum TripStatus {
   CANCELLED
 }
 
-enum DocumentStatus {
-  APPROVED,
-  PENDING,
-  EXPIRED
-}
+enum DocumentStatus { APPROVED, PENDING, EXPIRED }
 
 class AppConstants {
   static const String appName = 'QuiacaGo Conductor';

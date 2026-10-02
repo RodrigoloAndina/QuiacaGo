@@ -1,223 +1,224 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/auth_service.dart';
+import '../../services/driver_document_service.dart';
+import '../../services/supabase_service.dart';
 
 class AdminAprobacionesScreen extends StatefulWidget {
   const AdminAprobacionesScreen({super.key});
-
   @override
-  State<AdminAprobacionesScreen> createState() => _AdminAprobacionesScreenState();
+  State<AdminAprobacionesScreen> createState() =>
+      _AdminAprobacionesScreenState();
 }
 
 class _AdminAprobacionesScreenState extends State<AdminAprobacionesScreen> {
-  final List<Map<String, dynamic>> _solicitudes = [
-    {
-      'id': 'driver-042',
-      'nombre': 'Carlos Mamani',
-      'telefono': '+54 3885 401234',
-      'vehiculo': 'Chevrolet Corsa Blanco (Móvil 042)',
-      'patente': 'ABC 123',
-      'dni': '32.145.678',
-      'habilitacion': 'Exp: 2024-99812-MUNI (Vence 15/12/2026)',
-      'licencia': 'Cat. D1 Habilitada',
-      'vtv': 'RTO Jujuy Aprobada',
-      'seguro': 'Sancor Seguros Póliza 884120',
-      'isApproved': false,
-    },
-    {
-      'id': 'driver-043',
-      'nombre': 'Roberto Flores',
-      'telefono': '+54 3885 777888',
-      'vehiculo': 'Renault Kangoo Gris (Móvil 043)',
-      'patente': 'AF 342',
-      'dni': '29.888.111',
-      'habilitacion': 'Exp: 2024-99815-MUNI (Vence 10/10/2026)',
-      'licencia': 'Cat. D1 Habilitada',
-      'vtv': 'RTO Jujuy Aprobada',
-      'seguro': 'La Segunda Seguros',
-      'isApproved': false,
-    },
-  ];
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  List<Map<String, dynamic>> _drivers = [];
+  final Map<String, List<Map<String, dynamic>>> _documentsByDriver = {};
+  bool _authenticated = false;
+  bool _loading = false;
+  String? _error;
 
-  void _aprobarConductor(int index) {
-    setState(() {
-      _solicitudes[index]['isApproved'] = true;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.statusAvailable,
-        content: Text('Conductor ${_solicitudes[index]['nombre']} APROBADO e incorporado al sistema.'),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _restoreAdmin();
   }
 
-  void _rechazarConductor(int index) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.statusCancelled,
-        content: Text('Solicitud de ${_solicitudes[index]['nombre']} devuelta para revisión de documentos.'),
-      ),
-    );
+  Future<void> _restoreAdmin() async {
+    final profile = await AuthService().currentProfile();
+    if (profile?['role'] == 'admin') {
+      _authenticated = true;
+      await _load();
+    }
+  }
+
+  Future<void> _login() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final auth = AuthService();
+      await auth.signIn(
+          identifier: _email.text.trim(), password: _password.text);
+      final profile = await auth.currentProfile();
+      if (profile?['role'] != 'admin') {
+        await auth.logout();
+        throw StateError('La cuenta no tiene permisos de administrador.');
+      }
+      _authenticated = true;
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _load() async {
+    final rows = await SupabaseService()
+        .client
+        .from('profiles')
+        .select()
+        .eq('role', 'driver')
+        .order('created_at');
+    final documents = await SupabaseService()
+        .client
+        .from('driver_documents')
+        .select()
+        .order('created_at');
+    _documentsByDriver.clear();
+    for (final raw in List<Map<String, dynamic>>.from(documents)) {
+      final driverId = raw['driver_id'].toString();
+      _documentsByDriver.putIfAbsent(driverId, () => []).add(raw);
+    }
+    if (mounted) {
+      setState(() => _drivers = List<Map<String, dynamic>>.from(rows));
+    }
+  }
+
+  Future<void> _setApproval(Map<String, dynamic> driver, bool approved) async {
+    try {
+      final driverId = driver['id'].toString();
+      final documents = _documentsByDriver[driverId] ?? const [];
+      if (approved) {
+        const required = {
+          'dni_front',
+          'dni_back',
+          'license',
+          'insurance',
+          'vtv'
+        };
+        final present =
+            documents.map((d) => d['document_type'].toString()).toSet();
+        final expired = documents.any((document) {
+          final value = document['expires_at']?.toString();
+          final date = value == null ? null : DateTime.tryParse(value);
+          return date != null && date.isBefore(DateTime.now());
+        });
+        if (!present.containsAll(required) || expired) {
+          throw StateError(expired
+              ? 'Hay documentos vencidos.'
+              : 'Faltan documentos obligatorios.');
+        }
+      }
+      await SupabaseService().client.rpc('review_driver', params: {
+        'p_driver_id': driverId,
+        'p_approved': approved,
+        'p_days': 30,
+      });
+      await _load();
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo actualizar: $e')));
+    }
+  }
+
+  Future<void> _openDocument(Map<String, dynamic> document) async {
+    final url = await DriverDocumentService()
+        .signedUrl(document['storage_path'].toString());
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_authenticated) {
+      return Scaffold(
+          appBar: AppBar(title: const Text('Administración QuiacaGo')),
+          body: Center(
+              child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(Icons.admin_panel_settings,
+                            size: 64, color: AppColors.primary),
+                        const SizedBox(height: 20),
+                        TextField(
+                            controller: _email,
+                            decoration: const InputDecoration(
+                                labelText: 'Correo administrativo')),
+                        const SizedBox(height: 12),
+                        TextField(
+                            controller: _password,
+                            obscureText: true,
+                            decoration:
+                                const InputDecoration(labelText: 'Contraseña')),
+                        const SizedBox(height: 16),
+                        if (_error != null)
+                          Text(_error!,
+                              style: const TextStyle(color: Colors.red)),
+                        ElevatedButton(
+                            onPressed: _loading ? null : _login,
+                            child: Text(_loading ? 'INGRESANDO…' : 'INGRESAR')),
+                      ])))));
+    }
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Administración Municipal - QuiacaGo'),
-        backgroundColor: AppColors.primary,
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(20),
-        itemCount: _solicitudes.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          final sol = _solicitudes[index];
-          final isApproved = sol['isApproved'] as bool;
-
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isApproved ? AppColors.statusAvailable : AppColors.outlineVariant,
-                width: isApproved ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 15,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: isApproved ? AppColors.statusAvailable : AppColors.primary,
-                          child: Text(
-                            sol['nombre'][0],
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              sol['nombre'],
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.onSurface),
-                            ),
-                            Text(
-                              sol['telefono'],
-                              style: const TextStyle(fontSize: 12, color: AppColors.outline),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isApproved ? AppColors.statusAvailable.withOpacity(0.12) : AppColors.secondaryFixed,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        isApproved ? 'HABILITADO' : 'PENDIENTE',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isApproved ? AppColors.statusAvailable : AppColors.secondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 8),
-
-                _buildDocItem('🚘 Vehículo:', sol['vehiculo']),
-                _buildDocItem('🏷️ Patente:', sol['patente']),
-                _buildDocItem('🆔 DNI:', sol['dni']),
-                _buildDocItem('🏛️ Habilitación:', sol['habilitacion']),
-                _buildDocItem('🪪 Licencia:', sol['licencia']),
-                _buildDocItem('🔍 VTV / RTO:', sol['vtv']),
-                _buildDocItem('🛡️ Seguro:', sol['seguro']),
-
-                const SizedBox(height: 20),
-
-                if (!isApproved)
-                  Row(
+      appBar: AppBar(title: const Text('Conductores municipales'), actions: [
+        IconButton(onPressed: _load, icon: const Icon(Icons.refresh))
+      ]),
+      body: _drivers.isEmpty
+          ? const Center(child: Text('No hay conductores registrados.'))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _drivers.length,
+              itemBuilder: (context, index) {
+                final d = _drivers[index];
+                final approved = d['is_approved'] == true;
+                final documents =
+                    _documentsByDriver[d['id'].toString()] ?? const [];
+                return Card(
+                  child: ExpansionTile(
+                    leading: CircleAvatar(
+                        child: Text((d['full_name'] ?? 'C')
+                            .toString()[0]
+                            .toUpperCase())),
+                    title: Text(d['full_name']?.toString() ?? 'Conductor'),
+                    subtitle: Text(
+                        '${d['phone'] ?? ''} · ${d['plate'] ?? '-'} · ${documents.length}/5 documentos'),
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => _rechazarConductor(index),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.statusCancelled),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
-                          ),
-                          child: const Text('RECHAZAR', style: TextStyle(color: AppColors.statusCancelled, fontWeight: FontWeight.bold)),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(d['vehicle_info']?.toString() ??
+                              'Vehículo pendiente'),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => _aprobarConductor(index),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.statusAvailable,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                      for (final document in documents)
+                        ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.description_outlined),
+                          title: Text(document['document_type'].toString()),
+                          subtitle: Text(
+                              'Vence: ${document['expires_at'] ?? 'No corresponde'} · ${document['status']}'),
+                          trailing: IconButton(
+                            tooltip: 'Abrir documento',
+                            onPressed: () => _openDocument(document),
+                            icon: const Icon(Icons.open_in_new),
                           ),
-                          child: const Text('APROBAR TAXISTA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: approved
+                              ? OutlinedButton(
+                                  onPressed: () => _setApproval(d, false),
+                                  child: const Text('SUSPENDER'))
+                              : ElevatedButton(
+                                  onPressed: () => _setApproval(d, true),
+                                  child: const Text('APROBAR')),
                         ),
                       ),
                     ],
-                  )
-                else
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.statusAvailable.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '✓ Habilitación registrada en PostgreSQL Supabase',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.statusAvailable),
-                      ),
-                    ),
                   ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildDocItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.outline, fontWeight: FontWeight.w600)),
-          ),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.onSurface)),
-          ),
-        ],
-      ),
+                );
+              }),
     );
   }
 }

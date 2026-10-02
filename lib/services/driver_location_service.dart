@@ -37,9 +37,10 @@ class DriverLocationModel {
 
 class DriverLocationService {
   static final _supabase = SupabaseService().client;
+  static String? lastPublishError;
 
   /// Publica o actualiza la ubicación GPS del conductor en Supabase (UPSERT)
-  static Future<void> publicarUbicacion({
+  static Future<bool> publicarUbicacion({
     required String driverId,
     required double latitude,
     required double longitude,
@@ -47,7 +48,13 @@ class DriverLocationService {
     String vehicleInfo = '',
     String plate = '',
   }) async {
+    lastPublishError = null;
     try {
+      final authenticatedId = _supabase.auth.currentUser?.id;
+      if (authenticatedId == null || authenticatedId != driverId) {
+        lastPublishError = 'La sesión del conductor no es válida.';
+        return false;
+      }
       await _supabase.from('driver_locations').upsert({
         'driver_id': driverId,
         'driver_name': driverName,
@@ -58,9 +65,11 @@ class DriverLocationService {
         'is_online': true,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'driver_id');
+      return true;
     } catch (e) {
-      // Log silencioso para no bloquear la app
+      lastPublishError = e.toString();
       print('[DriverLocationService] Error publicando ubicación: $e');
+      return false;
     }
   }
 
@@ -77,14 +86,18 @@ class DriverLocationService {
   }
 
   /// Obtiene la lista de conductores disponibles (is_online = true) para mostrar en el mapa del pasajero
-  static Future<List<DriverLocationModel>> obtenerConductoresDisponibles() async {
+  static Future<List<DriverLocationModel>>
+      obtenerConductoresDisponibles() async {
     try {
+      final activeSince =
+          DateTime.now().toUtc().subtract(const Duration(seconds: 20));
       final data = await _supabase
           .from('driver_locations')
           .select()
-          .eq('is_online', true);
+          .eq('is_online', true)
+          .gte('updated_at', activeSince.toIso8601String());
 
-      if (data is List && data.isNotEmpty) {
+      if (data.isNotEmpty) {
         return data.map((item) => DriverLocationModel.fromMap(item)).toList();
       }
     } catch (e) {
@@ -94,12 +107,17 @@ class DriverLocationService {
   }
 
   /// Obtiene la ubicación actual de un conductor específico (para seguimiento en tiempo real)
-  static Future<DriverLocationModel?> obtenerUbicacionConductor(String driverId) async {
+  static Future<DriverLocationModel?> obtenerUbicacionConductor(
+      String driverId) async {
     try {
+      final activeSince =
+          DateTime.now().toUtc().subtract(const Duration(seconds: 20));
       final data = await _supabase
           .from('driver_locations')
           .select()
           .eq('driver_id', driverId)
+          .eq('is_online', true)
+          .gte('updated_at', activeSince.toIso8601String())
           .maybeSingle();
 
       if (data != null) {

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_colors.dart';
-import '../../services/supabase_service.dart';
+import '../../services/auth_service.dart';
 import 'inicio_pasajero_screen.dart';
 
 class LoginPasajeroScreen extends StatefulWidget {
@@ -12,65 +13,103 @@ class LoginPasajeroScreen extends StatefulWidget {
 }
 
 class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
-  final _telefonoDniCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
+  // Credenciales temporales para agilizar el piloto. Retirar en producción.
+  final _emailCtrl = TextEditingController(text: 'pasajero@quiaca.com');
+  final _passwordCtrl = TextEditingController(text: '123456');
   bool _isLoading = false;
   String? _errorMsg;
+  bool _emailNotConfirmed = false;
 
   Future<void> _ingresarPasajero() async {
-    final input = _telefonoDniCtrl.text.trim();
+    final input = _emailCtrl.text.trim();
     final password = _passwordCtrl.text.trim();
 
-    if (input.isEmpty || password.isEmpty) {
-      setState(() => _errorMsg = 'Ingrese teléfono/DNI y contraseña');
+    if (input.isEmpty || !input.contains('@') || password.isEmpty) {
+      setState(() => _errorMsg = 'Ingrese correo y contraseña');
       return;
     }
 
-    setState(() { _isLoading = true; _errorMsg = null; });
+    setState(() {
+      _isLoading = true;
+      _errorMsg = null;
+      _emailNotConfirmed = false;
+    });
 
     try {
-      final supabase = SupabaseService().client;
-      Map<String, dynamic>? data;
-
-      try {
-        data = await supabase
-            .from('passengers')
-            .select()
-            .or('phone.eq.$input,dni.eq.$input')
-            .maybeSingle();
-      } catch (_) {
-        try {
-          data = await supabase
-              .from('profiles')
-              .select()
-              .or('phone.eq.$input,email.eq.$input')
-              .maybeSingle();
-        } catch (_) {}
-      }
+      final auth = AuthService();
+      await auth.signIn(identifier: input, password: password);
+      final data = await auth.currentProfile();
 
       if (data != null) {
-        if (data['password'] != null && data['password'] != password) {
-          if (mounted) setState(() { _isLoading = false; _errorMsg = 'Contraseña incorrecta'; });
+        if (data['role'] != 'passenger') {
+          await auth.logout();
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _errorMsg = 'Esta cuenta no pertenece a un pasajero';
+            });
+          }
           return;
         }
-        InicioPasajeroScreen.passengerName = data['full_name']?.toString() ?? 'Pasajero';
-        InicioPasajeroScreen.passengerPhone = data['phone']?.toString() ?? input;
+        final suspension = AuthService.suspensionMessage(data);
+        if (suspension != null) {
+          await auth.logout();
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _errorMsg = suspension;
+            });
+          }
+          return;
+        }
+        InicioPasajeroScreen.passengerName =
+            data['full_name']?.toString() ?? 'Pasajero';
+        InicioPasajeroScreen.passengerPhone =
+            data['phone']?.toString() ?? input;
       } else {
-        // Asignar datos del login directamente si es la primera vez
-        InicioPasajeroScreen.passengerName = 'Pasajero $input';
-        InicioPasajeroScreen.passengerPhone = input;
+        throw StateError('Perfil de pasajero inexistente');
       }
 
       if (mounted) {
         setState(() => _isLoading = false);
         context.go('/pasajero-home');
       }
-    } catch (e) {
-      InicioPasajeroScreen.passengerName = 'Pasajero';
-      InicioPasajeroScreen.passengerPhone = input;
+    } on AuthException catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
-        context.go('/pasajero-home');
+        final unconfirmed = e.code == 'email_not_confirmed' ||
+            e.message.toLowerCase().contains('not confirmed');
+        setState(() {
+          _isLoading = false;
+          _emailNotConfirmed = unconfirmed;
+          _errorMsg = unconfirmed
+              ? 'Primero verificá tu correo desde el enlace que te enviamos.'
+              : 'Correo o contraseña incorrectos.';
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMsg = 'No se pudo conectar. Intentá nuevamente.';
+        });
+      }
+    }
+  }
+
+  Future<void> _reenviarConfirmacion() async {
+    try {
+      await AuthService().resendSignupConfirmation(_emailCtrl.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content:
+              Text('Correo de verificación reenviado. Revisá también Spam.'),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo reenviar: $e')),
+        );
       }
     }
   }
@@ -96,7 +135,8 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
                         color: Color(0xFF10B981),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.hail, size: 40, color: Colors.white),
+                      child:
+                          const Icon(Icons.hail, size: 40, color: Colors.white),
                     ),
                     const SizedBox(height: 14),
                     const Text(
@@ -114,9 +154,7 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 36),
-
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -142,7 +180,6 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
                         letterSpacing: 1,
                       ),
                     ),
-
                     if (_errorMsg != null) ...[
                       const SizedBox(height: 10),
                       Container(
@@ -153,38 +190,54 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 18),
+                            const Icon(Icons.error_outline,
+                                color: Color(0xFFEF4444), size: 18),
                             const SizedBox(width: 8),
-                            Expanded(child: Text(_errorMsg!, style: const TextStyle(fontSize: 12, color: Color(0xFFEF4444), fontWeight: FontWeight.w600))),
+                            Expanded(
+                                child: Text(_errorMsg!,
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFFEF4444),
+                                        fontWeight: FontWeight.w600))),
                           ],
                         ),
                       ),
+                      if (_emailNotConfirmed)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _reenviarConfirmacion,
+                            child: const Text('REENVIAR VERIFICACIÓN'),
+                          ),
+                        ),
                     ],
                     const SizedBox(height: 16),
-
                     TextFormField(
-                      controller: _telefonoDniCtrl,
-                      keyboardType: TextInputType.phone,
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      textCapitalization: TextCapitalization.none,
+                      autocorrect: false,
                       decoration: InputDecoration(
-                        labelText: 'Teléfono Celular o DNI',
-                        prefixIcon: const Icon(Icons.phone_android, color: Color(0xFF10B981)),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                        labelText: 'Correo electrónico',
+                        prefixIcon: const Icon(Icons.email_outlined,
+                            color: Color(0xFF10B981)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
                     const SizedBox(height: 14),
-
                     TextFormField(
                       controller: _passwordCtrl,
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: 'Contraseña de Pasajero',
-                        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF10B981)),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                        prefixIcon: const Icon(Icons.lock_outline,
+                            color: Color(0xFF10B981)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -192,34 +245,41 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
                         onPressed: _isLoading ? null : _ingresarPasajero,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF10B981),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40)),
                         ),
                         child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
                             : const Text(
                                 'INGRESAR A QUIACAGO PASAJERO',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 12),
-
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: OutlinedButton.icon(
                         onPressed: () => context.push('/registro-pasajero'),
-                        icon: const Icon(Icons.person_add, color: Color(0xFF10B981)),
+                        icon: const Icon(Icons.person_add,
+                            color: Color(0xFF10B981)),
                         label: const Text(
                           '¿Nuevo Pasajero? Registrate aquí',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF10B981)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Color(0xFF10B981)),
                         ),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                          side: const BorderSide(
+                              color: Color(0xFF10B981), width: 1.5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40)),
                         ),
                       ),
                     ),

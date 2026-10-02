@@ -59,8 +59,8 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.local_taxi, color: AppColors.primary, size: 24),
             SizedBox(width: 8),
             Text(
@@ -99,7 +99,9 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
                   const SizedBox(height: 24),
 
                   // Header Ganancias Dinámico
-                  Text(_labelMonto, style: const TextStyle(fontSize: 13, color: AppColors.outline)),
+                  Text(_labelMonto,
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.outline)),
                   const SizedBox(height: 4),
                   Text(
                     '\$ ${_montoActual.toStringAsFixed(2)}',
@@ -111,13 +113,16 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
                   ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE6F4EA),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      _selectedTab == 0 ? '$_viajesHoy servicio(s) realizados hoy' : '$_totalViajes servicio(s) en total',
+                      _selectedTab == 0
+                          ? '$_viajesHoy servicio(s) realizados hoy'
+                          : '$_totalViajes servicio(s) en total',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -126,167 +131,206 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
                     ),
                   ),
 
-            const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-            // Bar Chart Container
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColors.surfaceContainerHigh),
-              ),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 120,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        _buildBar(0.45),
-                        _buildBar(0.70),
-                        _buildBar(1.0, isSelected: true),
-                        _buildBar(0.10),
-                        _buildBar(0.10),
-                        _buildBar(0.10),
-                        _buildBar(0.10),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: const [
-                      Text('L', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                      Text('M', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                      Text('X', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                      Text('J', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                      Text('V', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                      Text('S', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                      Text('D', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Metrics Row
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(18),
+                  // Bar Chart Container
+                  Container(
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(color: AppColors.surfaceContainerHigh),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primaryFixedDim,
-                            shape: BoxShape.circle,
+                        SizedBox(
+                          height: 120,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              _buildBar(0.45),
+                              _buildBar(0.70),
+                              _buildBar(1.0, isSelected: true),
+                              _buildBar(0.10),
+                              _buildBar(0.10),
+                              _buildBar(0.10),
+                              _buildBar(0.10),
+                            ],
                           ),
-                          child: const Icon(Icons.local_taxi, color: AppColors.primary, size: 20),
                         ),
                         const SizedBox(height: 12),
-                        const Text('Viajes realizados', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${_selectedTab == 0 ? _viajesHoy : _totalViajes}',
-                          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.onSurface),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Text('L',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.outline)),
+                            Text('M',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.outline)),
+                            Text('X',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary)),
+                            Text('J',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.outline)),
+                            Text('V',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.outline)),
+                            Text('S',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.outline)),
+                            Text('D',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.outline)),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.surfaceContainerHigh),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: AppColors.secondaryFixed,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.star, color: AppColors.secondary, size: 20),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text('Calificación', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                        const SizedBox(height: 4),
-                        Text(
-                          _totalViajes > 0 ? '5.0 / 5' : 'Sin viajes',
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.onSurface),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
 
-            const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-            // Tiempo conectado
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.surfaceContainerHigh),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                  // Metrics Row
                   Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: AppColors.surfaceContainerHigh,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.access_time, color: AppColors.onSurface, size: 20),
-                      ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Tiempo conectado', style: TextStyle(fontSize: 12, color: AppColors.outline)),
-                          Text(
-                            _totalViajes > 0 ? 'Activo en servicio' : '0h 00m',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.onSurface),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: AppColors.surfaceContainerHigh),
                           ),
-                        ],
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primaryFixedDim,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.local_taxi,
+                                    color: AppColors.primary, size: 20),
+                              ),
+                              const SizedBox(height: 12),
+                              const Text('Viajes realizados',
+                                  style: TextStyle(
+                                      fontSize: 12, color: AppColors.outline)),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${_selectedTab == 0 ? _viajesHoy : _totalViajes}',
+                                style: const TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.onSurface),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: AppColors.surfaceContainerHigh),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.secondaryFixed,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.star,
+                                    color: AppColors.secondary, size: 20),
+                              ),
+                              const SizedBox(height: 12),
+                              const Text('Calificación',
+                                  style: TextStyle(
+                                      fontSize: 12, color: AppColors.outline)),
+                              const SizedBox(height: 4),
+                              Text(
+                                _totalViajes > 0 ? '5.0 / 5' : 'Sin viajes',
+                                style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.onSurface),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // Tiempo conectado
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.surfaceContainerHigh),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: AppColors.surfaceContainerHigh,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.access_time,
+                                  color: AppColors.onSurface, size: 20),
+                            ),
+                            const SizedBox(width: 14),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Tiempo conectado',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.outline)),
+                                Text(
+                                  _totalViajes > 0
+                                      ? 'Activo en servicio'
+                                      : '0h 00m',
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.onSurface),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
-
-            const SizedBox(height: 80),
-          ],
-        ),
-      ),
     );
   }
 
@@ -301,7 +345,12 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
-                ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))]
+                ? [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2))
+                  ]
                 : [],
           ),
           child: Center(
@@ -310,7 +359,9 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.bold,
-                color: isSelected ? AppColors.onSurface : AppColors.onSurfaceVariant,
+                color: isSelected
+                    ? AppColors.onSurface
+                    : AppColors.onSurfaceVariant,
               ),
             ),
           ),
@@ -324,7 +375,11 @@ class _MisGananciasScreenState extends State<MisGananciasScreen> {
       width: 24,
       height: 100 * heightFactor,
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.primary : (heightFactor > 0.2 ? AppColors.primaryFixedDim : AppColors.surfaceContainerHigh),
+        color: isSelected
+            ? AppColors.primary
+            : (heightFactor > 0.2
+                ? AppColors.primaryFixedDim
+                : AppColors.surfaceContainerHigh),
         borderRadius: BorderRadius.circular(6),
       ),
     );

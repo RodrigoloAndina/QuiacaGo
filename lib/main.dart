@@ -4,13 +4,15 @@ import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/constants/app_constants.dart';
 import 'services/supabase_service.dart';
+import 'services/offline_sync_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inicialización oficial de Supabase Realtime para recepción instantánea de viajes
   try {
     await SupabaseService().initialize();
+    await OfflineSyncService().start();
   } catch (_) {}
 
   runApp(
@@ -30,6 +32,8 @@ class QuiacaGoConductorApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: appRouter,
+      builder: (context, child) =>
+          ConnectionStatusOverlay(child: child ?? const SizedBox.shrink()),
     );
   }
 }

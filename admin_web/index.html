@@ -509,10 +509,119 @@
       overflow-y: auto;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     }
+
+    .notification-wrap {
+      position: relative;
+    }
+
+    .notification-button {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      justify-content: center;
+      position: relative;
+    }
+
+    .notification-count {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 10px;
+      background: var(--accent-red);
+      color: white;
+      border: 2px solid white;
+      font-size: 10px;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notification-panel {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: min(420px, calc(100vw - 32px));
+      max-height: 520px;
+      overflow: hidden;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, .18);
+      z-index: 1000;
+      display: none;
+    }
+
+    .notification-panel.active { display: block; }
+
+    .notification-list {
+      max-height: 430px;
+      overflow-y: auto;
+    }
+
+    .notification-item {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border-color);
+      cursor: pointer;
+      background: white;
+    }
+
+    .notification-item.unread {
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      padding-left: 12px;
+    }
+
+    .notification-item:hover { background: #f8fafc; }
+
+    .record-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .record-field label {
+      display: block;
+      margin-bottom: 5px;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .record-field input,
+    .record-field select {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      background: white;
+      color: #0f172a;
+      font-size: 13px;
+    }
+
+    @media (max-width: 800px) {
+      .record-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
 <body>
+  <div id="adminLoginOverlay" style="position:fixed;inset:0;z-index:99999;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
+    <form onsubmit="loginAdmin(event)" style="width:min(420px,calc(100% - 32px));background:white;padding:32px;border-radius:20px;box-shadow:0 20px 60px rgba(15,23,42,.15);">
+      <h2 style="color:#0b3b82;margin:0 0 6px;">Administración QuiacaGo</h2>
+      <p style="color:#64748b;margin:0 0 22px;">Ingresá con una cuenta que tenga rol administrador.</p>
+      <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Correo administrativo</label>
+      <input id="adminEmail" type="email" required autocomplete="username" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:14px;">
+      <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Contraseña</label>
+      <input id="adminPassword" type="password" required autocomplete="current-password" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:10px;">
+      <p id="adminLoginError" style="display:none;color:#dc2626;font-size:12px;font-weight:600;"></p>
+      <button id="adminLoginButton" type="submit" style="width:100%;padding:13px;border:0;border-radius:10px;background:#0b3b82;color:white;font-weight:800;cursor:pointer;">INGRESAR</button>
+    </form>
+  </div>
 
   <!-- Sidebar Minimalist Desktop Navigation -->
   <div class="sidebar">
@@ -542,6 +651,14 @@
       </svg>
       <span>Conductores</span>
     </div>
+    <div class="nav-item" onclick="switchTab('tab-usuarios', this)">
+      <svg class="svg-icon" viewBox="0 0 24 24">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="8.5" cy="7" r="4" />
+        <path d="M20 8v6M23 11h-6" />
+      </svg>
+      <span>Usuarios e incidencias</span>
+    </div>
     <div class="nav-item" onclick="switchTab('tab-mapa', this)">
       <svg class="svg-icon" viewBox="0 0 24 24">
         <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
@@ -557,6 +674,14 @@
       </svg>
       <span>Viajes</span>
     </div>
+    <div class="nav-item" onclick="switchTab('tab-tarifas', this)">
+      <svg class="svg-icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8" />
+        <line x1="12" y1="6" x2="12" y2="18" />
+      </svg>
+      <span>Tarifas</span>
+    </div>
   </div>
 
   <!-- Main Desktop Content Area -->
@@ -569,6 +694,28 @@
         <p class="page-subtitle" id="mainHeaderSubtitle">Visión general del estado actual del sistema en La Quiaca.</p>
       </div>
       <div style="display:flex; gap:10px;">
+        <div class="notification-wrap">
+          <button class="action-btn notification-button" type="button" aria-label="Notificaciones administrativas"
+            onclick="toggleNotifications(event)">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span class="notification-count" id="notificationCount">0</span>
+          </button>
+          <div class="notification-panel" id="notificationPanel">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;gap:12px;">
+              <div>
+                <strong style="font-size:14px;color:#0f172a;">Avisos de conductores</strong>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Altas, suspensiones y cambios de legajo</div>
+              </div>
+              <button class="btn-sm" style="background:#e2e8f0;color:#334155;" onclick="markAllNotificationsRead(event)">Marcar leídas</button>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">Cargando avisos...</div>
+            </div>
+          </div>
+        </div>
         <button class="action-btn">
           <svg class="svg-icon" viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -637,7 +784,7 @@
           </svg>
         </div>
         <div class="metric-num" id="metricViajesEnCurso">0</div>
-        <div class="metric-sub" style="color:#3b82f6;">Solicitudes activas</div>
+        <div class="metric-sub" style="color:#3b82f6;">Servicios aceptados o iniciados</div>
       </div>
 
       <div class="metric-card">
@@ -750,6 +897,40 @@
       </table>
     </div>
 
+    <!-- USUARIOS, CANCELACIONES Y SUSPENSIONES TEMPORALES -->
+    <div id="tab-usuarios" style="display:none;">
+      <div class="card-box" style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;">
+          <div>
+            <div class="card-title" style="margin-bottom:4px;">Personas registradas</div>
+            <p style="font-size:12px;color:var(--text-muted);">Pasajeros y conductores, actividad, reincidencias y suspensiones temporales.</p>
+          </div>
+          <button class="btn-sm btn-blue" onclick="fetchUsersAndIncidents()">Actualizar</button>
+        </div>
+        <div style="overflow:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th>PERSONA</th><th>ROL</th><th>VIAJES</th><th>CANCELACIONES</th>
+              <th>RIESGO</th><th>ESTADO</th><th>ACCIONES</th>
+            </tr></thead>
+            <tbody id="usersTableBody"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando usuarios...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-box">
+        <div class="card-title">Cancelaciones e incidencias recientes</div>
+        <div style="overflow:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th>FECHA</th><th>PERSONA</th><th>ETAPA</th><th>RESULTADO</th>
+              <th>MOTIVO</th><th>AFECTADO</th>
+            </tr></thead>
+            <tbody id="incidentsTableBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando incidencias...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 3: MAPA EN VIVO DE TAXIS (CON ICONOS SVG DE AUTO Y MOVIMIENTO ANIMADO) -->
     <div id="tab-mapa" class="card-box" style="display:none;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -762,11 +943,12 @@
         <div
           style="background:#dcfce7; color:#15803d; padding:6px 14px; border-radius:12px; font-weight:800; font-size:12px; display:flex; align-items:center; gap:8px;">
           <span style="width:8px; height:8px; background:#10b981; border-radius:50%;"></span>
-          <span id="updateTimer">Próxima actualización en 15s</span>
+          <span id="updateTimer">Esperando actualización GPS...</span>
         </div>
       </div>
 
       <div id="adminMap"></div>
+      <p id="mapStatus" style="margin:10px 0 0;color:#64748b;font-size:12px;">Abrí la app del conductor y presioná CONECTARSE para publicar su ubicación.</p>
     </div>
 
     <!-- TAB 4: HISTORIAL DE VIAJES -->
@@ -814,6 +996,40 @@
       </table>
     </div>
 
+    <!-- TAB 5: CONFIGURACIÓN DE TARIFAS -->
+    <div id="tab-tarifas" class="card-box" style="display:none;max-width:820px;">
+      <div class="card-title">Tarifas oficiales vigentes</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;line-height:1.5;">
+        Estos importes se aplican automáticamente a todos los viajes nuevos. La tarifa diurna rige de 06:00 a 21:59 y la nocturna de 22:00 a 05:59, hora argentina.
+      </p>
+      <form onsubmit="saveFareSettings(event)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;">
+          <label style="display:block;padding:20px;border:1px solid var(--border-color);border-radius:16px;background:#f8fafc;">
+            <span style="display:block;font-size:12px;font-weight:800;color:#475569;margin-bottom:8px;">TARIFA DÍA</span>
+            <span style="display:flex;align-items:center;gap:8px;font-size:24px;font-weight:800;color:var(--primary);">
+              $ <input id="dayFareInput" type="number" min="1" step="1" required
+                style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:22px;font-weight:800;color:#0f172a;">
+            </span>
+            <small style="display:block;color:var(--text-muted);margin-top:8px;">06:00 a 21:59</small>
+          </label>
+          <label style="display:block;padding:20px;border:1px solid var(--border-color);border-radius:16px;background:#f8fafc;">
+            <span style="display:block;font-size:12px;font-weight:800;color:#475569;margin-bottom:8px;">TARIFA NOCHE</span>
+            <span style="display:flex;align-items:center;gap:8px;font-size:24px;font-weight:800;color:#312e81;">
+              $ <input id="nightFareInput" type="number" min="1" step="1" required
+                style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:22px;font-weight:800;color:#0f172a;">
+            </span>
+            <small style="display:block;color:var(--text-muted);margin-top:8px;">22:00 a 05:59</small>
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:22px;flex-wrap:wrap;">
+          <button id="saveFaresButton" class="action-btn action-btn-primary" type="submit" style="padding:12px 22px;">
+            GUARDAR TARIFAS
+          </button>
+          <span id="fareSettingsStatus" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+      </form>
+    </div>
+
   </div>
 
   <!-- MODAL DE SUSPENSION CON TODAS LAS OPCIONES AMPLIADAS -->
@@ -830,7 +1046,7 @@
         onchange="toggleCustomReasonInput(this.value)">
         <option value="Falta de pago de cuota mensual municipal">1. Falta de pago de cuota mensual municipal</option>
         <option value="Póliza de seguro del automotor vencida">2. Póliza de seguro del automotor vencida</option>
-        <option value="Licencia Nacional de Conducir D1 vencida">3. Licencia Nacional de Conducir D1 vencida</option>
+        <option value="Licencia de conducir vencida">3. Licencia de conducir vencida</option>
         <option value="Revisión Técnica RTO / VTV vencida">4. Revisión Técnica RTO / VTV vencida</option>
         <option value="Habilitación Municipal o Carnet Sanitario vencido">5. Habilitación Municipal o Carnet Sanitario
           vencido</option>
@@ -942,12 +1158,21 @@
 
   <script>
     let activeRow = 1;
+    let adminMap = null;
+    let driverMarkersGroup = null;
+    let driverPollTimer = null;
 
     function switchTab(tabId, el) {
+      if (tabId !== 'tab-mapa' && driverPollTimer) {
+        clearInterval(driverPollTimer);
+        driverPollTimer = null;
+      }
       document.getElementById('tab-dashboard').style.display = 'none';
       document.getElementById('tab-conductores').style.display = 'none';
+      document.getElementById('tab-usuarios').style.display = 'none';
       document.getElementById('tab-mapa').style.display = 'none';
       document.getElementById('tab-viajes').style.display = 'none';
+      document.getElementById('tab-tarifas').style.display = 'none';
 
       document.getElementById(tabId).style.display = tabId === 'tab-dashboard' ? 'grid' : 'block';
 
@@ -957,8 +1182,10 @@
       const headersMap = {
         'tab-dashboard': { title: 'Resumen de Operaciones', subtitle: 'Visión general del estado actual del sistema en La Quiaca.' },
         'tab-conductores': { title: 'Gestión de Conductores y Habilitaciones', subtitle: 'Control de legajos, permisos por días y vencimientos de cuotas.' },
+        'tab-usuarios': { title: 'Usuarios, cancelaciones e incidencias', subtitle: 'Control de reincidencias y suspensiones temporales sin multas monetarias.' },
         'tab-mapa': { title: 'Mapa de Taxis en Vivo', subtitle: 'Monitoreo GPS en tiempo real de unidades habilitadas en La Quiaca.' },
-        'tab-viajes': { title: 'Historial de Viajes Realizados', subtitle: 'Registro centralizado de servicios y tarifas.' }
+        'tab-viajes': { title: 'Historial de Viajes Realizados', subtitle: 'Registro centralizado de servicios y tarifas.' },
+        'tab-tarifas': { title: 'Configuración de Tarifas', subtitle: 'Actualización de los importes oficiales para viajes diurnos y nocturnos.' }
       };
 
       if (headersMap[tabId]) {
@@ -971,6 +1198,12 @@
       }
       if (tabId === 'tab-conductores') {
         fetchDriversTable();
+      }
+      if (tabId === 'tab-usuarios') {
+        fetchUsersAndIncidents();
+      }
+      if (tabId === 'tab-tarifas') {
+        loadFareSettings();
       }
     }
 
@@ -1025,6 +1258,342 @@
     const SUPABASE_URL = 'https://xxqumxhdpjtjdcnnjmdm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXVteGhkcGp0amRjbm5qbWRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1MjQ4NjgsImV4cCI6MjEwMDEwMDg2OH0.1L-wFBgeQHcTQIsBQWCFMUffjaaW1jRNfGQR7S_OOeI';
 
+    let adminAccessToken = sessionStorage.getItem('quiacago_admin_token') || '';
+
+    function apiHeaders(extra = {}) {
+      return { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${adminAccessToken}`, ...extra };
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      })[char]);
+    }
+
+    function formatNotificationDate(value) {
+      if (!value) return '';
+      return new Intl.DateTimeFormat('es-AR', {
+        dateStyle: 'short', timeStyle: 'short'
+      }).format(new Date(value));
+    }
+
+    function toggleNotifications(event) {
+      event?.stopPropagation();
+      const panel = document.getElementById('notificationPanel');
+      panel.classList.toggle('active');
+      if (panel.classList.contains('active')) fetchAdminNotifications();
+    }
+
+    async function fetchAdminNotifications() {
+      if (!adminAccessToken) return;
+      const list = document.getElementById('notificationList');
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/admin_notifications?select=*&order=created_at.desc&limit=50`,
+          { headers: apiHeaders() }
+        );
+        if (!response.ok) throw new Error('Falta instalar admin_driver_notifications.sql en Supabase.');
+        const rows = await response.json();
+        const unread = rows.filter(item => !item.is_read).length;
+        const badge = document.getElementById('notificationCount');
+        badge.innerText = unread > 99 ? '99+' : String(unread);
+        badge.style.display = unread ? 'flex' : 'none';
+        list.innerHTML = rows.length ? '' : '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12px;">No hay avisos pendientes.</div>';
+        rows.forEach(item => {
+          const node = document.createElement('div');
+          node.className = `notification-item${item.is_read ? '' : ' unread'}`;
+          node.onclick = () => openDriverNotification(item.id, item.driver_id, item.is_read);
+          node.innerHTML = `
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+              <strong style="font-size:13px;color:#0f172a;">${escapeHtml(item.title)}</strong>
+              <small style="white-space:nowrap;color:#94a3b8;">${escapeHtml(formatNotificationDate(item.created_at))}</small>
+            </div>
+            <p style="font-size:12px;line-height:1.4;color:#64748b;margin-top:4px;">${escapeHtml(item.message)}</p>`;
+          list.appendChild(node);
+        });
+      } catch (error) {
+        list.innerHTML = `<div style="padding:18px;color:var(--accent-red);font-size:12px;">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    async function markNotificationRead(notificationId) {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/admin_notifications?id=eq.${notificationId}`, {
+        method: 'PATCH',
+        headers: apiHeaders({ 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ is_read: true, read_at: new Date().toISOString() })
+      });
+      if (!response.ok) throw new Error('No se pudo marcar el aviso como leído.');
+    }
+
+    async function openDriverNotification(notificationId, driverId, alreadyRead) {
+      try {
+        if (!alreadyRead) await markNotificationRead(notificationId);
+        document.getElementById('notificationPanel').classList.remove('active');
+        const driverNav = document.querySelectorAll('.nav-item')[1];
+        switchTab('tab-conductores', driverNav);
+        await fetchDriversTable();
+        await openDocsModal(driverId);
+        fetchAdminNotifications();
+      } catch (error) {
+        alert(error.message || 'No se pudo abrir el aviso.');
+      }
+    }
+
+    async function markAllNotificationsRead(event) {
+      event?.stopPropagation();
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/admin_notifications?is_read=eq.false`, {
+        method: 'PATCH',
+        headers: apiHeaders({ 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ is_read: true, read_at: new Date().toISOString() })
+      });
+      if (!response.ok) {
+        alert('No se pudieron marcar los avisos como leídos.');
+        return;
+      }
+      fetchAdminNotifications();
+    }
+
+    document.addEventListener('click', event => {
+      const wrap = document.querySelector('.notification-wrap');
+      if (wrap && !wrap.contains(event.target)) {
+        document.getElementById('notificationPanel')?.classList.remove('active');
+      }
+    });
+
+    const cancellationLabels = {
+      changed_plans: 'Cambio de planes', driver_delayed: 'Demora del conductor',
+      driver_not_approaching: 'El conductor no se acercaba',
+      vehicle_mismatch: 'Vehículo o conductor no reconocido',
+      safety_issue: 'Problema de seguridad', mechanical_issue: 'Problema mecánico',
+      personal_emergency: 'Emergencia personal', cannot_reach_pickup: 'No pudo llegar',
+      unsafe_area: 'Zona inaccesible o insegura', passenger_requested: 'El pasajero lo pidió',
+      passenger_no_show: 'Pasajero ausente', other: 'Otro motivo',
+      legacy_offline_request: 'Solicitud sin conexión de versión anterior'
+    };
+
+    async function fetchUsersAndIncidents() {
+      if (!adminAccessToken) return;
+      const usersBody = document.getElementById('usersTableBody');
+      const incidentsBody = document.getElementById('incidentsTableBody');
+      usersBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Cargando usuarios...</td></tr>';
+      incidentsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Cargando incidencias...</td></tr>';
+      try {
+        const [usersResponse, incidentsResponse] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_users`, {
+            method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: '{}'
+          }),
+          fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_recent_cancellations`, {
+            method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_limit: 100 })
+          })
+        ]);
+        if (!usersResponse.ok || !incidentsResponse.ok) {
+          throw new Error('Ejecutá cancellation_management.sql en Supabase para habilitar esta sección.');
+        }
+        const users = await usersResponse.json();
+        const incidents = await incidentsResponse.json();
+        usersBody.innerHTML = users.length ? '' : '<tr><td colspan="7" style="text-align:center;padding:20px;">No hay personas registradas.</td></tr>';
+        users.forEach(user => {
+          const cancellations = Number(user.cancellations_30d || 0);
+          const suspendedUntil = user.account_suspended_until ? new Date(user.account_suspended_until) : null;
+          const suspended = suspendedUntil && suspendedUntil > new Date();
+          const risk = cancellations >= 5
+            ? '<span class="badge badge-suspended">ALTO</span>'
+            : cancellations >= 3
+              ? '<span class="badge" style="background:#fef3c7;color:#92400e;">REVISAR</span>'
+              : '<span class="badge badge-approved">NORMAL</span>';
+          const status = suspended
+            ? `<span class="badge badge-suspended">SUSPENDIDO</span><br><small>Hasta ${suspendedUntil.toLocaleDateString('es-AR')} · ${escapeHtml(user.account_suspension_reason || '')}</small>`
+            : '<span class="badge badge-approved">ACTIVO</span>';
+          const nameEncoded = encodeURIComponent(user.full_name || 'Usuario');
+          const actions = suspended
+            ? `<button class="btn-sm btn-green" onclick="reactivateUser('${user.id}')">REACTIVAR</button>`
+            : `<button class="btn-sm btn-red" onclick="suspendUser('${user.id}','${nameEncoded}')">SUSPENDER</button>`;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><strong>${escapeHtml(user.full_name || 'Usuario')}</strong><br><small>${escapeHtml(user.phone || user.email || '')}</small></td>
+            <td>${user.role === 'driver' ? 'Conductor' : user.role === 'passenger' ? 'Pasajero' : 'Administrador'}</td>
+            <td>${Number(user.trips_completed || 0)} completados<br><small>${Number(user.trips_total || 0)} totales</small></td>
+            <td><strong>${Number(user.cancellations_total || 0)}</strong> total<br><small>${cancellations} en 30 días</small></td>
+            <td>${risk}</td><td>${status}</td><td>${user.role === 'admin' ? '—' : actions}</td>`;
+          usersBody.appendChild(tr);
+        });
+
+        incidentsBody.innerHTML = incidents.length ? '' : '<tr><td colspan="6" style="text-align:center;padding:20px;">Todavía no hay cancelaciones registradas.</td></tr>';
+        incidents.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${new Date(item.created_at).toLocaleString('es-AR')}</td>
+            <td><strong>${escapeHtml(item.actor_name)}</strong><br><small>${escapeHtml(item.actor_role)}</small></td>
+            <td>${escapeHtml(item.previous_status)}</td><td>${escapeHtml(item.outcome)}</td>
+            <td>${escapeHtml(cancellationLabels[item.reason_code] || item.reason_code)}${item.reason_detail ? `<br><small>${escapeHtml(item.reason_detail)}</small>` : ''}</td>
+            <td>${escapeHtml(item.affected_name || '—')}</td>`;
+          incidentsBody.appendChild(tr);
+        });
+      } catch (error) {
+        usersBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--accent-red);">${escapeHtml(error.message)}</td></tr>`;
+        incidentsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--accent-red);">No se pudieron cargar las incidencias.</td></tr>';
+      }
+    }
+
+    async function suspendUser(userId, encodedName) {
+      const name = decodeURIComponent(encodedName);
+      const daysText = prompt(`¿Por cuántos días querés suspender a ${name}?`, '7');
+      if (daysText === null) return;
+      const days = Number(daysText);
+      if (!Number.isInteger(days) || days < 1 || days > 365) {
+        alert('Ingresá una cantidad de días entre 1 y 365.'); return;
+      }
+      const reason = prompt('Indicá el motivo de la suspensión:', 'Cancelaciones recurrentes');
+      if (!reason?.trim()) return;
+      await setUserSuspension(userId, days, reason.trim());
+    }
+
+    async function reactivateUser(userId) {
+      if (!confirm('¿Querés reactivar esta cuenta ahora?')) return;
+      await setUserSuspension(userId, 0, '');
+    }
+
+    async function setUserSuspension(userId, days, reason) {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_set_account_suspension`, {
+        method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_user_id: userId, p_days: days, p_reason: reason })
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        alert(error.message || 'No se pudo actualizar la cuenta.'); return;
+      }
+      alert(days > 0 ? `Cuenta suspendida por ${days} días.` : 'Cuenta reactivada.');
+      fetchUsersAndIncidents();
+      updateRealMetrics();
+    }
+
+    async function loginAdmin(event) {
+      event.preventDefault();
+      const button = document.getElementById('adminLoginButton');
+      const error = document.getElementById('adminLoginError');
+      button.disabled = true;
+      button.innerText = 'VERIFICANDO...';
+      error.style.display = 'none';
+      try {
+        const authResponse = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: document.getElementById('adminEmail').value.trim(), password: document.getElementById('adminPassword').value })
+        });
+        const auth = await authResponse.json();
+        if (!authResponse.ok || !auth.access_token) throw new Error('Correo o contraseña incorrectos.');
+        adminAccessToken = auth.access_token;
+        const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${auth.user.id}&select=role`, { headers: apiHeaders() });
+        const profiles = await profileResponse.json();
+        if (!profileResponse.ok || profiles[0]?.role !== 'admin') {
+          adminAccessToken = '';
+          throw new Error('Esta cuenta no tiene permisos de administrador.');
+        }
+        sessionStorage.setItem('quiacago_admin_token', adminAccessToken);
+        document.getElementById('adminLoginOverlay').style.display = 'none';
+        fetchDriversTable();
+        updateRealMetrics();
+        loadFareSettings();
+        fetchAdminNotifications();
+      } catch (err) {
+        error.innerText = err.message || 'No se pudo iniciar sesión.';
+        error.style.display = 'block';
+      } finally {
+        button.disabled = false;
+        button.innerText = 'INGRESAR';
+      }
+    }
+
+    async function restoreAdminSession() {
+      if (!adminAccessToken) return;
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: apiHeaders() });
+      if (!response.ok) {
+        sessionStorage.removeItem('quiacago_admin_token');
+        adminAccessToken = '';
+        return;
+      }
+      const user = await response.json();
+      const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}&select=role`, { headers: apiHeaders() });
+      const profiles = await profileResponse.json();
+      if (profileResponse.ok && profiles[0]?.role === 'admin') {
+        document.getElementById('adminLoginOverlay').style.display = 'none';
+        fetchDriversTable();
+        updateRealMetrics();
+        loadFareSettings();
+        fetchAdminNotifications();
+      }
+    }
+
+    function formatFareDate(value) {
+      if (!value) return '';
+      return new Intl.DateTimeFormat('es-AR', {
+        dateStyle: 'short', timeStyle: 'short'
+      }).format(new Date(value));
+    }
+
+    async function loadFareSettings() {
+      if (!adminAccessToken) return;
+      const status = document.getElementById('fareSettingsStatus');
+      if (status) status.innerText = 'Cargando tarifas vigentes...';
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/fare_settings?id=eq.current&select=day_amount,night_amount,updated_at`,
+          { headers: apiHeaders() }
+        );
+        const rows = await response.json();
+        if (!response.ok || !rows[0]) throw new Error('No se encontraron las tarifas configuradas.');
+        document.getElementById('dayFareInput').value = Number(rows[0].day_amount);
+        document.getElementById('nightFareInput').value = Number(rows[0].night_amount);
+        if (status) {
+          status.style.color = 'var(--text-muted)';
+          status.innerText = rows[0].updated_at
+            ? `Última actualización: ${formatFareDate(rows[0].updated_at)}`
+            : 'Tarifas cargadas.';
+        }
+      } catch (err) {
+        if (status) {
+          status.style.color = 'var(--accent-red)';
+          status.innerText = err.message || 'No se pudieron cargar las tarifas.';
+        }
+      }
+    }
+
+    async function saveFareSettings(event) {
+      event.preventDefault();
+      const button = document.getElementById('saveFaresButton');
+      const status = document.getElementById('fareSettingsStatus');
+      const dayAmount = Number(document.getElementById('dayFareInput').value);
+      const nightAmount = Number(document.getElementById('nightFareInput').value);
+      if (!Number.isFinite(dayAmount) || !Number.isFinite(nightAmount) || dayAmount <= 0 || nightAmount <= 0) {
+        status.style.color = 'var(--accent-red)';
+        status.innerText = 'Ingresá dos importes mayores que cero.';
+        return;
+      }
+      button.disabled = true;
+      button.innerText = 'GUARDANDO...';
+      status.style.color = 'var(--text-muted)';
+      status.innerText = 'Actualizando tarifas...';
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/set_fare_settings`, {
+          method: 'POST',
+          headers: apiHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            p_day_amount: dayAmount,
+            p_night_amount: nightAmount
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Supabase rechazó la actualización.');
+        status.style.color = 'var(--accent-green)';
+        status.innerText = 'Tarifas actualizadas correctamente. Se aplicarán a los próximos viajes.';
+        await loadFareSettings();
+      } catch (err) {
+        status.style.color = 'var(--accent-red)';
+        status.innerText = err.message || 'No se pudieron guardar las tarifas.';
+      } finally {
+        button.disabled = false;
+        button.innerText = 'GUARDAR TARIFAS';
+      }
+    }
+
     window.profilesList = [];
 
     function calcularProximoVencimiento(p) {
@@ -1032,7 +1601,7 @@
       const items = [];
 
       if (p.licencia_expiration) {
-        items.push({ nombre: 'Licencia D1', fecha: new Date(p.licencia_expiration) });
+        items.push({ nombre: 'Licencia', fecha: new Date(p.licencia_expiration) });
       }
       if (p.vtv_expiration) {
         items.push({ nombre: 'RTO / VTV', fecha: new Date(p.vtv_expiration) });
@@ -1201,8 +1770,8 @@
         let trips = [];
 
         // 1. Conductores
-        const driversRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*`, {
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        const driversRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?role=eq.driver&select=*`, {
+          headers: apiHeaders()
         });
         if (driversRes.ok) {
           profiles = await driversRes.json();
@@ -1216,8 +1785,8 @@
         }
 
         // 2. Pasajeros
-        const passRes = await fetch(`${SUPABASE_URL}/rest/v1/passengers?select=*`, {
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        const passRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?role=eq.passenger&select=*`, {
+          headers: apiHeaders()
         });
         if (passRes.ok) {
           passengers = await passRes.json();
@@ -1231,14 +1800,17 @@
 
         // 3. Viajes
         const tripsRes = await fetch(`${SUPABASE_URL}/rest/v1/trips?select=*`, {
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+          headers: apiHeaders()
         });
         if (tripsRes.ok) {
           trips = await tripsRes.json();
           if (Array.isArray(trips)) {
             const hoyStr = new Date().toISOString().split('T')[0];
             const viajesHoy = trips.filter(t => t.created_at && t.created_at.startsWith(hoyStr)).length;
-            const enCurso = trips.filter(t => ['requested', 'accepted', 'arrived', 'in_progress'].includes(t.status)).length;
+            // Una solicitud todavía sin conductor no es un viaje en curso.
+            // Tampoco lo es un servicio que ya llegó a la etapa de pago.
+            const estadosEnCurso = ['accepted', 'arrived', 'in_progress', 'awaiting_finish_code'];
+            const enCurso = trips.filter(t => estadosEnCurso.includes(t.status)).length;
             const cancelados = trips.filter(t => t.status === 'cancelled').length;
 
             const elViajesDia = document.getElementById('metricViajesDia');
@@ -1269,11 +1841,8 @@
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">Cargando registros reales de Supabase...</td></tr>`;
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          }
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?role=eq.driver&select=*`, {
+          headers: apiHeaders()
         });
 
         if (!response.ok) {
@@ -1288,9 +1857,13 @@
           tbody.innerHTML = '';
           profiles.forEach(p => {
             const venc = calcularProximoVencimiento(p);
-            const isApproved = p.is_approved === true && !venc.estaVencido;
+            const suspendedUntil = p.account_suspended_until ? new Date(p.account_suspended_until) : null;
+            const accountSuspended = suspendedUntil && suspendedUntil > new Date();
+            const isApproved = p.is_approved === true && !venc.estaVencido && !accountSuspended;
 
-            const statusBadge = isApproved
+            const statusBadge = accountSuspended
+              ? `<span class="badge badge-suspended">SUSPENDIDO</span><br><span style="font-size:10px;color:var(--accent-red);font-weight:bold;">Hasta ${suspendedUntil.toLocaleDateString('es-AR')} · ${escapeHtml(p.account_suspension_reason || 'Revisión administrativa')}</span>`
+              : isApproved
               ? '<span class="badge badge-approved">HABILITADO</span>'
               : (venc.estaVencido
                 ? `<span class="badge badge-suspended">SUSPENDIDO</span><br><span style="font-size:10px; color:var(--accent-red); font-weight:bold;">Vencimiento de ${venc.motivo}</span>`
@@ -1327,7 +1900,7 @@
               <td>${p.vehicle_info || 'Móvil Registrado'}</td>
               <td>${vencimientoText}</td>
               <td>
-                <button class="btn-sm btn-blue" onclick="openDocsModal('${p.id}')">Ver Legajo Digital</button>
+                <button class="btn-sm btn-blue" onclick="openDocsModal('${p.id}')">Ver / Editar Legajo</button>
               </td>
               <td>${statusBadge}</td>
               <td>${actionBtns}</td>
@@ -1354,7 +1927,19 @@
       document.getElementById('imageViewerModal').classList.remove('active');
     }
 
-    function openDocsModal(driverId) {
+    async function createDocumentSignedUrl(storagePath) {
+      const encodedPath = storagePath.split('/').map(encodeURIComponent).join('/');
+      const response = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/driver-documents/${encodedPath}`, {
+        method: 'POST',
+        headers: apiHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ expiresIn: 300 })
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.signedURL ? `${SUPABASE_URL}/storage/v1${data.signedURL}` : null;
+    }
+
+    async function openDocsModal(driverId) {
       const modal = document.getElementById('docsModal');
       const content = document.getElementById('docsModalContent');
       modal.classList.add('active');
@@ -1369,44 +1954,48 @@
 
       const venc = calcularProximoVencimiento(driver);
 
-      // Fecha actual más 1 año por defecto para fecha de vencimiento si no tiene
-      const defaultDate = new Date();
-      defaultDate.setFullYear(defaultDate.getFullYear() + 1);
-      const defaultDateStr = defaultDate.toISOString().split('T')[0];
+      const docsResponse = await fetch(`${SUPABASE_URL}/rest/v1/driver_documents?driver_id=eq.${driverId}&select=*`, {
+        headers: apiHeaders()
+      });
+      const documentRows = docsResponse.ok ? await docsResponse.json() : [];
+      const documentsByType = {};
+      await Promise.all(documentRows.map(async row => {
+        row.signed_url = await createDocumentSignedUrl(row.storage_path);
+        documentsByType[row.document_type] = row;
+      }));
 
       let html = `
-        <div style="margin-bottom:16px; font-size:13px; color:var(--text-muted); background:#f8fafc; padding:12px; border-radius:10px; border:1px solid var(--border-color);">
-          <strong>Teléfono:</strong> ${driver.phone || 'Sin datos'} | <strong>Vehículo:</strong> ${driver.vehicle_info || 'Móvil'}<br>
-          <strong>Próximo Vencimiento Registrado:</strong> <span style="color:${venc.estaVencido ? 'var(--accent-red)' : 'var(--primary)'}; font-weight:bold;">${venc.motivo} ${venc.fechaStr ? '(' + venc.fechaStr + ')' : ''} ${venc.diffDias !== null ? '- Faltan ' + venc.diffDias + ' días' : ''}</span>
+        <div style="margin-bottom:16px;font-size:13px;color:var(--text-muted);background:#f8fafc;padding:12px;border-radius:10px;border:1px solid var(--border-color);">
+          <strong>Estado del legajo:</strong>
+          <span style="color:${venc.estaVencido ? 'var(--accent-red)' : 'var(--primary)'};font-weight:bold;">${escapeHtml(venc.motivo)} ${venc.fechaStr ? '(' + escapeHtml(venc.fechaStr) + ')' : ''} ${venc.diffDias !== null ? '- Faltan ' + venc.diffDias + ' días' : ''}</span>
         </div>
 
-        <div style="margin-bottom:16px; background:#fff; border:1px solid var(--border-color); padding:12px; border-radius:10px;">
-          <h4 style="font-size:12px; font-weight:bold; color:var(--primary); margin-bottom:8px;">REGISTRAR / ACTUALIZAR FECHAS DE VENCIMIENTO DE DOCUMENTACIÓN:</h4>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
-            <div>
-              <label style="font-size:11px; font-weight:bold; display:block; color:#475569;">Vencimiento Licencia D1:</label>
-              <input type="date" id="inputLicenciaVenc_${driver.id}" value="${driver.licencia_expiration || defaultDateStr}" style="width:100%; padding:6px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;">
-            </div>
-            <div>
-              <label style="font-size:11px; font-weight:bold; display:block; color:#475569;">Vencimiento RTO / VTV:</label>
-              <input type="date" id="inputVtvVenc_${driver.id}" value="${driver.vtv_expiration || defaultDateStr}" style="width:100%; padding:6px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;">
-            </div>
-            <div>
-              <label style="font-size:11px; font-weight:bold; display:block; color:#475569;">Vencimiento Póliza Seguro:</label>
-              <input type="date" id="inputSeguroVenc_${driver.id}" value="${driver.seguro_expiration || defaultDateStr}" style="width:100%; padding:6px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;">
-            </div>
-          </div>
+        <div class="record-grid" style="margin-bottom:18px;">
+          <div class="record-field"><label>Nombre completo</label><input id="recordFullName" value="${escapeHtml(driver.full_name || driver.name || '')}" required></div>
+          <div class="record-field"><label>Teléfono</label><input id="recordPhone" value="${escapeHtml(driver.phone || '')}" required></div>
+          <div class="record-field"><label>Correo</label><input id="recordEmail" type="email" value="${escapeHtml(driver.email || '')}"></div>
+          <div class="record-field"><label>Vehículo</label><input id="recordVehicle" value="${escapeHtml(driver.vehicle_info || '')}" placeholder="Marca, modelo y color"></div>
+          <div class="record-field"><label>Patente</label><input id="recordPlate" value="${escapeHtml(driver.plate || '')}"></div>
+          <div class="record-field"><label>Número de móvil</label><input id="recordTaxiNumber" value="${escapeHtml(driver.taxi_number || '')}"></div>
+          <div class="record-field"><label>Vencimiento licencia</label><input id="recordLicenseExpiry" type="date" value="${escapeHtml(driver.licencia_expiration || '')}"></div>
+          <div class="record-field"><label>Vencimiento seguro</label><input id="recordInsuranceExpiry" type="date" value="${escapeHtml(driver.seguro_expiration || '')}"></div>
+          <div class="record-field"><label>Vencimiento VTV / RTO</label><input id="recordVtvExpiry" type="date" value="${escapeHtml(driver.vtv_expiration || '')}"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px;gap:10px;">
+          <strong style="font-size:13px;color:#0f172a;">Documentos adjuntos</strong>
+          <small style="color:var(--text-muted);">Podés corregir estado y vencimiento.</small>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; max-height:360px; overflow-y:auto; padding-right:6px;">
       `;
 
       const docs = [
-        { label: 'DNI Frente', url: driver.dni_frente_url || driver.dni_url },
-        { label: 'DNI Dorso', url: driver.dni_dorso_url },
-        { label: 'Licencia Nacional D1', url: driver.licencia_frente_url || driver.licencia_url },
-        { label: 'Póliza de Seguro', url: driver.seguro_url },
-        { label: 'VTV / RTO Vigente', url: driver.vtv_url },
+        { type: 'dni_front', label: 'DNI Frente', record: documentsByType.dni_front },
+        { type: 'dni_back', label: 'DNI Dorso', record: documentsByType.dni_back },
+        { type: 'license', label: 'Licencia', record: documentsByType.license },
+        { type: 'insurance', label: 'Póliza de Seguro', record: documentsByType.insurance },
+        { type: 'vtv', label: 'VTV / RTO Vigente', record: documentsByType.vtv },
       ];
 
       docs.forEach(doc => {
@@ -1415,29 +2004,67 @@
             <strong style="font-size:12px; color:var(--primary); display:block; margin-bottom:8px;">${doc.label}</strong>
         `;
 
-        if (doc.url && doc.url.startsWith('data:image')) {
-          html += `<img src="${doc.url}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0; cursor:pointer;" onclick="openImageViewerModal('${doc.url}', '${doc.label}')" title="Clic para ampliar">`;
-        } else if (doc.url && doc.url.startsWith('data:application/pdf')) {
-          html += `<a href="${doc.url}" download="${doc.label}.pdf" class="btn-sm btn-blue" style="display:inline-block; text-decoration:none;">Descargar PDF Adjunto</a>`;
-        } else if (doc.url) {
-          html += `<button class="btn-sm btn-blue" onclick="openImageViewerModal('${doc.url}', '${doc.label}')">Abrir Documento</button>`;
+        if (doc.record) {
+          const selectedStatus = doc.record.status || 'pending';
+          html += `<div class="record-grid" style="grid-template-columns:1fr 1fr;margin-bottom:9px;gap:7px;">
+            <div class="record-field"><label>Estado</label><select data-document-status="${doc.type}" id="doc-status-${doc.type}">
+              <option value="pending" ${selectedStatus === 'pending' ? 'selected' : ''}>Pendiente</option>
+              <option value="approved" ${selectedStatus === 'approved' ? 'selected' : ''}>Aprobado</option>
+              <option value="rejected" ${selectedStatus === 'rejected' ? 'selected' : ''}>Rechazado</option>
+              <option value="expired" ${selectedStatus === 'expired' ? 'selected' : ''}>Vencido</option>
+            </select></div>
+            <div class="record-field"><label>Vencimiento</label><input data-document-expiry="${doc.type}" id="doc-expiry-${doc.type}" type="date" value="${escapeHtml(doc.record.expires_at || '')}"></div>
+          </div>`;
+          if (doc.record.signed_url) {
+            html += `<a href="${doc.record.signed_url}" target="_blank" rel="noopener" class="btn-sm btn-blue" style="display:inline-block;text-decoration:none;margin-right:6px;">Abrir documento</a>`;
+          }
         } else {
-          html += `<span style="font-size:12px; color:var(--accent-red); font-weight:bold;">Documento no adjuntado</span>`;
+          html += `<span style="font-size:12px;color:var(--accent-red);font-weight:bold;display:block;margin-bottom:9px;">Documento no adjuntado</span>`;
         }
+
+        html += `<input id="admin-file-${doc.type}" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" hidden
+          onchange="uploadAdminDocument('${driver.id}','${doc.type}',this)">
+          <button class="btn-sm" style="background:#e2e8f0;color:#334155;margin-top:7px;" onclick="document.getElementById('admin-file-${doc.type}').click()">
+            ${doc.record ? 'Reemplazar desde panel' : 'Cargar desde panel'}
+          </button>`;
 
         html += `</div>`;
       });
 
       html += `</div>`;
 
+      const requiredDocumentLabels = {
+        dni_front: 'DNI frente', dni_back: 'DNI dorso', license: 'Licencia',
+        insurance: 'Seguro', vtv: 'VTV / RTO'
+      };
+      const missingDocuments = Object.keys(requiredDocumentLabels).filter(type => !documentsByType[type]);
+      const today = new Date().toISOString().split('T')[0];
+      const expiredDocuments = ['license', 'insurance', 'vtv'].filter(type => {
+        const record = documentsByType[type];
+        return record && (!record.expires_at || record.expires_at < today);
+      });
+      const canApprove = missingDocuments.length === 0 && expiredDocuments.length === 0;
+      if (!canApprove) {
+        const details = [];
+        if (missingDocuments.length) details.push(`Faltan archivos: ${missingDocuments.map(type => requiredDocumentLabels[type]).join(', ')}`);
+        if (expiredDocuments.length) details.push(`Sin vigencia: ${expiredDocuments.map(type => requiredDocumentLabels[type]).join(', ')}`);
+        html += `<div style="margin-top:14px;padding:12px;border-radius:10px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:12px;line-height:1.45;">
+          <strong>No se puede habilitar todavía.</strong> ${escapeHtml(details.join('. '))}. Cambiar solamente las fechas generales no reemplaza los archivos obligatorios.
+        </div>`;
+      }
+
       html += `
         <div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:14px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+            <button id="saveDriverRecordButton" class="btn-sm btn-blue" onclick="saveDriverRecord('${driver.id}')">GUARDAR CAMBIOS DEL LEGAJO</button>
+            <span id="driverRecordStatus" style="font-size:12px;color:var(--text-muted);"></span>
+          </div>
           <label style="font-size:12px; font-weight:bold; color:var(--primary); display:block; margin-bottom:8px;">DAR DE ALTA Y HABILITAR POR PERÍODO DE DÍAS:</label>
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
             <div style="display:flex; gap:6px;">
-              <button class="btn-sm btn-green" onclick="guardarLegajoYHabilitar('${driver.id}', 30); closeDocsModal();">Dar Alta (+30 Días)</button>
-              <button class="btn-sm btn-green" onclick="guardarLegajoYHabilitar('${driver.id}', 60); closeDocsModal();">Dar Alta (+60 Días)</button>
-              <button class="btn-sm btn-green" onclick="guardarLegajoYHabilitar('${driver.id}', 90); closeDocsModal();">Dar Alta (+90 Días)</button>
+              <button class="btn-sm btn-green" ${canApprove ? '' : 'disabled style="opacity:.45;cursor:not-allowed;"'} onclick="guardarLegajoYHabilitar('${driver.id}', 30)">Dar Alta (+30 Días)</button>
+              <button class="btn-sm btn-green" ${canApprove ? '' : 'disabled style="opacity:.45;cursor:not-allowed;"'} onclick="guardarLegajoYHabilitar('${driver.id}', 60)">Dar Alta (+60 Días)</button>
+              <button class="btn-sm btn-green" ${canApprove ? '' : 'disabled style="opacity:.45;cursor:not-allowed;"'} onclick="guardarLegajoYHabilitar('${driver.id}', 90)">Dar Alta (+90 Días)</button>
             </div>
             <div style="display:flex; gap:8px;">
               <button class="btn-sm btn-red" onclick="toggleHabilitacionDriver('${driver.id}', false); closeDocsModal();">SUSPENDER</button>
@@ -1450,58 +2077,201 @@
       content.innerHTML = html;
     }
 
-    async function guardarLegajoYHabilitar(driverId, dias = 30) {
-      const licVenc = document.getElementById(`inputLicenciaVenc_${driverId}`)?.value;
-      const vtvVenc = document.getElementById(`inputVtvVenc_${driverId}`)?.value;
-      const seguroVenc = document.getElementById(`inputSeguroVenc_${driverId}`)?.value;
+    async function uploadAdminDocument(driverId, documentType, input) {
+      const file = input.files?.[0];
+      input.value = '';
+      if (!file) return;
+      const status = document.getElementById('driverRecordStatus');
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+      const extension = (file.name.split('.').pop() || '').toLowerCase();
+      if (!allowedExtensions.includes(extension)) {
+        alert('El documento debe ser JPG, PNG o PDF.');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert('El documento no puede superar los 10 MB.');
+        return;
+      }
 
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + dias);
-
-      const headers = {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+      const expiryFieldByType = {
+        license: 'recordLicenseExpiry', insurance: 'recordInsuranceExpiry', vtv: 'recordVtvExpiry'
       };
+      const expiryField = expiryFieldByType[documentType];
+      const expiresAt = expiryField ? document.getElementById(expiryField)?.value || '' : '';
+      if (expiryField && !expiresAt) {
+        alert('Primero ingresá la fecha de vencimiento de este documento.');
+        return;
+      }
+
+      const safePath = `${driverId}/${documentType}.${extension}`;
+      const encodedPath = safePath.split('/').map(encodeURIComponent).join('/');
+      status.style.color = 'var(--text-muted)';
+      status.innerText = `Subiendo ${file.name}...`;
+      try {
+        const uploadResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/driver-documents/${encodedPath}`, {
+          method: 'POST',
+          headers: apiHeaders({
+            'Content-Type': file.type || (extension === 'pdf' ? 'application/pdf' : 'image/jpeg'),
+            'x-upsert': 'true'
+          }),
+          body: file
+        });
+        if (!uploadResponse.ok) {
+          const error = await uploadResponse.json().catch(() => ({}));
+          throw new Error(error.message || 'No se pudo guardar el archivo.');
+        }
+
+        const existingResponse = await fetch(
+          `${SUPABASE_URL}/rest/v1/driver_documents?driver_id=eq.${driverId}&document_type=eq.${documentType}&select=id&limit=1`,
+          { headers: apiHeaders() }
+        );
+        if (!existingResponse.ok) throw new Error('No se pudo consultar el legajo actual.');
+        const existingRows = await existingResponse.json();
+        const existingId = existingRows[0]?.id;
+        const recordUrl = existingId
+          ? `${SUPABASE_URL}/rest/v1/driver_documents?id=eq.${existingId}`
+          : `${SUPABASE_URL}/rest/v1/driver_documents`;
+        const recordResponse = await fetch(recordUrl, {
+          method: existingId ? 'PATCH' : 'POST',
+          headers: apiHeaders({
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          }),
+          body: JSON.stringify({
+            ...(existingId ? {} : { driver_id: driverId, document_type: documentType }),
+            storage_path: safePath,
+            status: 'pending',
+            expires_at: expiresAt || null
+          })
+        });
+        if (!recordResponse.ok) {
+          const error = await recordResponse.json().catch(() => ({}));
+          throw new Error(error.message || 'El archivo subió, pero no se pudo registrar en el legajo.');
+        }
+
+        status.style.color = 'var(--accent-green)';
+        status.innerText = 'Documento cargado. El conductor quedó pendiente hasta revisar todo el legajo.';
+        await fetchDriversTable();
+        await openDocsModal(driverId);
+      } catch (error) {
+        status.style.color = 'var(--accent-red)';
+        status.innerText = error.message || 'No se pudo subir el documento.';
+      }
+    }
+
+    async function saveDriverRecord(driverId) {
+      const button = document.getElementById('saveDriverRecordButton');
+      const status = document.getElementById('driverRecordStatus');
+      const value = id => document.getElementById(id)?.value?.trim() || '';
+      const fullName = value('recordFullName');
+      const phone = value('recordPhone');
+      if (!fullName || !phone) {
+        status.style.color = 'var(--accent-red)';
+        status.innerText = 'Nombre y teléfono son obligatorios.';
+        return;
+      }
+
+      const documentUpdates = Array.from(document.querySelectorAll('[data-document-status]')).map(select => {
+        const type = select.dataset.documentStatus;
+        return {
+          document_type: type,
+          status: select.value,
+          expires_at: document.getElementById(`doc-expiry-${type}`)?.value || null
+        };
+      });
+
+      button.disabled = true;
+      button.innerText = 'GUARDANDO...';
+      status.style.color = 'var(--text-muted)';
+      status.innerText = 'Actualizando el legajo en Supabase...';
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_update_driver_record`, {
+          method: 'POST',
+          headers: apiHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            p_driver_id: driverId,
+            p_full_name: fullName,
+            p_phone: phone,
+            p_email: value('recordEmail'),
+            p_vehicle_info: value('recordVehicle'),
+            p_plate: value('recordPlate'),
+            p_taxi_number: value('recordTaxiNumber'),
+            p_licencia_expiration: value('recordLicenseExpiry') || null,
+            p_seguro_expiration: value('recordInsuranceExpiry') || null,
+            p_vtv_expiration: value('recordVtvExpiry') || null,
+            p_document_updates: documentUpdates
+          })
+        });
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.message || 'Supabase rechazó la actualización.');
+        }
+        status.style.color = 'var(--accent-green)';
+        status.innerText = 'Legajo actualizado correctamente. Revisá y volvé a habilitar si corresponde.';
+        await fetchDriversTable();
+        setTimeout(() => openDocsModal(driverId), 500);
+      } catch (error) {
+        status.style.color = 'var(--accent-red)';
+        status.innerText = error.message || 'No se pudo actualizar el legajo.';
+      } finally {
+        button.disabled = false;
+        button.innerText = 'GUARDAR CAMBIOS DEL LEGAJO';
+      }
+    }
+
+    async function guardarLegajoYHabilitar(driverId, dias = 30) {
+      const headers = apiHeaders({
+        'Content-Type': 'application/json',
+      });
 
       try {
-        // Nivel 1: Intentar guardar con todas las fechas de vencimiento de documentos
-        let response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
-          method: 'PATCH',
+        const documentsResponse = await fetch(
+          `${SUPABASE_URL}/rest/v1/driver_documents?driver_id=eq.${driverId}&select=document_type,expires_at`,
+          { headers: apiHeaders() }
+        );
+        if (documentsResponse.ok) {
+          const documents = await documentsResponse.json();
+          const labels = {
+            dni_front: 'DNI frente', dni_back: 'DNI dorso', license: 'Licencia',
+            insurance: 'Seguro', vtv: 'VTV / RTO'
+          };
+          const missing = Object.keys(labels).filter(type => !documents.some(doc => doc.document_type === type));
+          const today = new Date().toISOString().split('T')[0];
+          const expired = documents.filter(doc => ['license', 'insurance', 'vtv'].includes(doc.document_type)
+            && (!doc.expires_at || doc.expires_at < today));
+          if (missing.length || expired.length) {
+            const details = [];
+            if (missing.length) details.push(`Faltan: ${missing.map(type => labels[type]).join(', ')}`);
+            if (expired.length) details.push(`Vencidos o sin fecha: ${expired.map(doc => labels[doc.document_type]).join(', ')}`);
+            alert(`No se puede habilitar el conductor. ${details.join('. ')}. Los cinco archivos deben estar cargados y vigentes.`);
+            return;
+          }
+        }
+        const driver = window.profilesList?.find(item => item.id === driverId);
+        const driverName = driver?.full_name || 'Conductor';
+        const title = prompt('Título del mensaje para el conductor:', 'Solicitud aprobada');
+        const message = title === null ? '' : prompt(
+          'Mensaje que verá al abrir la aplicación:',
+          `Tu legajo fue aprobado. Ya estás habilitado para trabajar en QuiacaGo por ${dias} días.`
+        ) || '';
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/review_driver_and_notify`, {
+          method: 'POST',
           headers: headers,
           body: JSON.stringify({
-            is_approved: true,
-            approved_until: expirationDate.toISOString(),
-            licencia_expiration: licVenc || null,
-            vtv_expiration: vtvVenc || null,
-            seguro_expiration: seguroVenc || null
+            p_driver_id: driverId,
+            p_approved: true,
+            p_days: dias,
+            p_title: title || 'Solicitud aprobada',
+            p_message: message
           })
         });
 
-        // Nivel 2: Si faltan columnas de fechas especificas, intentar con approved_until
-        if (!response.ok) {
-          response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
-            method: 'PATCH',
-            headers: headers,
-            body: JSON.stringify({ is_approved: true, approved_until: expirationDate.toISOString() })
-          });
-        }
-
-        // Nivel 3: Ultra defensivo (actualización básica is_approved = true)
-        if (!response.ok) {
-          response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
-            method: 'PATCH',
-            headers: headers,
-            body: JSON.stringify({ is_approved: true })
-          });
-        }
-
         if (response.ok) {
-          alert(`Conductor dado de Alta y HABILITADO por ${dias} DÍAS correctamente.`);
+          alert(`${driverName} fue habilitado por ${dias} días${message ? ' y recibió el mensaje.' : '.'}`);
           fetchDriversTable();
         } else {
-          alert('Error: No se pudo actualizar el registro en Supabase.');
+          const error = await response.json().catch(() => ({}));
+          alert(error.message || 'No se puede aprobar: verificá que estén los 5 documentos y que sigan vigentes.');
         }
       } catch (err) {
         alert('Error al conectar con Supabase.');
@@ -1509,41 +2279,29 @@
     }
 
     async function toggleHabilitacionDriver(driverId, habilitar, dias = 30) {
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + dias);
-
-      const headers = {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      const headers = apiHeaders({
         'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      };
+      });
 
       try {
-        let response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
-          method: 'PATCH',
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/review_driver_and_notify`, {
+          method: 'POST',
           headers: headers,
-          body: JSON.stringify(
-            habilitar
-              ? { is_approved: true, approved_until: expirationDate.toISOString() }
-              : { is_approved: false }
-          )
+          body: JSON.stringify({
+            p_driver_id: driverId,
+            p_approved: habilitar,
+            p_days: dias,
+            p_title: '',
+            p_message: ''
+          })
         });
-
-        // Fallback si approved_until no existe en la BD Supabase
-        if (!response.ok) {
-          response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${driverId}`, {
-            method: 'PATCH',
-            headers: headers,
-            body: JSON.stringify({ is_approved: habilitar })
-          });
-        }
 
         if (response.ok) {
           alert(habilitar ? `Conductor HABILITADO correctamente (${dias} DÍAS asignados).` : 'Conductor INHABILITADO en Supabase.');
           fetchDriversTable();
         } else {
-          alert('Error: No se pudo actualizar el registro en Supabase.');
+          const error = await response.json().catch(() => ({}));
+          alert(error.message || 'No se pudo actualizar el conductor.');
         }
       } catch (err) {
         alert('Error al conectar con Supabase.');
@@ -1551,20 +2309,23 @@
     }
 
     // Inicializar tabla de choferes y métricas en tiempo real al abrir
-    setTimeout(fetchDriversTable, 500);
-    setTimeout(updateRealMetrics, 800);
-    setInterval(updateRealMetrics, 5000);
+    restoreAdminSession();
+    setInterval(updateRealMetrics, 30000);
+    setInterval(fetchAdminNotifications, 30000);
 
     async function fetchRealDrivers() {
-      if (!adminMap) return;
+      if (!adminMap || !adminAccessToken) return;
+      const status = document.getElementById('mapStatus');
+      const timer = document.getElementById('updateTimer');
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/driver_locations?is_online=eq.true`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          }
+        const activeSince = encodeURIComponent(new Date(Date.now() - 20000).toISOString());
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/driver_locations?is_online=eq.true&updated_at=gte.${activeSince}`, {
+          headers: apiHeaders()
         });
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (status) status.innerText = `No se pudieron consultar ubicaciones (${response.status}).`;
+          return;
+        }
         const drivers = await response.json();
 
         driverMarkersGroup.clearLayers();
@@ -1583,15 +2344,21 @@
               driverMarkersGroup.addLayer(marker);
             }
           });
+          if (status) status.innerText = `${drivers.length} taxi(s) conectado(s) en tiempo real.`;
+        } else {
+          if (status) status.innerText = 'No hay conductores conectados. Abrí la app del conductor y presioná CONECTARSE.';
         }
+        if (timer) timer.innerText = `Actualizado ${new Date().toLocaleTimeString('es-AR')}`;
       } catch (err) {
         console.log('Error buscando choferes reales:', err);
+        if (status) status.innerText = 'Error de red al actualizar las ubicaciones.';
       }
     }
 
     function initAdminMap() {
       if (adminMap !== null) {
-        adminMap.invalidateSize();
+        setTimeout(() => adminMap.invalidateSize(), 50);
+        fetchRealDrivers();
         return;
       }
 
@@ -1603,7 +2370,7 @@
       fetchRealDrivers();
 
       // Actualizar automáticamente cada 5 segundos
-      setInterval(fetchRealDrivers, 5000);
+      if (!driverPollTimer) driverPollTimer = setInterval(fetchRealDrivers, 5000);
     }
   </script>
 </body>

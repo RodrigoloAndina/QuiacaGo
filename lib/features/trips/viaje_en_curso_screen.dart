@@ -3,11 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/theme/app_colors.dart';
 import '../../services/location_service.dart';
 import '../../services/routing_service.dart';
 
 import '../../services/current_trip_session.dart';
+import '../../services/trip_service.dart';
+import '../../services/offline_sync_service.dart';
+import '../../services/tariff_service.dart';
+import '../../core/constants/app_constants.dart';
 
 class ViajeEnCursoScreen extends StatefulWidget {
   const ViajeEnCursoScreen({super.key});
@@ -21,6 +24,8 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
   LatLng _destinoPos = const LatLng(0, 0);
   List<LatLng> _rutaPuntos = [];
   bool _isLoadingRoute = true;
+  bool _finishing = false;
+  final MapController _mapController = MapController();
 
   @override
   void initState() {
@@ -33,12 +38,14 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
     final posGps = await LocationService.getCurrentLocation();
 
     LatLng destinoReal = posGps;
-    if (trip != null && trip.destinationLat != 0.0 && trip.destinationLng != 0.0) {
+    if (trip != null &&
+        trip.destinationLat != 0.0 &&
+        trip.destinationLng != 0.0) {
       destinoReal = LatLng(trip.destinationLat, trip.destinationLng);
     } else {
       destinoReal = LatLng(posGps.latitude + 0.005, posGps.longitude + 0.005);
     }
-    
+
     final puntos = await RoutingService.getRoutePoints(posGps, destinoReal);
 
     if (mounted) {
@@ -48,20 +55,76 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
         _rutaPuntos = puntos;
         _isLoadingRoute = false;
       });
+      _enfocarRuta(posGps, destinoReal);
     }
   }
 
+  void _enfocarRuta(LatLng inicio, LatLng fin) {
+    const distance = Distance();
+    final meters = distance.as(LengthUnit.Meter, inicio, fin);
+    final zoom = meters < 1500
+        ? 15.5
+        : meters < 5000
+            ? 13.5
+            : meters < 20000
+                ? 11.0
+                : 8.0;
+    final center = LatLng((inicio.latitude + fin.latitude) / 2,
+        (inicio.longitude + fin.longitude) / 2);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _mapController.move(center, zoom);
+    });
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
   Future<void> _hacerLlamada() async {
-    final Uri url = Uri.parse('tel:+5493885401234');
+    final phone = CurrentTripSession().currentTrip?.passengerPhone ?? '';
+    final Uri url = Uri(scheme: 'tel', path: phone);
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     }
   }
 
   Future<void> _abrirWhatsApp() async {
-    final Uri url = Uri.parse('https://wa.me/5493885401234?text=Hola%20María,%20estamos%20en%20camino%20a%20la%20Terminal%20de%20Ómnibus.');
+    final trip = CurrentTripSession().currentTrip;
+    final phone =
+        (trip?.passengerPhone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+    final Uri url = Uri.https('wa.me', '/$phone', {
+      'text':
+          'Hola ${trip?.passengerName ?? 'pasajero'}, estamos llegando a ${trip?.destinationAddress ?? 'tu destino'}.',
+    });
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _llegueAlDestino() async {
+    final trip = CurrentTripSession().currentTrip;
+    if (trip == null || _finishing) return;
+    if (!await OfflineSyncService().checkNow()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Sin conexión. El viaje sigue activo; reintentá al recuperar internet.'),
+        ));
+      }
+      return;
+    }
+    setState(() => _finishing = true);
+    final ok = await TripService.solicitarCodigoFinalizacion(trip.id);
+    if (!mounted) return;
+    setState(() => _finishing = false);
+    if (ok) {
+      CurrentTripSession().setTrip(trip.copyWithStatus('awaiting_finish_code'));
+      context.go('/finalizacion-viaje');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No se pudo solicitar el código final.')));
     }
   }
 
@@ -72,18 +135,20 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
         children: [
           // MAPA DE NAVEGACIÓN OSRM ALINEADO 100% SOBRE EL ASFALTO
           FlutterMap(
-            options: MapOptions(
-              initialCenter: LatLng(
-                (_conductorPos.latitude + _destinoPos.latitude) / 2,
-                (_conductorPos.longitude + _destinoPos.longitude) / 2,
-              ),
+            mapController: _mapController,
+            options: const MapOptions(
+              initialCenter:
+                  LatLng(AppConstants.laQuiacaLat, AppConstants.laQuiacaLng),
               initialZoom: 16.0,
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.quiacago.quiaca_go_conductor',
               ),
+              const RichAttributionWidget(attributions: [
+                TextSourceAttribution('© OpenStreetMap contributors'),
+              ]),
               if (_rutaPuntos.isNotEmpty)
                 PolylineLayer(
                   polylines: [
@@ -115,7 +180,9 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                           ),
                         ],
                       ),
-                      child: const Center(child: Icon(Icons.navigation, color: Colors.white, size: 24)),
+                      child: const Center(
+                          child: Icon(Icons.navigation,
+                              color: Colors.white, size: 24)),
                     ),
                   ),
                   Marker(
@@ -135,7 +202,9 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                           ),
                         ],
                       ),
-                      child: const Center(child: Icon(Icons.location_on, color: Colors.white, size: 26)),
+                      child: const Center(
+                          child: Icon(Icons.location_on,
+                              color: Colors.white, size: 26)),
                     ),
                   ),
                 ],
@@ -169,7 +238,8 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                       color: const Color(0xFF2563EB),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.turn_left, color: Colors.white, size: 28),
+                    child: const Icon(Icons.turn_left,
+                        color: Colors.white, size: 28),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -177,7 +247,9 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isLoadingRoute ? 'Calculando ruta por calles...' : 'En 200m gira a la izquierda',
+                          _isLoadingRoute
+                              ? 'Calculando ruta por calles...'
+                              : 'En 200m gira a la izquierda',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -185,9 +257,12 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
-                          'por Calle 25 de Mayo hacia Av. España',
-                          style: TextStyle(
+                        Text(
+                          CurrentTripSession()
+                                  .currentTrip
+                                  ?.destinationAddress ??
+                              'Destino indicado por el pasajero',
+                          style: const TextStyle(
                             color: Color(0xFF94A3B8),
                             fontSize: 13,
                           ),
@@ -196,7 +271,8 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1E293B),
                       borderRadius: BorderRadius.circular(12),
@@ -205,11 +281,15 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                       children: [
                         Text(
                           '6 min',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13),
                         ),
                         Text(
                           '2.1 km',
-                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+                          style:
+                              TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
                         ),
                       ],
                     ),
@@ -243,70 +323,100 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'DESTINO FINAL',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8)),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Terminal de Ómnibus',
-                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'DESTINO FINAL',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF94A3B8)),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              CurrentTripSession()
+                                      .currentTrip
+                                      ?.destinationAddress ??
+                                  'Destino indicado por el pasajero',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Text(
-                          '\$ 1,250',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF00327D)),
+                        child: Text(
+                          TariffService.formatearMonto(
+                              CurrentTripSession().currentTrip?.fareAmount ??
+                                  TariffService.calcularPrecio()),
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF00327D)),
                         ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
                   const Divider(height: 1),
                   const SizedBox(height: 14),
-
                   Row(
                     children: [
-                      const Icon(Icons.person, color: Color(0xFF00327D), size: 20),
+                      const Icon(Icons.person,
+                          color: Color(0xFF00327D), size: 20),
                       const SizedBox(width: 8),
-                      const Text('María Gómez', style: TextStyle(color: Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold)),
+                      Text(
+                          CurrentTripSession().currentTrip?.passengerName ??
+                              'Pasajero',
+                          style: const TextStyle(
+                              color: Color(0xFF0F172A),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold)),
                       const Spacer(),
-
                       IconButton.filledTonal(
-                        icon: const Icon(Icons.phone, color: Color(0xFF00327D), size: 20),
+                        icon: const Icon(Icons.phone,
+                            color: Color(0xFF00327D), size: 20),
                         onPressed: _hacerLlamada,
-                        style: IconButton.styleFrom(backgroundColor: const Color(0xFFEFF6FF)),
+                        style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFEFF6FF)),
                       ),
                       const SizedBox(width: 6),
                       IconButton.filledTonal(
-                        icon: const Icon(Icons.chat_outlined, color: Color(0xFF10B981), size: 20),
+                        icon: const Icon(Icons.chat_outlined,
+                            color: Color(0xFF10B981), size: 20),
                         onPressed: _abrirWhatsApp,
-                        style: IconButton.styleFrom(backgroundColor: const Color(0xFFECFDF5)),
+                        style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFECFDF5)),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
-
                   SizedBox(
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton.icon(
-                      onPressed: () => context.push('/finalizacion-viaje'),
-                      icon: const Icon(Icons.flag, color: Colors.white, size: 22),
-                      label: const Text(
-                        'FINALIZAR VIAJE Y COBRAR \$1,250',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                      onPressed: _finishing ? null : _llegueAlDestino,
+                      icon:
+                          const Icon(Icons.flag, color: Colors.white, size: 22),
+                      label: Text(
+                        'LLEGUÉ AL DESTINO · COBRAR ${TariffService.formatearMonto(CurrentTripSession().currentTrip?.fareAmount ?? 0)}',
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEF4444),

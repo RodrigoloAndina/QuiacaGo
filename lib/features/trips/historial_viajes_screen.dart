@@ -74,10 +74,10 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
                   const SizedBox(height: 4),
                   const Text(
                     'Registro real de servicios asignados y completados en La Quiaca.',
-                    style: TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
+                    style: TextStyle(
+                        fontSize: 13, color: AppColors.onSurfaceVariant),
                   ),
                   const SizedBox(height: 20),
-
                   if (_trips.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(24),
@@ -85,21 +85,27 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.surfaceContainerHigh),
+                        border:
+                            Border.all(color: AppColors.surfaceContainerHigh),
                       ),
-                      child: Column(
-                        children: const [
-                          Icon(Icons.history_outlined, size: 48, color: AppColors.outline),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.history_outlined,
+                              size: 48, color: AppColors.outline),
                           SizedBox(height: 12),
                           Text(
                             'Sin viajes registrados aún',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.primary),
                           ),
                           SizedBox(height: 4),
                           Text(
                             'Los servicios aceptados y finalizados aparecerán aquí en tiempo real.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: AppColors.outline),
+                            style: TextStyle(
+                                fontSize: 12, color: AppColors.outline),
                           ),
                         ],
                       ),
@@ -114,16 +120,20 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
                         final t = _trips[index];
                         final isCancelled = t.status == 'cancelled';
                         return _buildTripCard(
-                          date: t.id.length > 8 ? 'ID: ${t.id.substring(0, 8)}...' : 'Viaje #${t.id}',
-                          amount: isCancelled ? 'Cancelado' : '\$${t.fareAmount.toStringAsFixed(2)}',
+                          date: t.id.length > 8
+                              ? 'ID: ${t.id.substring(0, 8)}...'
+                              : 'Viaje #${t.id}',
+                          amount: isCancelled
+                              ? 'Cancelado'
+                              : '\$${t.fareAmount.toStringAsFixed(2)}',
                           origin: t.pickupAddress,
                           destination: t.destinationAddress,
-                          passenger: 'Pasajero: ${t.passengerName} (${t.passengerPhone})',
+                          passenger:
+                              'Pasajero: ${t.passengerName} (${t.passengerPhone})',
                           isCancelled: isCancelled,
                         );
                       },
                     ),
-
                   const SizedBox(height: 40),
                 ],
               ),
@@ -162,10 +172,13 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(date, style: const TextStyle(fontSize: 12, color: AppColors.outline)),
+              Text(date,
+                  style:
+                      const TextStyle(fontSize: 12, color: AppColors.outline)),
               if (isCancelled)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.badgeCancelledBackground,
                     borderRadius: BorderRadius.circular(12),
@@ -198,7 +211,10 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
               Expanded(
                 child: Text(
                   'Origen: $origin',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.onSurface),
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onSurface),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -212,7 +228,10 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
               Expanded(
                 child: Text(
                   'Destino: $destination',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.onSurfaceVariant),
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onSurfaceVariant),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -222,7 +241,11 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
             const SizedBox(height: 12),
             const Divider(),
             const SizedBox(height: 4),
-            Text(passenger, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+            Text(passenger,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary)),
           ],
         ],
       ),

@@ -14,12 +14,16 @@ class CuentaPendienteScreen extends StatelessWidget {
   });
 
   Future<void> _abrirWhatsApp() async {
-    final url = Uri.parse('https://wa.me/5493885401234?text=Hola,%20he%20enviado%20mi%20solicitud%20de%20habilitación%20para%20QuiacaGo.');
+    final url = Uri.parse(
+        'https://wa.me/5493885401234?text=Hola,%20he%20enviado%20mi%20solicitud%20de%20habilitación%20para%20QuiacaGo.');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
       // Fallback
-      await launchUrl(Uri.parse('https://api.whatsapp.com/send?phone=5493885401234&text=Hola,%20he%20enviado%20mi%20solicitud%20de%20habilitación'), mode: LaunchMode.externalApplication);
+      await launchUrl(
+          Uri.parse(
+              'https://api.whatsapp.com/send?phone=5493885401234&text=Hola,%20he%20enviado%20mi%20solicitud%20de%20habilitación'),
+          mode: LaunchMode.externalApplication);
     }
   }
 
@@ -41,7 +45,8 @@ class CuentaPendienteScreen extends StatelessWidget {
                   color: Color(0xFFEFF6FF),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.schedule_rounded, size: 48, color: AppColors.primary),
+                child: const Icon(Icons.schedule_rounded,
+                    size: 48, color: AppColors.primary),
               ),
               const SizedBox(height: 20),
               const Text(
@@ -73,7 +78,8 @@ class CuentaPendienteScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primaryFixedDim, width: 1.5),
+                  border:
+                      Border.all(color: AppColors.primaryFixedDim, width: 1.5),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.04),
@@ -82,8 +88,8 @@ class CuentaPendienteScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Column(
-                  children: const [
+                child: const Column(
+                  children: [
                     Text(
                       'ESTADO DE HABILITACIÓN',
                       style: TextStyle(
@@ -110,7 +116,10 @@ class CuentaPendienteScreen extends StatelessWidget {
                     Text(
                       'La habilitación de tu vehículo y legajo depende exclusivamente de la aprobación en el Panel de Administración Municipal.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12.5, color: AppColors.onSurfaceVariant, height: 1.4),
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.onSurfaceVariant,
+                          height: 1.4),
                     ),
                   ],
                 ),
@@ -131,7 +140,8 @@ class CuentaPendienteScreen extends StatelessWidget {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF25D366),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(40)),
                   ),
                 ),
               ),
@@ -144,14 +154,20 @@ class CuentaPendienteScreen extends StatelessWidget {
                 height: 52,
                 child: OutlinedButton.icon(
                   onPressed: () => context.push('/documentacion'),
-                  icon: const Icon(Icons.cloud_upload_outlined, color: AppColors.primary),
+                  icon: const Icon(Icons.cloud_upload_outlined,
+                      color: AppColors.primary),
                   label: const Text(
                     'SUBIR PAPELES Y COMPROBANTE',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: AppColors.primary),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primary, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                    side:
+                        const BorderSide(color: AppColors.primary, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(40)),
                   ),
                 ),
               ),

@@ -18,7 +18,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Driver?> login(String phone, String password) async {
-    return await _authService.loginWithPhone(phone, password);
+    await _authService.signIn(identifier: phone, password: password);
+    final profile = await _authService.currentProfile();
+    if (profile == null || profile['role'] != 'driver') {
+      await _authService.logout();
+      return null;
+    }
+    return Driver(
+      id: profile['id'].toString(),
+      nombre: profile['full_name']?.toString() ?? 'Conductor',
+      telefono: profile['phone']?.toString() ?? phone,
+    );
   }
 
   @override
@@ -39,7 +49,7 @@ class AuthRepositoryImpl implements AuthRepository {
         return response['is_approved'] as bool;
       }
     } catch (_) {}
-    return true; // Fallback testing
+    return false;
   }
 
   @override
@@ -47,11 +57,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _supabaseService.client
           .from('profiles')
-          .update({'is_approved': true})
-          .eq('id', driverId);
+          .update({'is_approved': true}).eq('id', driverId);
       return true;
     } catch (_) {
-      return true;
+      return false;
     }
   }
 
@@ -60,11 +69,11 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _supabaseService.client
           .from('profiles')
-          .update({'is_approved': false})
-          .eq('id', driverId);
+          .update({'is_approved': false, 'suspension_reason': reason}).eq(
+              'id', driverId);
       return true;
     } catch (_) {
-      return true;
+      return false;
     }
   }
 }

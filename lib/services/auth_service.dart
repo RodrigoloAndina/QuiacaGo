@@ -1,22 +1,57 @@
-import '../models/driver.dart';
-import '../core/constants/app_constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'supabase_service.dart';
 
 class AuthService {
-  // Simulación y cliente de autenticación
-  Future<Driver?> loginWithPhone(String phone, String password) async {
-    await Future.delayed(const Duration(milliseconds: 600));
+  SupabaseClient get _client => SupabaseService().client;
+  bool get hasSession => _client.auth.currentSession != null;
 
-    // Retorna conductor activo para pruebas
-    return Driver(
-      id: 'driver-042',
-      nombre: 'Carlos Mamani',
-      telefono: phone,
-      estado: DriverStatus.OFFLINE,
-      calificacion: 4.95,
-    );
+  static String? suspensionMessage(Map<String, dynamic>? profile) {
+    final until = DateTime.tryParse(
+        profile?['account_suspended_until']?.toString() ?? '');
+    if (until == null || !until.isAfter(DateTime.now().toUtc())) return null;
+    final reason = profile?['account_suspension_reason']?.toString().trim();
+    final localUntil = until.toLocal();
+    final date =
+        '${localUntil.day.toString().padLeft(2, '0')}/${localUntil.month.toString().padLeft(2, '0')}/${localUntil.year}';
+    return 'Cuenta suspendida hasta el $date.${reason?.isNotEmpty == true ? ' Motivo: $reason' : ''}';
   }
 
-  Future<void> logout() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+  static String emailForPhone(String phone) {
+    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    return '$digits@usuarios.quiacago.app';
   }
+
+  Future<AuthResponse> signIn(
+      {required String identifier, required String password}) {
+    final email = identifier.contains('@')
+        ? identifier.trim()
+        : emailForPhone(identifier);
+    return _client.auth.signInWithPassword(email: email, password: password);
+  }
+
+  Future<AuthResponse> signUp(
+          {required String email,
+          required String password,
+          required String fullName,
+          required String phone,
+          required String role,
+          Map<String, dynamic>? extraData}) =>
+      _client.auth
+          .signUp(email: email.trim().toLowerCase(), password: password, data: {
+        'full_name': fullName,
+        'phone': phone,
+        'role': role,
+        ...?extraData,
+      });
+
+  Future<void> resendSignupConfirmation(String email) =>
+      _client.auth.resend(type: OtpType.signup, email: email.trim());
+
+  Future<Map<String, dynamic>?> currentProfile() async {
+    final id = _client.auth.currentUser?.id;
+    if (id == null) return null;
+    return _client.from('profiles').select().eq('id', id).maybeSingle();
+  }
+
+  Future<void> logout() => _client.auth.signOut();
 }

@@ -1,4 +1,3 @@
-import '../models/driver.dart';
 import '../models/vehicle.dart';
 import '../models/document.dart';
 import '../models/earning.dart';
@@ -56,7 +55,7 @@ class DriverRepositoryImpl implements DriverRepository {
       ),
       DriverDocument(
         id: 'doc-2',
-        titulo: 'Licencia de Conducir Cat. D1',
+        titulo: 'Licencia de conducir',
         estado: DocumentStatus.APPROVED,
         fechaVencimiento: DateTime(2027, 10, 10),
       ),

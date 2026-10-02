@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_colors.dart';
-import '../../services/supabase_service.dart';
+import '../../services/auth_service.dart';
 import '../../services/driver_session_service.dart';
+import '../../services/pending_driver_registration_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,52 +14,74 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController(text: '+54 3885 401234');
+  // Credenciales temporales para agilizar el piloto. Retirar en producción.
+  final _phoneController = TextEditingController(text: 'conductor@quiaca.com');
   final _passwordController = TextEditingController(text: '123456');
   bool _isLoading = false;
 
   String? _errorMessage;
+  bool _emailNotConfirmed = false;
 
   Future<void> _handleLogin() async {
     final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
 
     if (phone.isEmpty || password.isEmpty) {
-      setState(() => _errorMessage = 'Ingresá tu teléfono y contraseña.');
+      setState(() => _errorMessage = 'Ingresá tu correo y contraseña.');
       return;
     }
 
-    setState(() { _isLoading = true; _errorMessage = null; });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _emailNotConfirmed = false;
+    });
 
     try {
-      final supabase = SupabaseService().client;
-
-      // Buscar si el chofer existe en la base de datos profiles
-      final data = await supabase
-          .from('profiles')
-          .select()
-          .eq('phone', phone)
-          .maybeSingle();
+      final auth = AuthService();
+      await auth.signIn(identifier: phone, password: password);
+      final data = await auth.currentProfile();
 
       if (!mounted) return;
       setState(() => _isLoading = false);
 
       if (data == null) {
         // Usuario NO registrado
-        setState(() => _errorMessage = '⚠️ Tu número no se encuentra registrado. Regístrate para solicitar la habilitación municipal.');
+        setState(() => _errorMessage =
+            '⚠️ Tu número no se encuentra registrado. Regístrate para solicitar la habilitación municipal.');
         return;
       }
 
-      // Verificar contraseña si fue configurada
-      if (data['password'] != null && data['password'] != password) {
-        setState(() => _errorMessage = '🔑 Contraseña incorrecta.');
+      if (data['role'] != 'driver') {
+        await auth.logout();
+        setState(
+            () => _errorMessage = 'Esta cuenta no pertenece a un conductor.');
         return;
+      }
+
+      final suspension = AuthService.suspensionMessage(data);
+      if (suspension != null) {
+        await auth.logout();
+        if (mounted) setState(() => _errorMessage = suspension);
+        return;
+      }
+
+      try {
+        final uploaded = await PendingDriverRegistrationService()
+            .uploadIfPresent(data['id'].toString());
+        if (uploaded && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Legajo pendiente enviado correctamente.'),
+          ));
+        }
+      } catch (_) {
+        // El archivo queda guardado para reintentar en el próximo ingreso.
       }
 
       // Guardar datos reales en DriverSessionService
       DriverSessionService().setSession(
         id: data['id']?.toString() ?? 'driver_${data['phone']}',
-        fullName: data['full_name'] ?? data['name'] ?? 'Conductor Habilitado',
+        fullName: data['full_name'] ?? 'Conductor Habilitado',
         phone: data['phone'] ?? phone,
         vehicleInfo: data['vehicle_info'] ?? 'Taxi Habilitado',
         plate: data['plate'] ?? '',
@@ -72,34 +96,72 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (data['approved_until'] != null) {
         final d = DateTime.tryParse(data['approved_until'].toString());
-        if (d != null && d.isBefore(now)) motivoVencimiento = 'Permiso Municipal vencido';
+        if (d != null && d.isBefore(now)) {
+          motivoVencimiento = 'Permiso Municipal vencido';
+        }
       }
       if (data['licencia_expiration'] != null) {
         final d = DateTime.tryParse(data['licencia_expiration'].toString());
-        if (d != null && d.isBefore(now)) motivoVencimiento = 'Licencia Nacional D1 vencida';
+        if (d != null && d.isBefore(now)) {
+          motivoVencimiento = 'Licencia vencida';
+        }
       }
       if (data['vtv_expiration'] != null) {
         final d = DateTime.tryParse(data['vtv_expiration'].toString());
-        if (d != null && d.isBefore(now)) motivoVencimiento = 'Revisión RTO/VTV vencida';
+        if (d != null && d.isBefore(now)) {
+          motivoVencimiento = 'Revisión RTO/VTV vencida';
+        }
       }
       if (data['seguro_expiration'] != null) {
         final d = DateTime.tryParse(data['seguro_expiration'].toString());
-        if (d != null && d.isBefore(now)) motivoVencimiento = 'Póliza de Seguro vencida';
+        if (d != null && d.isBefore(now)) {
+          motivoVencimiento = 'Póliza de Seguro vencida';
+        }
       }
 
       if (isApproved && motivoVencimiento == null) {
         context.go('/home');
       } else if (motivoVencimiento != null) {
-        setState(() => _errorMessage = 'Acceso suspendido: $motivoVencimiento. Presenta la documentación actualizada en la Municipalidad de La Quiaca.');
+        setState(() => _errorMessage =
+            'Acceso suspendido: $motivoVencimiento. Presenta la documentación actualizada en la Municipalidad de La Quiaca.');
       } else {
         context.go('/cuenta-pendiente');
       }
-    } catch (e) {
+    } on AuthException catch (e) {
+      if (mounted) {
+        final unconfirmed = e.code == 'email_not_confirmed' ||
+            e.message.toLowerCase().contains('not confirmed');
+        setState(() {
+          _isLoading = false;
+          _emailNotConfirmed = unconfirmed;
+          _errorMessage = unconfirmed
+              ? 'Confirmá tu correo desde el enlace que te enviamos.'
+              : 'Correo o contraseña incorrectos.';
+        });
+      }
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Error al conectar con Supabase. Verifica tu conexión.';
+          _errorMessage = 'Correo o contraseña incorrectos, o no hay conexión.';
         });
+      }
+    }
+  }
+
+  Future<void> _resendConfirmation() async {
+    try {
+      await AuthService().resendSignupConfirmation(_phoneController.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Correo reenviado. Revisá también la carpeta Spam.'),
+        ));
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo reenviar: $error')),
+        );
       }
     }
   }
@@ -125,7 +187,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.local_taxi, size: 40, color: Colors.white),
+                      child: const Icon(Icons.local_taxi,
+                          size: 40, color: Colors.white),
                     ),
                     const SizedBox(height: 14),
                     const Text(
@@ -143,9 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 36),
-
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -171,7 +232,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         letterSpacing: 1,
                       ),
                     ),
-
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 10),
                       Container(
@@ -182,44 +242,55 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 18),
+                            const Icon(Icons.error_outline,
+                                color: Color(0xFFEF4444), size: 18),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _errorMessage!,
-                                style: const TextStyle(fontSize: 12, color: Color(0xFFEF4444), fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFFEF4444),
+                                    fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ],
-
+                    if (_emailNotConfirmed)
+                      TextButton.icon(
+                        onPressed: _resendConfirmation,
+                        icon: const Icon(Icons.mark_email_unread_outlined),
+                        label: const Text('REENVIAR CORREO DE CONFIRMACIÓN'),
+                      ),
                     const SizedBox(height: 16),
-
                     TextFormField(
                       controller: _phoneController,
-                      keyboardType: TextInputType.phone,
+                      keyboardType: TextInputType.emailAddress,
+                      textCapitalization: TextCapitalization.none,
+                      autocorrect: false,
                       decoration: InputDecoration(
-                        labelText: 'Teléfono Celular Habilitado',
-                        prefixIcon: const Icon(Icons.phone_android, color: AppColors.primary),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                        labelText: 'Correo electrónico',
+                        prefixIcon: const Icon(Icons.email_outlined,
+                            color: AppColors.primary),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
                     const SizedBox(height: 14),
-
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: 'Contraseña de Conductor',
-                        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                        prefixIcon: const Icon(Icons.lock_outline,
+                            color: AppColors.primary),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -227,34 +298,41 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40)),
                         ),
                         child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
                             : const Text(
                                 'INGRESAR COMO CONDUCTOR',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 12),
-
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: OutlinedButton.icon(
                         onPressed: () => context.push('/registro-conductor'),
-                        icon: const Icon(Icons.person_add_alt_1, color: AppColors.primary),
+                        icon: const Icon(Icons.person_add_alt_1,
+                            color: AppColors.primary),
                         label: const Text(
                           '¿Nuevo Conductor? Registrate aquí',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: AppColors.primary),
                         ),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary, width: 1.5),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+                          side: const BorderSide(
+                              color: AppColors.primary, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40)),
                         ),
                       ),
                     ),

@@ -8,35 +8,41 @@ import 'features/pasajero/login_pasajero_screen.dart';
 import 'features/pasajero/registro_pasajero_screen.dart';
 import 'features/pasajero/inicio_pasajero_screen.dart';
 import 'services/supabase_service.dart';
+import 'services/offline_sync_service.dart';
 
 final GoRouter pasajeroRouter = GoRouter(
   initialLocation: '/splash-pasajero',
   routes: <RouteBase>[
     GoRoute(
       path: '/splash-pasajero',
-      builder: (BuildContext context, GoRouterState state) => const SplashPasajeroScreen(),
+      builder: (BuildContext context, GoRouterState state) =>
+          const SplashPasajeroScreen(),
     ),
     GoRoute(
       path: '/login-pasajero',
-      builder: (BuildContext context, GoRouterState state) => const LoginPasajeroScreen(),
+      builder: (BuildContext context, GoRouterState state) =>
+          const LoginPasajeroScreen(),
     ),
     GoRoute(
       path: '/registro-pasajero',
-      builder: (BuildContext context, GoRouterState state) => const RegistroPasajeroScreen(),
+      builder: (BuildContext context, GoRouterState state) =>
+          const RegistroPasajeroScreen(),
     ),
     GoRoute(
       path: '/pasajero-home',
-      builder: (BuildContext context, GoRouterState state) => const InicioPasajeroScreen(),
+      builder: (BuildContext context, GoRouterState state) =>
+          const InicioPasajeroScreen(),
     ),
   ],
 );
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inicialización oficial de Supabase Realtime para la App de Pasajeros
   try {
     await SupabaseService().initialize();
+    await OfflineSyncService().start();
   } catch (_) {}
 
   runApp(
@@ -56,6 +62,8 @@ class QuiacaGoPasajeroApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: pasajeroRouter,
+      builder: (context, child) =>
+          ConnectionStatusOverlay(child: child ?? const SizedBox.shrink()),
     );
   }
 }

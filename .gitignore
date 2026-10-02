@@ -25,3 +25,6 @@ npm-debug.log
 *.swp
 *.ds_store
 Thumbs.db
+
+# Local analysis and generated temporary files
+tmp/

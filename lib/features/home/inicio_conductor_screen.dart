@@ -55,9 +55,10 @@ class _InicioConductorScreenState extends State<InicioConductorScreen>
     _isConnected = DriverTrackingService().isRunning;
     _iniciarCapturaGPSReal();
     _cargarMetricasInicio();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _cargarMensajesAdministracion());
-    _adminMessageTimer = Timer.periodic(const Duration(seconds: 30),
-        (_) => _cargarMensajesAdministracion());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _cargarMensajesAdministracion());
+    _adminMessageTimer = Timer.periodic(
+        const Duration(seconds: 30), (_) => _cargarMensajesAdministracion());
     _restaurarViajeActivo();
     if (_isConnected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -167,7 +168,8 @@ class _InicioConductorScreenState extends State<InicioConductorScreen>
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: Text(message['title']?.toString() ?? 'Mensaje de administración'),
+          title:
+              Text(message['title']?.toString() ?? 'Mensaje de administración'),
           content: Text(message['body']?.toString() ?? ''),
           actions: [
             TextButton(
@@ -211,6 +213,25 @@ class _InicioConductorScreenState extends State<InicioConductorScreen>
         setState(() => _isConnecting = false);
         _mostrarErrorConexion(
             'La sesión del conductor venció. Cerrá sesión y volvé a ingresar.');
+      }
+      return false;
+    }
+
+    try {
+      final operational = await AuthService().refreshDriverCompliance();
+      if (!operational) {
+        if (mounted) {
+          setState(() => _isConnecting = false);
+          _mostrarErrorConexion(
+              'Tu cuenta o documentación requiere revisión. Abrí Perfil > Documentación para ver el detalle.');
+        }
+        return false;
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isConnecting = false);
+        _mostrarErrorConexion(
+            'No pudimos validar tu habilitación con el servidor. Reintentá con conexión a internet.');
       }
       return false;
     }
@@ -356,7 +377,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen>
               margin: const EdgeInsets.only(right: 12),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.statusAvailable.withOpacity(0.15),
+                color: AppColors.statusAvailable.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -412,7 +433,7 @@ class _InicioConductorScreenState extends State<InicioConductorScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
+                              color: Colors.black.withValues(alpha: 0.25),
                               blurRadius: 10,
                               offset: const Offset(0, 4))
                         ],
@@ -467,7 +488,8 @@ class _InicioConductorScreenState extends State<InicioConductorScreen>
                             horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
                           color: _isConnected
-                              ? AppColors.statusAvailable.withOpacity(0.15)
+                              ? AppColors.statusAvailable
+                                  .withValues(alpha: 0.15)
                               : AppColors.badgeCancelledBackground,
                           borderRadius: BorderRadius.circular(20),
                         ),

@@ -12,6 +12,7 @@ build/
 # Android / Gradle
 .gradle/
 android/.gradle/
+android/.kotlin/
 android/local.properties
 android/app/build/
 

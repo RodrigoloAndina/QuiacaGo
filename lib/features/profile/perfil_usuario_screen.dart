@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../services/auth_service.dart';
 import '../../services/driver_document_service.dart';
+import '../../services/driver_document_rules.dart';
 import '../../services/driver_session_service.dart';
 import '../../services/trip_service.dart';
+import '../../services/account_service.dart';
 
 class PerfilUsuarioScreen extends StatefulWidget {
   const PerfilUsuarioScreen({super.key});
@@ -16,6 +19,10 @@ class PerfilUsuarioScreen extends StatefulWidget {
 class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
   bool _loadingRatings = true;
   bool _loadingDocuments = true;
+  bool _savingProfile = false;
+  bool _deletingAccount = false;
+  String? _ratingsError;
+  String? _documentsError;
   List<Map<String, dynamic>> _ratings = const [];
   List<Map<String, dynamic>> _documents = const [];
 
@@ -29,18 +36,28 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
   @override
   void initState() {
     super.initState();
+    _loadProfile();
     _loadRatings();
     _loadDocuments();
   }
 
   Future<void> _loadRatings() async {
-    final ratings = await TripService.obtenerCalificacionesConductor(
-        DriverSessionService().id);
-    if (!mounted) return;
-    setState(() {
-      _ratings = ratings;
-      _loadingRatings = false;
-    });
+    if (mounted) {
+      setState(() {
+        _loadingRatings = true;
+        _ratingsError = null;
+      });
+    }
+    try {
+      final ratings = await TripService.obtenerCalificacionesConductor(
+          DriverSessionService().id);
+      if (mounted) setState(() => _ratings = ratings);
+    } catch (_) {
+      if (mounted)
+        setState(() => _ratingsError = 'No pudimos cargar las calificaciones.');
+    } finally {
+      if (mounted) setState(() => _loadingRatings = false);
+    }
   }
 
   Future<void> _loadDocuments() async {
@@ -49,16 +66,45 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
       if (mounted) setState(() => _loadingDocuments = false);
       return;
     }
+    if (mounted) {
+      setState(() {
+        _loadingDocuments = true;
+        _documentsError = null;
+      });
+    }
     try {
       final documents = await DriverDocumentService().forDriver(driverId);
       if (mounted) setState(() => _documents = documents);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _documentsError = 'No pudimos consultar el legajo.');
+      }
     } finally {
       if (mounted) setState(() => _loadingDocuments = false);
     }
   }
 
   Future<void> _refreshProfile() async {
-    await Future.wait([_loadRatings(), _loadDocuments()]);
+    await Future.wait([_loadProfile(), _loadRatings(), _loadDocuments()]);
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await AuthService().currentProfile();
+      if (profile == null || profile['role'] != 'driver') return;
+      DriverSessionService().setSession(
+        id: profile['id'].toString(),
+        fullName: profile['full_name']?.toString() ?? '',
+        phone: profile['phone']?.toString() ?? '',
+        vehicleInfo: profile['vehicle_info']?.toString() ?? '',
+        plate: profile['plate']?.toString() ?? '',
+        taxiNumber: profile['taxi_number']?.toString() ?? '',
+        approvedUntil: profile['approved_until']?.toString(),
+      );
+      if (mounted) setState(() {});
+    } catch (_) {
+      // La sesión local permite seguir mostrando el perfil sin conexión.
+    }
   }
 
   @override
@@ -116,6 +162,20 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
               ],
             ),
             const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonalIcon(
+                onPressed: _savingProfile ? null : _editProfile,
+                icon: _savingProfile
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.edit_outlined),
+                label: const Text('EDITAR MIS DATOS Y EL TAXI'),
+              ),
+            ),
+            const SizedBox(height: 16),
             _documentsCard(context),
             const SizedBox(height: 16),
             _phoneCard(context),
@@ -156,53 +216,116 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
                   ...comments.map(_commentCard),
               ],
             ),
+            const SizedBox(height: 16),
+            Card(
+              child: Column(children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.support_agent, color: AppColors.primary),
+                  title: const Text('Ayuda y emergencia'),
+                  subtitle:
+                      const Text('Soporte, incidentes y llamada de emergencia'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/soporte'),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  enabled: !_deletingAccount,
+                  leading: const Icon(Icons.delete_forever_outlined,
+                      color: AppColors.statusCancelled),
+                  title: const Text('Eliminar mi cuenta',
+                      style: TextStyle(color: AppColors.statusCancelled)),
+                  subtitle:
+                      const Text('Eliminación definitiva de datos personales'),
+                  onTap: _deleteAccount,
+                ),
+              ]),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _documentsCard(BuildContext context) {
-    const requiredTypes = {
-      'dni_front',
-      'dni_back',
-      'license',
-      'insurance',
-      'vtv'
-    };
-    final uploadedTypes = _documents
-        .map((document) => document['document_type']?.toString())
-        .whereType<String>()
-        .toSet();
-    final missing = requiredTypes.difference(uploadedTypes).length;
-    final today = DateTime.now();
-    final expiring = _documents.where((document) {
-      if (!{'license', 'insurance', 'vtv'}
-          .contains(document['document_type'])) {
-        return false;
+  Future<void> _deleteAccount() async {
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar cuenta definitivamente'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text(
+              'No podrás eliminarla si tenés un viaje activo. Tu perfil y documentación se borrarán y esta acción no puede deshacerse.'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Escribí ELIMINAR'),
+          ),
+        ]),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('CANCELAR')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: AppColors.statusCancelled),
+            onPressed: () => Navigator.pop(
+                context, controller.text.trim().toUpperCase() == 'ELIMINAR'),
+            child: const Text('ELIMINAR CUENTA'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (confirmed != true || !mounted) return;
+    setState(() => _deletingAccount = true);
+    try {
+      await AccountService().deleteMyAccount(isDriver: true);
+      DriverSessionService().clear();
+      if (mounted) context.go('/login');
+    } catch (error) {
+      if (mounted) {
+        setState(() => _deletingAccount = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(error
+              .toString()
+              .replaceFirst('PostgrestException(message: ', '')),
+        ));
       }
-      final expiry =
-          DateTime.tryParse(document['expires_at']?.toString() ?? '');
-      if (expiry == null) return true;
-      return expiry.difference(today).inDays <= 30;
-    }).length;
-    final pending = _documents
-        .where((document) => document['status']?.toString() == 'pending')
-        .length;
+    }
+  }
+
+  Widget _documentsCard(BuildContext context) {
+    final documentSummary = DriverDocumentRules.summarize(_documents);
 
     String summary;
     Color summaryColor;
     if (_loadingDocuments) {
       summary = 'Consultando el legajo...';
       summaryColor = AppColors.textSecondary;
-    } else if (missing > 0) {
-      summary = 'Faltan $missing de los 5 documentos obligatorios.';
+    } else if (_documentsError != null) {
+      summary = _documentsError!;
       summaryColor = AppColors.statusRejected;
-    } else if (expiring > 0) {
-      summary = '$expiring documento(s) vencidos o próximos a vencer.';
+    } else if (documentSummary.missing.isNotEmpty) {
+      summary =
+          'Faltan ${documentSummary.missing.length} de los 5 documentos obligatorios.';
+      summaryColor = AppColors.statusRejected;
+    } else if (documentSummary.expired.isNotEmpty) {
+      summary =
+          '${documentSummary.expired.length} documento(s) están vencidos o sin fecha válida.';
+      summaryColor = AppColors.statusRejected;
+    } else if (documentSummary.rejected.isNotEmpty) {
+      summary =
+          '${documentSummary.rejected.length} documento(s) deben reemplazarse.';
+      summaryColor = AppColors.statusRejected;
+    } else if (documentSummary.expiringSoon.isNotEmpty) {
+      summary =
+          '${documentSummary.expiringSoon.length} documento(s) vencen dentro de 30 días.';
       summaryColor = AppColors.statusPending;
-    } else if (pending > 0) {
-      summary = '$pending documento(s) esperan revisión administrativa.';
+    } else if (documentSummary.pending.isNotEmpty) {
+      summary =
+          '${documentSummary.pending.length} documento(s) esperan revisión administrativa.';
       summaryColor = AppColors.statusPending;
     } else {
       summary = 'Los 5 documentos están cargados y vigentes.';
@@ -263,8 +386,10 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
             const Icon(Icons.phone_android_outlined, color: AppColors.primary),
             const SizedBox(width: 12),
             const Expanded(
-              child: Text('Verificá tu número de celular para recibir avisos de administración.',
-                  style: TextStyle(color: AppColors.textSecondary, height: 1.3)),
+              child: Text(
+                  'Verificá tu número de celular para recibir avisos de administración.',
+                  style:
+                      TextStyle(color: AppColors.textSecondary, height: 1.3)),
             ),
             TextButton(
               onPressed: () async {
@@ -285,6 +410,13 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
           width: 24,
           height: 24,
           child: CircularProgressIndicator(strokeWidth: 2));
+    }
+    if (_ratingsError != null) {
+      return TextButton.icon(
+        onPressed: _loadRatings,
+        icon: const Icon(Icons.refresh),
+        label: const Text('REINTENTAR CALIFICACIONES'),
+      );
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -388,5 +520,180 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _editProfile() async {
+    final session = DriverSessionService();
+    final formKey = GlobalKey<FormState>();
+    final name = TextEditingController(text: session.fullName);
+    final phone = TextEditingController(text: session.phone);
+    final vehicle = TextEditingController(text: session.vehicleInfo);
+    final plate = TextEditingController(text: session.plate);
+    final taxiNumber = TextEditingController(text: session.taxiNumber);
+
+    final save = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.fromLTRB(
+            20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
+        child: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Editar perfil del conductor',
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              const Text(
+                'Mantené estos datos actualizados. Un cambio del vehículo puede requerir una nueva revisión municipal.',
+                style: TextStyle(color: AppColors.textSecondary, height: 1.35),
+              ),
+              const SizedBox(height: 18),
+              TextFormField(
+                controller: name,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Nombre completo'),
+                validator: (value) => (value?.trim().length ?? 0) < 3
+                    ? 'Ingresá tu nombre completo.'
+                    : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: phone,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(labelText: 'Teléfono'),
+                validator: (value) {
+                  final digits = value?.replaceAll(RegExp(r'[^0-9]'), '') ?? '';
+                  return digits.length < 8
+                      ? 'Ingresá un teléfono válido.'
+                      : null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: vehicle,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                    labelText: 'Vehículo',
+                    hintText: 'Ej.: Fiat Cronos blanco 2022'),
+                validator: (value) => (value?.trim().length ?? 0) < 3
+                    ? 'Describí el vehículo.'
+                    : null,
+              ),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: plate,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(labelText: 'Patente'),
+                    validator: (value) => (value?.trim().isEmpty ?? true)
+                        ? 'Ingresá la patente.'
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: taxiNumber,
+                    decoration:
+                        const InputDecoration(labelText: 'N.º de móvil'),
+                    validator: (value) => (value?.trim().isEmpty ?? true)
+                        ? 'Ingresá el móvil.'
+                        : null,
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    if (formKey.currentState?.validate() == true) {
+                      Navigator.pop(context, true);
+                    }
+                  },
+                  child: const Text('GUARDAR CAMBIOS'),
+                ),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
+
+    if (save != true || !mounted) {
+      name.dispose();
+      phone.dispose();
+      vehicle.dispose();
+      plate.dispose();
+      taxiNumber.dispose();
+      return;
+    }
+    final vehicleChanged = vehicle.text.trim() != session.vehicleInfo.trim() ||
+        plate.text.trim().toUpperCase() != session.plate.trim().toUpperCase() ||
+        taxiNumber.text.trim() != session.taxiNumber.trim();
+    setState(() => _savingProfile = true);
+    try {
+      final profile = await AuthService().updateDriverProfile(
+        fullName: name.text,
+        phone: phone.text,
+        vehicleInfo: vehicle.text,
+        plate: plate.text,
+        taxiNumber: taxiNumber.text,
+      );
+      session.setSession(
+        id: profile['id'].toString(),
+        fullName: profile['full_name']?.toString() ?? name.text,
+        phone: profile['phone']?.toString() ?? phone.text,
+        vehicleInfo: profile['vehicle_info']?.toString() ?? vehicle.text,
+        plate: profile['plate']?.toString() ?? plate.text,
+        taxiNumber: profile['taxi_number']?.toString() ?? taxiNumber.text,
+        approvedUntil: profile['approved_until']?.toString(),
+      );
+      if (mounted) {
+        setState(() {});
+        if (vehicleChanged) {
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              icon: const Icon(Icons.fact_check_outlined,
+                  color: AppColors.statusPending, size: 40),
+              title: const Text('Datos guardados'),
+              content: const Text(
+                  'Como cambiaste información del taxi, el municipio debe revisar nuevamente tu perfil antes de que vuelvas a conectarte.'),
+              actions: [
+                FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('ENTENDIDO')),
+              ],
+            ),
+          );
+          if (mounted) context.go('/cuenta-pendiente');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Datos personales actualizados correctamente.'),
+            backgroundColor: AppColors.statusAvailable,
+          ));
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'No pudimos guardar los cambios. Revisá la conexión e intentá nuevamente.'),
+        ));
+      }
+    } finally {
+      name.dispose();
+      phone.dispose();
+      vehicle.dispose();
+      plate.dispose();
+      taxiNumber.dispose();
+      if (mounted) setState(() => _savingProfile = false);
+    }
   }
 }

@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+const { PGlite } = await import(pathToFileURL(process.argv[2]).href);
+const db = new PGlite();
+await db.exec(`
+create role anon; create role authenticated; create role service_role;
+create function check_app_release(text,integer) returns jsonb language sql as $$select '{}'::jsonb$$;
+create function create_trip(text,text,text,double precision,double precision,text,double precision,double precision,double precision) returns integer language sql as $$select 1$$;
+create function get_driver_trip_offer() returns integer language sql as $$select 1$$;
+create function account_deletion_objects(uuid) returns jsonb language sql as $$select '[]'::jsonb$$;
+create function finish_account_data_deletion(uuid) returns void language plpgsql as $$begin end$$;
+`);
+await db.exec(await readFile(new URL('../supabase/restore_runtime_permissions.sql', import.meta.url),'utf8'));
+const privilege = async (role,fn) => (await db.query('select has_function_privilege($1,$2,\'EXECUTE\') ok',[role,fn])).rows[0].ok;
+assert.equal(await privilege('anon','check_app_release(text,integer)'),true);
+assert.equal(await privilege('authenticated','create_trip(text,text,text,double precision,double precision,text,double precision,double precision,double precision)'),true);
+assert.equal(await privilege('authenticated','finish_account_data_deletion(uuid)'),false);
+assert.equal(await privilege('service_role','finish_account_data_deletion(uuid)'),true);
+await db.close();
+console.log('PASS: release and application RPC permissions restored; deletion RPC remains service-only.');

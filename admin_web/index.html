@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuiacaGo - Panel Web de Administración Central</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2300327d'/%3E%3Cpath d='M17 39V25a8 8 0 0 1 8-8h14a8 8 0 0 1 8 8v14h-5l-3-6H25l-3 6h-5Zm9-11h12l-2-6h-8l-2 6Z' fill='white'/%3E%3Ccircle cx='23' cy='42' r='5' fill='%23fe8c65'/%3E%3Ccircle cx='41' cy='42' r='5' fill='%23fe8c65'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -13,7 +13,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -84,6 +84,16 @@
       font-size: 15px;
       flex-shrink: 0;
     }
+
+    .brand-mark {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 14px;
+      filter: drop-shadow(0 8px 16px rgba(0, 50, 125, .2));
+    }
+
+    .avatar-img svg,
+    .brand-mark svg { width: 100%; height: 100%; display: block; }
 
     .nav-item {
       display: flex;
@@ -495,6 +505,7 @@
       transition: opacity 0.3s ease;
     }
 
+    .modal-overlay:not(.active) { visibility: hidden; }
     .modal-overlay.active {
       opacity: 1;
       pointer-events: auto;
@@ -604,21 +615,96 @@
     }
 
     @media (max-width: 800px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+        flex-direction: column;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        z-index: 900;
+        width: 100%;
+        padding: 8px 10px;
+        flex-direction: row;
+        gap: 6px;
+        overflow-x: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+      }
+
+      .user-profile-header { display: none; }
+      .nav-item {
+        flex: 0 0 auto;
+        padding: 9px 11px;
+        margin: 0;
+        font-size: 12px;
+      }
+      .nav-item .svg-icon { width: 18px; height: 18px; }
+      .main-content { padding: 16px 12px 28px; overflow: visible; }
+      .header-bar { flex-direction: column; gap: 14px; margin-bottom: 18px; }
+      .header-bar > div:last-child { flex-wrap: wrap; }
+      .page-title { font-size: 22px; }
+      .action-btn { padding: 8px 12px; }
+      .metrics-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .metric-card { padding: 13px; }
+      .metric-header span, .metric-sub { white-space: normal; }
+      .content-grid { grid-template-columns: 1fr; }
+      .card-box { padding: 15px; border-radius: 16px; overflow-x: auto; }
+      .data-table { min-width: 820px; }
+      .modal-card {
+        width: calc(100% - 20px);
+        max-height: 92vh;
+        padding: 18px;
+        border-radius: 18px;
+      }
+      .notification-panel {
+        position: fixed;
+        top: 70px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+      }
       .record-grid { grid-template-columns: 1fr; }
     }
+    :focus-visible { outline: 3px solid #9d4221; outline-offset: 3px; }
+    button:disabled { opacity: .55; cursor: wait; }
+    button, input, select, textarea { font: inherit; }
+    .nav-item { border: 0; background: transparent; text-align: left; }
+    .main-content, .card-box, .content-grid { min-width: 0; }
+    .table-scroll { overflow-x: auto; }
+    .pager { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; color: var(--text-muted); font-size: 13px; }
+    .notice { padding: 12px 16px; background: #eff6ff; border-radius: 12px; color: #00327d; font-size: 13px; margin-bottom: 18px; }
+    .case-message { margin: 10px 0; padding: 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .case-message small { display: block; margin-bottom: 6px; color: var(--text-muted); }
+    #caseMessage { width: 100%; resize: vertical; min-height: 90px; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; }
+    @media (max-width: 480px) {
+      .modal-card { max-width: calc(100vw - 20px) !important; }
+      .btn-sm, .action-btn { min-height: 40px; }
+      .record-grid, .document-grid { grid-template-columns: 1fr !important; }
+      #driverSearchInput { min-width: 0 !important; width: 100%; }
+      #adminLoginOverlay { overflow-y: auto; padding: 16px 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
   </style>
 </head>
 
 <body>
   <div id="adminLoginOverlay" style="position:fixed;inset:0;z-index:99999;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
     <form onsubmit="loginAdmin(event)" style="width:min(420px,calc(100% - 32px));background:white;padding:32px;border-radius:20px;box-shadow:0 20px 60px rgba(15,23,42,.15);">
-      <h2 style="color:#0b3b82;margin:0 0 6px;">Administración QuiacaGo</h2>
-      <p style="color:#64748b;margin:0 0 22px;">Ingresá con una cuenta que tenga rol administrador.</p>
-      <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Correo administrativo</label>
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#00327d"/><path d="M15 39V26c0-6 4-10 10-10h14c6 0 10 4 10 10v13h-5l-3-7H23l-3 7h-5Zm10-13h14l-2-6H27l-2 6Z" fill="white"/><circle cx="22" cy="43" r="5" fill="#fe8c65"/><circle cx="42" cy="43" r="5" fill="#fe8c65"/></svg>
+      </div>
+      <h2 style="color:#0b3b82;margin:0 0 6px;text-align:center;">Administración QuiacaGo</h2>
+      <p style="color:#64748b;margin:0 0 22px;text-align:center;">Operaciones y soporte · La Quiaca</p>
+      <label for="adminEmail" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Correo administrativo</label>
       <input id="adminEmail" type="email" required autocomplete="username" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:14px;">
-      <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Contraseña</label>
+      <label for="adminPassword" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;">Contraseña</label>
       <input id="adminPassword" type="password" required autocomplete="current-password" style="box-sizing:border-box;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;margin-bottom:10px;">
-      <p id="adminLoginError" style="display:none;color:#dc2626;font-size:12px;font-weight:600;"></p>
+      <p id="adminLoginError" role="alert" style="display:none;color:#dc2626;font-size:12px;font-weight:600;"></p>
       <button id="adminLoginButton" type="submit" style="width:100%;padding:13px;border:0;border-radius:10px;background:#0b3b82;color:white;font-weight:800;cursor:pointer;">INGRESAR</button>
     </form>
   </div>
@@ -626,7 +712,9 @@
   <!-- Sidebar Minimalist Desktop Navigation -->
   <div class="sidebar">
     <div class="user-profile-header">
-      <div class="avatar-img">A</div>
+      <div class="avatar-img" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#00327d"/><path d="M15 39V26c0-6 4-10 10-10h14c6 0 10 4 10 10v13h-5l-3-7H23l-3 7h-5Zm10-13h14l-2-6H27l-2 6Z" fill="white"/><circle cx="22" cy="43" r="5" fill="#fe8c65"/><circle cx="42" cy="43" r="5" fill="#fe8c65"/></svg>
+      </div>
       <div>
         <h4 style="font-size:14px; font-weight:800; color:#0f172a; line-height:1.2;">Admin Principal</h4>
         <p style="font-size:11.5px; color:var(--text-muted);">Sistema Central</p>
@@ -716,7 +804,7 @@
             </div>
           </div>
         </div>
-        <button class="action-btn">
+        <button class="action-btn" type="button" onclick="refreshAdminPanel()" title="Actualizar información">
           <svg class="svg-icon" viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
@@ -725,13 +813,21 @@
           </svg>
           <span>Hoy</span>
         </button>
-        <button class="action-btn action-btn-primary">
+        <button class="action-btn action-btn-primary" type="button" onclick="exportDriversCsv()">
           <svg class="svg-icon" viewBox="0 0 24 24">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
           <span>Exportar</span>
+        </button>
+        <button class="action-btn" type="button" onclick="logoutAdmin()" title="Cerrar sesión administrativa">
+          <svg class="svg-icon" viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span>Salir</span>
         </button>
       </div>
     </div>
@@ -796,7 +892,7 @@
           </svg>
         </div>
         <div class="metric-num" id="metricViajesCancelados">0</div>
-        <div class="metric-sub" style="color:var(--text-muted);">Servicios no completados</div>
+        <div class="metric-sub" style="color:var(--text-muted);">Cancelados hoy, hora argentina</div>
       </div>
     </div>
 
@@ -808,7 +904,7 @@
       <!-- Enriched Demanda por Hora Chart REAL -->
       <div class="card-box">
         <div class="card-title">
-          <span>Demanda por Hora (Viajes Realizados)</span>
+          <span>Solicitudes de hoy por hora argentina</span>
           <div style="display:flex; gap:12px; font-size:11px; font-weight:700; color:var(--text-muted);">
             <span><strong style="color:#00327d;">■</strong> Franja Operativa</span>
             <span><strong style="color:#9d4221;">■</strong> Pico de Solicitudes</span>
@@ -854,7 +950,7 @@
         <!-- Minimalist Button (NO EMOJIS) -->
         <div style="margin-top:20px; text-align:center;">
           <button class="btn-record-link"
-            onclick="fetchDriversTable(); switchTab('tab-conductores', document.querySelectorAll('.nav-item')[1]);">
+            onclick="switchTab('tab-conductores', document.querySelectorAll('.nav-item')[1]);">
             <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--primary);">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
@@ -870,10 +966,16 @@
 
     <!-- TAB 2: CONDUCTORES & HABILITACIONES TEMPORALES -->
     <div id="tab-conductores" class="card-box" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">Gestión de Habilitaciones Municipales y Permisos Temporales
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div class="card-title" style="margin-bottom:0;">Conductores, documentación y habilitación de servicio
         </div>
-        <button class="btn-sm btn-blue" onclick="fetchDriversTable()">🔄 Actualizar Registros</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="driverSearchInput" type="search" aria-label="Buscar conductores"
+            placeholder="Buscar nombre, teléfono o patente"
+            oninput="searchDrivers(this.value)"
+            style="min-width:260px;padding:8px 12px;border:1px solid var(--border-color);border-radius:9px;outline:none;">
+          <button class="btn-sm btn-blue" onclick="fetchDriversTable()">Actualizar registros</button>
+        </div>
       </div>
 
       <table class="data-table">
@@ -883,7 +985,7 @@
             <th>MÓVIL / PATENTE</th>
             <th>VENCIMIENTO PERMISO</th>
             <th>DOCUMENTACIÓN</th>
-            <th>ESTADO SUPABASE</th>
+            <th>ESTADO</th>
             <th>GESTIÓN Y ACCESO</th>
           </tr>
         </thead>
@@ -895,6 +997,7 @@
           </tr>
         </tbody>
       </table>
+      <div class="pager"><button class="btn-sm btn-blue" id="driversPrev" onclick="changeDriversPage(-1)">Anterior</button><span id="driversPageStatus"></span><button class="btn-sm btn-blue" id="driversNext" onclick="changeDriversPage(1)">Siguiente</button></div>
     </div>
 
     <!-- USUARIOS, CANCELACIONES Y SUSPENSIONES TEMPORALES -->
@@ -916,6 +1019,7 @@
             <tbody id="usersTableBody"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando usuarios...</td></tr></tbody>
           </table>
         </div>
+        <div class="pager"><button class="btn-sm btn-blue" id="usersPrev" onclick="changeUsersPage(-1)">Anterior</button><span id="usersPageStatus"></span><button class="btn-sm btn-blue" id="usersNext" onclick="changeUsersPage(1)">Siguiente</button></div>
       </div>
       <div class="card-box">
         <div class="card-title">Cancelaciones e incidencias recientes</div>
@@ -926,6 +1030,24 @@
               <th>MOTIVO</th><th>AFECTADO</th>
             </tr></thead>
             <tbody id="incidentsTableBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando incidencias...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-box" style="margin-top:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div>
+            <div class="card-title" style="margin-bottom:4px;">Reclamos de pagos en efectivo</div>
+            <p style="font-size:12px;color:var(--text-muted);">Soporte actúa como intermediario y deja una resolución auditada.</p>
+          </div>
+          <button class="btn-sm btn-blue" onclick="fetchUsersAndIncidents()">Actualizar reclamos</button>
+        </div>
+        <div style="overflow:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th>FECHA</th><th>PASAJERO</th><th>CONDUCTOR</th><th>IMPORTE</th>
+              <th>RECLAMO</th><th>ESTADO</th><th>RESOLUCIÓN</th>
+            </tr></thead>
+            <tbody id="paymentDisputesTableBody"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando reclamos...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -953,47 +1075,24 @@
 
     <!-- TAB 4: HISTORIAL DE VIAJES -->
     <div id="tab-viajes" class="card-box" style="display:none;">
-      <div class="card-title">Historial de Viajes Realizados</div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID VIAJE</th>
-            <th>HORA</th>
-            <th>PASAJERO</th>
-            <th>CONDUCTOR</th>
-            <th>ORIGEN ➔ DESTINO</th>
-            <th>TARIFA</th>
-            <th>PIN SEGURIDAD</th>
-            <th>ESTADO</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>#TQ-8841</code></td>
-            <td>11:15 hs</td>
-            <td>Juan P.</td>
-            <td>Carlos M. (Móvil 042)</td>
-            <td>Plaza Central ➔ Terminal de Ómnibus</td>
-            <td><strong>$1.850 ARS</strong></td>
-            <td><span
-                style="background:var(--primary-light); color:var(--primary); padding:4px 8px; border-radius:6px; font-weight:bold;">4821</span>
-            </td>
-            <td><span class="badge badge-approved">COMPLETADO</span></td>
-          </tr>
-          <tr>
-            <td><code>#TQ-8840</code></td>
-            <td>10:45 hs</td>
-            <td>María G.</td>
-            <td>Roberto F. (Móvil 043)</td>
-            <td>Av. Sarmiento 345 ➔ Hospital Jorge Uro</td>
-            <td><strong>$1.400 ARS</strong></td>
-            <td><span
-                style="background:var(--primary-light); color:var(--primary); padding:4px 8px; border-radius:6px; font-weight:bold;">8205</span>
-            </td>
-            <td><span class="badge badge-approved">COMPLETADO</span></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="card-title">Historial de viajes</div>
+      <div class="pager" style="margin-bottom:14px;">
+        <label for="tripsStatusFilter">Estado</label>
+        <select id="tripsStatusFilter" onchange="resetTripsPage()">
+          <option value="">Todos</option><option value="active">En curso</option>
+          <option value="completed">Finalizados</option><option value="cancelled">Cancelados</option>
+          <option value="disputed">Pago en revisión</option>
+        </select>
+        <button class="btn-sm btn-blue" onclick="fetchTripsTable()">Actualizar</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">El importe de un viaje cancelado, pendiente o reclamado no representa un cobro. Las fechas usan la hora argentina.</p>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>VIAJE / FECHA</th><th>PASAJERO</th><th>CONDUCTOR</th><th>ORIGEN → DESTINO</th><th>TARIFA FIJA</th><th>VIAJE</th><th>PAGO</th></tr></thead>
+          <tbody id="tripsTableBody"><tr><td colspan="7">Abrí esta sección para consultar los viajes.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pager"><button class="btn-sm btn-blue" id="tripsPrev" onclick="changeTripsPage(-1)">Anterior</button><span id="tripsPageStatus"></span><button class="btn-sm btn-blue" id="tripsNext" onclick="changeTripsPage(1)">Siguiente</button></div>
     </div>
 
     <!-- TAB 5: CONFIGURACIÓN DE TARIFAS -->
@@ -1032,102 +1131,22 @@
 
   </div>
 
-  <!-- MODAL DE SUSPENSION CON TODAS LAS OPCIONES AMPLIADAS -->
-  <div class="modal-overlay" id="suspendModal">
-    <div class="modal-card" style="width:560px;">
-      <h3 style="font-size:18px; font-weight:800; color:var(--accent-red); margin-bottom:12px;">Suspender / Inhabilitar
-        Conductor</h3>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" id="suspendDriverText"></p>
-
-      <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:6px; color:#334155;">MOTIVO COMPLETO
-        DE INHABILITACIÓN (SE MOSTRARÁ EN LA APP DEL TAXISTA):</label>
-      <select id="suspendReasonSelect"
-        style="width:100%; padding:12px; border:1.5px solid var(--accent-red); border-radius:10px; margin-bottom:14px; font-weight:bold; font-size:13px; outline:none;"
-        onchange="toggleCustomReasonInput(this.value)">
-        <option value="Falta de pago de cuota mensual municipal">1. Falta de pago de cuota mensual municipal</option>
-        <option value="Póliza de seguro del automotor vencida">2. Póliza de seguro del automotor vencida</option>
-        <option value="Licencia de conducir vencida">3. Licencia de conducir vencida</option>
-        <option value="Revisión Técnica RTO / VTV vencida">4. Revisión Técnica RTO / VTV vencida</option>
-        <option value="Habilitación Municipal o Carnet Sanitario vencido">5. Habilitación Municipal o Carnet Sanitario
-          vencido</option>
-        <option value="Infracción o sanción administrativa de tránsito">6. Infracción o sanción administrativa de
-          tránsito</option>
-        <option value="Desvinculación / Baja de la central de taxis">7. Desvinculación / Baja de la central de taxis
-        </option>
-        <option value="OTRO">8. Otro motivo personalizado libre...</option>
-      </select>
-
-      <div id="customReasonInputContainer" style="display:none; margin-bottom:16px;">
-        <label
-          style="font-size:11px; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:4px;">ESCRIBE
-          EL MOTIVO PERSONALIZADO EXACTO:</label>
-        <input type="text" id="customReasonTextField"
-          placeholder="Ej: Falta de presentación de certificado de antecedentes..."
-          style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px;">
+  <div class="modal-overlay" id="paymentCaseModal" role="dialog" aria-modal="true" aria-labelledby="paymentCaseTitle">
+    <div class="modal-card" style="width:720px;max-width:95vw;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;">
+        <h3 id="paymentCaseTitle">Mediación de pago</h3>
+        <button class="btn-sm btn-blue" onclick="closePaymentCase()">Cerrar</button>
       </div>
-
-      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
-        <button class="btn-sm" style="background:#e2e8f0; color:#334155;"
-          onclick="closeSuspendModal()">Cancelar</button>
-        <button class="btn-sm btn-red" onclick="confirmarSuspension()">Confirmar Suspensión</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL COMPLETO DE REGISTRO DE ACTIVIDAD -->
-  <div class="modal-overlay" id="activityModal">
-    <div class="modal-card">
-      <div
-        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:var(--primary);">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-          <h3 style="font-size:18px; font-weight:800; color:#0f172a;">Registro Completo de Actividad del Sistema</h3>
-        </div>
-        <button style="background:none; border:none; color:var(--text-muted); font-size:22px; cursor:pointer;"
-          onclick="closeActivityModal()">✕</button>
-      </div>
-
-      <div class="activity-list" style="margin-bottom:20px;">
-        <div class="activity-item">
-          <div class="activity-icon-bg">
-            <svg class="svg-icon" viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-          <div>
-            <h5 style="font-size:13px; font-weight:800;">Nuevo Conductor registrado</h5>
-            <p style="font-size:12px; color:var(--text-muted);">Carlos Mamani (Móvil 042) completó verificación en
-              Supabase.</p>
-            <span style="font-size:11px; color:#94a3b8;">Hoy 11:40 hs</span>
-          </div>
-        </div>
-
-        <div class="activity-item">
-          <div class="activity-icon-bg" style="background:#fee2e2; color:#b91c1c;">
-            <svg class="svg-icon" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-          </div>
-          <div>
-            <h5 style="font-size:13px; font-weight:800;">Reporte de Usuario</h5>
-            <p style="font-size:12px; color:var(--text-muted);">Pasajero reportó problema con el cobro en efectivo Viaje
-              #4892.</p>
-            <span style="font-size:11px; color:#94a3b8;">Hoy 11:22 hs</span>
-          </div>
-        </div>
-      </div>
-
-      <div style="text-align:right;">
-        <button class="btn-sm btn-blue" onclick="closeActivityModal()">Cerrar Registro</button>
-      </div>
+      <div id="paymentCaseSummary"></div>
+      <p class="notice">Escuchá a ambas partes antes de resolver. Los mensajes de soporte son visibles para pasajero y conductor; la suspensión no debe aplicarse automáticamente por un reclamo.</p>
+      <div id="paymentCaseMessages" aria-live="polite"></div>
+      <form id="paymentCaseForm" onsubmit="sendPaymentCaseMessage(event)">
+        <label for="caseMessage">Mensaje de soporte para ambas partes</label>
+        <textarea id="caseMessage" maxlength="2000" minlength="3" required></textarea>
+        <button id="sendCaseMessageButton" class="btn-sm btn-blue" type="submit">Enviar mensaje</button>
+      </form>
+      <p id="paymentCaseStatus" role="status" style="margin:12px 0;font-size:13px;"></p>
+      <div id="paymentCaseActions" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
     </div>
   </div>
 
@@ -1162,103 +1181,67 @@
     let driverMarkersGroup = null;
     let driverPollTimer = null;
 
+    let activeTab = 'tab-dashboard';
+    const PAGE_SIZE = 50;
+    let driversPage = 0, usersPage = 0, tripsPage = 0;
+    let driverQuery = '', driverSearchTimer = null;
+    let paymentDisputes = [], activePaymentCase = null;
+    let sessionVersion = 0, refreshPromise = null;
+
     function switchTab(tabId, el) {
-      if (tabId !== 'tab-mapa' && driverPollTimer) {
-        clearInterval(driverPollTimer);
-        driverPollTimer = null;
-      }
-      document.getElementById('tab-dashboard').style.display = 'none';
-      document.getElementById('tab-conductores').style.display = 'none';
-      document.getElementById('tab-usuarios').style.display = 'none';
-      document.getElementById('tab-mapa').style.display = 'none';
-      document.getElementById('tab-viajes').style.display = 'none';
-      document.getElementById('tab-tarifas').style.display = 'none';
-
+      activeTab = tabId;
+      document.querySelectorAll('[id^="tab-"]').forEach(tab => { tab.style.display = 'none'; });
       document.getElementById(tabId).style.display = tabId === 'tab-dashboard' ? 'grid' : 'block';
-
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      if (el) el.classList.add('active');
-
+      document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); item.removeAttribute('aria-current'); });
+      if (el) { el.classList.add('active'); el.setAttribute('aria-current', 'page'); }
       const headersMap = {
-        'tab-dashboard': { title: 'Resumen de Operaciones', subtitle: 'Visión general del estado actual del sistema en La Quiaca.' },
-        'tab-conductores': { title: 'Gestión de Conductores y Habilitaciones', subtitle: 'Control de legajos, permisos por días y vencimientos de cuotas.' },
-        'tab-usuarios': { title: 'Usuarios, cancelaciones e incidencias', subtitle: 'Control de reincidencias y suspensiones temporales sin multas monetarias.' },
-        'tab-mapa': { title: 'Mapa de Taxis en Vivo', subtitle: 'Monitoreo GPS en tiempo real de unidades habilitadas en La Quiaca.' },
-        'tab-viajes': { title: 'Historial de Viajes Realizados', subtitle: 'Registro centralizado de servicios y tarifas.' },
-        'tab-tarifas': { title: 'Configuración de Tarifas', subtitle: 'Actualización de los importes oficiales para viajes diurnos y nocturnos.' }
+        'tab-dashboard': ['Resumen de operaciones', 'Datos de hoy en La Quiaca. Actualización automática mientras esta pantalla está visible.'],
+        'tab-conductores': ['Conductores y habilitaciones', 'Documentación, permisos y vencimientos.'],
+        'tab-usuarios': ['Personas y soporte', 'Cancelaciones, mediación de pagos y suspensiones justificadas.'],
+        'tab-mapa': ['Mapa de conductores', 'Ubicaciones recientes de vehículos conectados.'],
+        'tab-viajes': ['Historial de viajes', 'Servicio y pago se muestran por separado.'],
+        'tab-tarifas': ['Tarifas fijas por horario', 'Día y noche, sin aumentos por demanda.']
       };
-
-      if (headersMap[tabId]) {
-        document.getElementById('mainHeaderTitle').innerText = headersMap[tabId].title;
-        document.getElementById('mainHeaderSubtitle').innerText = headersMap[tabId].subtitle;
-      }
-
-      if (tabId === 'tab-mapa') {
-        setTimeout(initAdminMap, 200);
-      }
-      if (tabId === 'tab-conductores') {
-        fetchDriversTable();
-      }
-      if (tabId === 'tab-usuarios') {
-        fetchUsersAndIncidents();
-      }
-      if (tabId === 'tab-tarifas') {
-        loadFareSettings();
-      }
+      const [title, subtitle] = headersMap[tabId];
+      document.getElementById('mainHeaderTitle').textContent = title;
+      document.getElementById('mainHeaderSubtitle').textContent = subtitle;
+      refreshVisibleTab();
     }
 
-    function openActivityModal() { document.getElementById('activityModal').classList.add('active'); }
-    function closeActivityModal() { document.getElementById('activityModal').classList.remove('active'); }
-
-    function openDocsModal(name) {
-      document.getElementById('docsTitle').innerText = 'Legajo Digital de ' + name;
-      document.getElementById('docsModal').classList.add('active');
+    function refreshVisibleTab() {
+      if (!adminAccessToken || document.hidden) return;
+      if (activeTab === 'tab-dashboard') return updateRealMetrics();
+      if (activeTab === 'tab-conductores') return fetchDriversTable();
+      if (activeTab === 'tab-usuarios') return fetchUsersAndIncidents();
+      if (activeTab === 'tab-viajes') return fetchTripsTable();
+      if (activeTab === 'tab-tarifas') return loadFareSettings();
+      if (activeTab === 'tab-mapa') return initAdminMap();
     }
+
+    function updatePager(prefix, page, rows) {
+      const info = AdminCore.pageInfo(page, rows, PAGE_SIZE);
+      document.getElementById(prefix + 'Prev').disabled = !info.previous;
+      document.getElementById(prefix + 'Next').disabled = !info.next;
+      document.getElementById(prefix + 'PageStatus').textContent = info.label;
+      return info.rows;
+    }
+    function changeDriversPage(delta) { driversPage = Math.max(0, driversPage + delta); fetchDriversTable(); }
+    function changeUsersPage(delta) { usersPage = Math.max(0, usersPage + delta); fetchUsersAndIncidents(); }
+    function changeTripsPage(delta) { tripsPage = Math.max(0, tripsPage + delta); fetchTripsTable(); }
+    function resetTripsPage() { tripsPage = 0; fetchTripsTable(); }
+    function searchDrivers(value) {
+      clearTimeout(driverSearchTimer);
+      driverSearchTimer = setTimeout(() => { driverQuery = AdminCore.searchFilter(value); driversPage = 0; fetchDriversTable(); }, 400);
+    }
+
     function closeDocsModal() { document.getElementById('docsModal').classList.remove('active'); }
-
-    function openSuspendModal(name, row) {
-      activeRow = row;
-      document.getElementById('suspendDriverText').innerText = 'Selecciona la razón de suspensión para ' + name + '.';
-      document.getElementById('suspendModal').classList.add('active');
-    }
-    function closeSuspendModal() { document.getElementById('suspendModal').classList.remove('active'); }
-
-    function toggleCustomReasonInput(val) {
-      document.getElementById('customReasonInputContainer').style.display = val === 'OTRO' ? 'block' : 'none';
-    }
-
-    function confirmarSuspension() {
-      let reason = document.getElementById('suspendReasonSelect').value;
-      if (reason === 'OTRO') {
-        reason = document.getElementById('customReasonTextField').value || 'Infracción de tránsito municipal';
-      }
-
-      document.getElementById('statusCol' + activeRow).innerHTML = '<span class="badge badge-suspended">INHABILITADO</span><br><span style="font-size:10px; color:var(--accent-red); font-weight:bold;">' + reason + '</span>';
-      document.getElementById('actionCol' + activeRow).innerHTML = '<div style="display:flex; gap:8px; align-items:center;"><button class="btn-sm btn-green" onclick="reactivarConductor(' + activeRow + ')">REHABILITAR</button><select class="days-select" onchange="renovarDias(' + activeRow + ', this.value)"><option value="30" selected>30 Días</option><option value="60">60 Días</option><option value="365">365 Días</option></select></div>';
-
-      closeSuspendModal();
-      alert('⛔ Taxista suspendido en Supabase. Motivo registrado: "' + reason + '"');
-    }
-
-    function reactivarConductor(row) {
-      document.getElementById('statusCol' + row).innerHTML = '<span class="badge badge-approved">HABILITADO (30 DÍAS)</span>';
-      document.getElementById('vencCol' + row).innerHTML = '<span style="color:var(--accent-green); font-weight:bold;">Vence en 30 Días</span><br><span style="font-size:11px; color:var(--text-muted);">Permiso activo</span>';
-      document.getElementById('actionCol' + row).innerHTML = '<div style="display:flex; gap:8px; align-items:center;"><button class="btn-sm btn-red" onclick="openSuspendModal(\'Conductor\', ' + row + ')">SUSPENDER</button><select class="days-select" onchange="renovarDias(' + row + ', this.value)"><option value="30" selected>+30 Días</option><option value="60">+60 Días</option><option value="90">+90 Días</option><option value="365">+365 Días</option></select></div>';
-
-      alert('✅ Acceso REHABILITADO por 30 días en Supabase.');
-    }
-
-    function renovarDias(row, days) {
-      document.getElementById('statusCol' + row).innerHTML = '<span class="badge badge-approved">HABILITADO (' + days + ' DÍAS)</span>';
-      document.getElementById('vencCol' + row).innerHTML = '<span style="color:var(--accent-green); font-weight:bold;">Vence en ' + days + ' Días</span>';
-      alert('📅 Permiso de taxista RENOVADO por ' + days + ' DÍAS adicionales en PostgreSQL Supabase.');
-    }
 
     // CONSTANTES SUPABASE
     const SUPABASE_URL = 'https://xxqumxhdpjtjdcnnjmdm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4cXVteGhkcGp0amRjbm5qbWRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1MjQ4NjgsImV4cCI6MjEwMDEwMDg2OH0.1L-wFBgeQHcTQIsBQWCFMUffjaaW1jRNfGQR7S_OOeI';
 
     let adminAccessToken = sessionStorage.getItem('quiacago_admin_token') || '';
+    let adminRefreshToken = sessionStorage.getItem('quiacago_admin_refresh_token') || '';
 
     function apiHeaders(extra = {}) {
       return { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${adminAccessToken}`, ...extra };
@@ -1268,6 +1251,59 @@
       return String(value ?? '').replace(/[&<>'"]/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
       })[char]);
+    }
+
+    function saveAdminSession(auth) {
+      adminAccessToken = auth.access_token || '';
+      adminRefreshToken = auth.refresh_token || adminRefreshToken;
+      sessionStorage.setItem('quiacago_admin_token', adminAccessToken);
+      if (adminRefreshToken) sessionStorage.setItem('quiacago_admin_refresh_token', adminRefreshToken);
+    }
+
+    function clearAdminSession() {
+      adminAccessToken = '';
+      adminRefreshToken = '';
+      sessionStorage.removeItem('quiacago_admin_token');
+      sessionStorage.removeItem('quiacago_admin_refresh_token');
+    }
+
+    async function refreshAdminAccessToken() {
+      if (!adminRefreshToken) return false;
+      if (refreshPromise) return refreshPromise;
+      const version = sessionVersion;
+      refreshPromise = (async () => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+        try {
+          const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+            method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: adminRefreshToken }), signal: controller.signal
+          });
+          if (!response.ok || version !== sessionVersion) return false;
+          saveAdminSession(await response.json());
+          return Boolean(adminAccessToken);
+        } catch (_) { return false; }
+        finally { clearTimeout(timer); }
+      })().finally(() => { refreshPromise = null; });
+      return refreshPromise;
+    }
+
+    async function adminFetch(url, options = {}, retry = true) {
+      const version = sessionVersion;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      let response;
+      try { response = await fetch(url, { ...options, signal: controller.signal }); }
+      catch (error) { throw new Error(error.name === 'AbortError' ? 'La conexión tardó demasiado. Intentá nuevamente.' : 'Sin conexión. Revisá internet e intentá nuevamente.'); }
+      finally { clearTimeout(timer); }
+      if (version !== sessionVersion) throw new Error('La sesión cambió. Volvé a ingresar.');
+      if (response.status === 401 && retry && adminRefreshToken) {
+        if (await refreshAdminAccessToken()) return adminFetch(url, { ...options, headers: { ...options.headers, Authorization: 'Bearer ' + adminAccessToken } }, false);
+        clearAdminSession();
+        document.getElementById('adminLoginOverlay').style.display = 'flex';
+        throw new Error('La sesión venció. Volvé a ingresar.');
+      }
+      return response;
     }
 
     function formatNotificationDate(value) {
@@ -1371,26 +1407,38 @@
       legacy_offline_request: 'Solicitud sin conexión de versión anterior'
     };
 
+    const paymentDisputeLabels = {
+      refused_to_pay: 'Se negó a pagar', insufficient_cash: 'No tenía efectivo suficiente',
+      passenger_left: 'Se retiró sin pagar', payment_disagreement: 'Desacuerdo sobre el importe',
+      other: 'Otro motivo'
+    };
+
     async function fetchUsersAndIncidents() {
       if (!adminAccessToken) return;
       const usersBody = document.getElementById('usersTableBody');
       const incidentsBody = document.getElementById('incidentsTableBody');
+      const disputesBody = document.getElementById('paymentDisputesTableBody');
       usersBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Cargando usuarios...</td></tr>';
       incidentsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Cargando incidencias...</td></tr>';
+      disputesBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Cargando reclamos...</td></tr>';
       try {
-        const [usersResponse, incidentsResponse] = await Promise.all([
+        const [usersResponse, incidentsResponse, disputesResponse] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_users`, {
             method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: '{}'
           }),
           fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_recent_cancellations`, {
             method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_limit: 100 })
+          }),
+          fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_payment_disputes`, {
+            method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: '{}'
           })
         ]);
-        if (!usersResponse.ok || !incidentsResponse.ok) {
-          throw new Error('Ejecutá cancellation_management.sql en Supabase para habilitar esta sección.');
+        if (!usersResponse.ok || !incidentsResponse.ok || !disputesResponse.ok) {
+          throw new Error('Ejecutá cancellation_management.sql y payment_disputes.sql en Supabase para habilitar esta sección.');
         }
         const users = await usersResponse.json();
         const incidents = await incidentsResponse.json();
+        const disputes = await disputesResponse.json();
         usersBody.innerHTML = users.length ? '' : '<tr><td colspan="7" style="text-align:center;padding:20px;">No hay personas registradas.</td></tr>';
         users.forEach(user => {
           const cancellations = Number(user.cancellations_30d || 0);
@@ -1427,10 +1475,104 @@
             <td>${escapeHtml(item.affected_name || '—')}</td>`;
           incidentsBody.appendChild(tr);
         });
+
+        disputesBody.innerHTML = disputes.length ? '' : '<tr><td colspan="7" style="text-align:center;padding:20px;">No hay reclamos de pago registrados.</td></tr>';
+        disputes.forEach(item => {
+          const open = item.status === 'open';
+          const status = open
+            ? '<span class="badge" style="background:#fef3c7;color:#92400e;">PENDIENTE</span>'
+            : item.status === 'resolved_paid'
+              ? '<span class="badge badge-approved">PAGO CONFIRMADO</span>'
+              : '<span class="badge" style="background:#e2e8f0;color:#334155;">DEUDA ANULADA</span>';
+          const actions = open
+            ? `<div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn-sm btn-green" onclick="resolvePaymentDispute('${item.id}','paid')">CONFIRMAR PAGO</button><button class="btn-sm" style="background:#e2e8f0;color:#334155;" onclick="resolvePaymentDispute('${item.id}','waived')">ANULAR DEUDA</button><button class="btn-sm btn-red" onclick="suspendUser('${item.passenger_id}','${encodeURIComponent(item.passenger_name || 'Pasajero')}')">SUSPENDER</button></div>`
+            : `<small>${escapeHtml(item.resolution_notes || 'Resuelto por soporte')}</small>`;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${new Date(item.reported_at).toLocaleString('es-AR')}<br><small>#${escapeHtml(item.trip_id)}</small></td>
+            <td><strong>${escapeHtml(item.passenger_name)}</strong><br><small>${escapeHtml(item.passenger_phone || '')}</small></td>
+            <td>${escapeHtml(item.driver_name || item.driver_id)}</td>
+            <td><strong>$${Number(item.amount || 0).toLocaleString('es-AR')}</strong></td>
+            <td>${escapeHtml(paymentDisputeLabels[item.reason_code] || item.reason_code)}${item.driver_notes ? `<br><small>${escapeHtml(item.driver_notes)}</small>` : ''}<br><small>${escapeHtml(item.pickup_address || 'Origen')} → ${escapeHtml(item.destination_address || 'Destino')}</small></td>
+            <td>${status}</td><td>${actions}</td>`;
+          disputesBody.appendChild(tr);
+        });
       } catch (error) {
         usersBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--accent-red);">${escapeHtml(error.message)}</td></tr>`;
         incidentsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--accent-red);">No se pudieron cargar las incidencias.</td></tr>';
+        disputesBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--accent-red);">${escapeHtml(error.message)}</td></tr>`;
       }
+    }
+
+    async function openPaymentCase(disputeId) {
+      activePaymentCase = paymentDisputes.find(item => item.id === disputeId);
+      if (!activePaymentCase) return;
+      const item = activePaymentCase;
+      document.getElementById('paymentCaseModal').classList.add('active');
+      document.getElementById('paymentCaseTitle').textContent = 'Mediación · viaje ' + item.trip_id;
+      document.getElementById('paymentCaseSummary').innerHTML = `<p><strong>${escapeHtml(item.passenger_name || 'Pasajero')}</strong> · ${escapeHtml(item.passenger_phone || '')}<br>Conductor: ${escapeHtml(item.driver_name || 'Conductor')}<br>Tarifa: $${Number(item.amount || 0).toLocaleString('es-AR')}<br>${escapeHtml(item.pickup_address || 'Origen')} → ${escapeHtml(item.destination_address || 'Destino')}</p><div class="case-message"><small>Reclamo inicial del conductor · ${escapeHtml(AdminCore.formatDate(item.reported_at))}</small>${escapeHtml(paymentDisputeLabels[item.reason_code] || item.reason_code)}<br>${escapeHtml(item.driver_notes || '')}</div>${item.resolution_notes ? `<p><strong>Resolución:</strong> ${escapeHtml(item.resolution_notes)} · ${escapeHtml(AdminCore.formatDate(item.resolved_at))}</p>` : ''}`;
+      document.getElementById('paymentCaseForm').hidden = item.status !== 'open';
+      document.getElementById('paymentCaseActions').innerHTML = item.status === 'open'
+        ? `<button class="btn-sm btn-green" onclick="resolvePaymentDispute('${item.id}','paid')">Confirmar pago recibido</button><button class="btn-sm btn-blue" onclick="resolvePaymentDispute('${item.id}','waived')">Anular deuda</button>` : '';
+      document.getElementById('paymentCaseStatus').textContent = '';
+      document.getElementById('caseMessage').value = '';
+      await loadPaymentCaseMessages(disputeId);
+      document.getElementById('paymentCaseModal').querySelector('button').focus();
+    }
+
+    function closePaymentCase() { activePaymentCase = null; document.getElementById('paymentCaseModal').classList.remove('active'); }
+    async function loadPaymentCaseMessages(disputeId) {
+      const container = document.getElementById('paymentCaseMessages');
+      container.innerHTML = '<p>Cargando declaraciones...</p>';
+      try {
+        const response = await adminFetch(`${SUPABASE_URL}/rest/v1/rpc/get_payment_dispute_messages`, {
+          method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_dispute_id: disputeId })
+        });
+        if (!response.ok) throw new Error('No se pudieron cargar las declaraciones. Actualizá antes de resolver.');
+        const messages = await response.json();
+        if (activePaymentCase?.id !== disputeId) return;
+        container.innerHTML = messages.length ? messages.map(message => `<div class="case-message"><small>${escapeHtml({ passenger: 'Pasajero', driver: 'Conductor', admin: 'Soporte' }[message.author_role] || 'Participante')} · ${escapeHtml(AdminCore.formatDate(message.created_at))}</small>${escapeHtml(message.body)}</div>`).join('') : '<p style="margin:12px 0;">Todavía no hay declaraciones adicionales.</p>';
+      } catch (error) { container.textContent = error.message; }
+    }
+
+    async function sendPaymentCaseMessage(event) {
+      event.preventDefault();
+      if (!activePaymentCase) return;
+      const id = activePaymentCase.id;
+      const body = document.getElementById('caseMessage').value.trim();
+      const status = document.getElementById('paymentCaseStatus');
+      if (body.length < 3 || body.length > 2000) { status.textContent = 'Escribí entre 3 y 2000 caracteres.'; return; }
+      const button = document.getElementById('sendCaseMessageButton');
+      button.disabled = true;
+      try {
+        const response = await adminFetch(`${SUPABASE_URL}/rest/v1/rpc/add_payment_dispute_message`, {
+          method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_dispute_id: id, p_message: body })
+        });
+        if (!response.ok) { const error = await response.json().catch(() => ({})); throw new Error(error.message || 'No se pudo enviar el mensaje.'); }
+        document.getElementById('caseMessage').value = '';
+        status.textContent = 'Mensaje registrado para ambas partes.';
+        await loadPaymentCaseMessages(id);
+      } catch (error) { status.textContent = error.message; }
+      finally { button.disabled = false; }
+    }
+
+    async function resolvePaymentDispute(disputeId, resolution) {
+      const action = resolution === 'paid' ? 'confirmar que el conductor recibió el pago' : 'anular la deuda';
+      const notes = prompt(`Escribí los fundamentos de soporte para ${action}. Indicá cómo se consultó a ambas partes:`);
+      if (!notes?.trim()) return;
+      if (notes.trim().length < 10 || notes.trim().length > 2000) { alert('La resolución debe tener entre 10 y 2000 caracteres.'); return; }
+      if (!confirm(`¿Confirmás ${action}? La resolución se notificará a ambas partes y quedará auditada.`)) return;
+      const buttons = document.querySelectorAll('#paymentCaseActions button');
+      buttons.forEach(button => { button.disabled = true; });
+      try {
+        const response = await adminFetch(`${SUPABASE_URL}/rest/v1/rpc/resolve_payment_dispute`, {
+          method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ p_dispute_id: disputeId, p_resolution: resolution, p_notes: notes.trim() })
+        });
+        if (!response.ok) { const error = await response.json().catch(() => ({})); throw new Error(error.message || 'No se pudo resolver el reclamo.'); }
+        closePaymentCase();
+        await fetchUsersAndIncidents();
+      } catch (error) { document.getElementById('paymentCaseStatus').textContent = error.message; }
+      finally { buttons.forEach(button => { button.disabled = false; }); }
     }
 
     async function suspendUser(userId, encodedName) {
@@ -1480,14 +1622,13 @@
         });
         const auth = await authResponse.json();
         if (!authResponse.ok || !auth.access_token) throw new Error('Correo o contraseña incorrectos.');
-        adminAccessToken = auth.access_token;
+        saveAdminSession(auth);
         const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${auth.user.id}&select=role`, { headers: apiHeaders() });
         const profiles = await profileResponse.json();
         if (!profileResponse.ok || profiles[0]?.role !== 'admin') {
-          adminAccessToken = '';
+          clearAdminSession();
           throw new Error('Esta cuenta no tiene permisos de administrador.');
         }
-        sessionStorage.setItem('quiacago_admin_token', adminAccessToken);
         document.getElementById('adminLoginOverlay').style.display = 'none';
         fetchDriversTable();
         updateRealMetrics();
@@ -1504,10 +1645,13 @@
 
     async function restoreAdminSession() {
       if (!adminAccessToken) return;
-      const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: apiHeaders() });
+      let response = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: apiHeaders() });
+      if (!response.ok && await refreshAdminAccessToken()) {
+        response = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: apiHeaders() });
+      }
       if (!response.ok) {
-        sessionStorage.removeItem('quiacago_admin_token');
-        adminAccessToken = '';
+        clearAdminSession();
+        document.getElementById('adminLoginOverlay').style.display = 'flex';
         return;
       }
       const user = await response.json();
@@ -1520,6 +1664,43 @@
         loadFareSettings();
         fetchAdminNotifications();
       }
+    }
+
+    async function logoutAdmin() {
+      if (adminAccessToken) {
+        await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+          method: 'POST', headers: apiHeaders()
+        }).catch(() => null);
+      }
+      clearAdminSession();
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('adminLoginOverlay').style.display = 'flex';
+    }
+
+    function refreshAdminPanel() { refreshVisibleTab(); fetchAdminNotifications(); }
+
+    function exportDriversCsv() {
+      const profiles = Array.isArray(window.profilesList) ? window.profilesList : [];
+      if (!profiles.length) {
+        alert('Todavía no hay conductores cargados para exportar.');
+        return;
+      }
+      const quote = value => `"${String(value ?? '').replaceAll('"', '""')}"`;
+      const headers = ['Nombre', 'Teléfono', 'Correo', 'Vehículo', 'Patente', 'Móvil', 'Estado', 'Habilitado hasta'];
+      const rows = profiles.map(profile => [
+        profile.full_name || profile.name || '', profile.phone, profile.email,
+        profile.vehicle_info, profile.plate, profile.taxi_number,
+        profile.is_approved === true ? 'Habilitado' : 'Pendiente', profile.approved_until
+      ]);
+      const csv = '\uFEFF' + [headers, ...rows].map(row => row.map(quote).join(';')).join('\r\n');
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `conductores-quiacago-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     }
 
     function formatFareDate(value) {
@@ -1629,207 +1810,64 @@
       };
     }
 
-    function renderRealChart(trips = []) {
-      const container = document.getElementById('chartContainer');
-      const yAxis = document.getElementById('chartYAxis');
-      if (!container) return;
-
-      const counts = new Array(12).fill(0);
-
-      trips.forEach(t => {
-        if (t.created_at) {
-          const date = new Date(t.created_at);
-          const hour = date.getHours();
-          const bucketIndex = Math.floor(hour / 2);
-          if (bucketIndex >= 0 && bucketIndex < 12) {
-            counts[bucketIndex]++;
-          }
-        }
-      });
-
-      const maxVal = Math.max(...counts, 5);
-
-      if (yAxis) {
-        yAxis.innerHTML = `
-          <span>${maxVal}</span>
-          <span>${Math.round(maxVal * 0.66)}</span>
-          <span>${Math.round(maxVal * 0.33)}</span>
-          <span>0</span>
-        `;
-      }
-
-      let html = '';
-      const hourLabels = [
-        '00:00 - 02:00', '02:00 - 04:00', '04:00 - 06:00',
-        '06:00 - 08:00', '08:00 - 10:00', '10:00 - 12:00',
-        '12:00 - 14:00', '14:00 - 16:00', '16:00 - 18:00',
-        '18:00 - 20:00', '20:00 - 22:00', '22:00 - 24:00'
-      ];
-
-      counts.forEach((count, i) => {
-        const pct = Math.round((count / maxVal) * 100);
-        const isPeak = pct >= 75 && count > 0;
-        const barClass = isPeak ? 'active-orange' : (pct >= 50 ? 'active-blue' : '');
-        html += `
-          <div class="chart-col" title="${hourLabels[i]}: ${count} viajes">
-            <span class="val-label">${count}</span>
-            <div class="chart-bar ${barClass}" style="height:${pct === 0 ? 4 : pct}%;"></div>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-    }
-
-    function formatTimeAgo(date) {
-      if (!date || isNaN(date.getTime())) return 'Recientemente';
-      const now = new Date();
-      const diffMin = Math.floor((now - date) / (1000 * 60));
-
-      if (diffMin < 1) return 'Hace un instante';
-      if (diffMin < 60) return `Hace ${diffMin} min`;
-      const diffHours = Math.floor(diffMin / 60);
-      if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-      const diffDays = Math.floor(diffHours / 24);
-      return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
-    }
-
-    function renderRealActivity(profiles = [], passengers = [], trips = []) {
-      const listEl = document.getElementById('activityList');
-      if (!listEl) return;
-
-      const events = [];
-
-      profiles.forEach(p => {
-        events.push({
-          type: 'driver',
-          title: 'Nuevo Conductor Registrado',
-          desc: `${p.full_name || p.name || 'Chofer'} - ${p.vehicle_info || 'Móvil'}`,
-          time: p.created_at ? new Date(p.created_at) : new Date()
-        });
-      });
-
-      passengers.forEach(pass => {
-        events.push({
-          type: 'passenger',
-          title: 'Nuevo Pasajero Registrado',
-          desc: `${pass.name || pass.phone || 'Pasajero'}`,
-          time: pass.created_at ? new Date(pass.created_at) : new Date()
-        });
-      });
-
-      trips.forEach(t => {
-        events.push({
-          type: 'trip',
-          title: `Servicio de Taxi: ${t.status || 'Solicitado'}`,
-          desc: `Origen: ${t.pickup_address || 'La Quiaca'} -> Destino: ${t.destination_address || 'Centro'}`,
-          time: t.created_at ? new Date(t.created_at) : new Date()
-        });
-      });
-
-      events.sort((a, b) => b.time - a.time);
-      const topEvents = events.slice(0, 5);
-
-      if (topEvents.length === 0) {
-        listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:12px; padding:20px;">Sin actividad reciente en Supabase.</div>`;
-        return;
-      }
-
-      let html = '';
-      topEvents.forEach(ev => {
-        const timeAgo = formatTimeAgo(ev.time);
-        let iconBg = 'background:#e0e7ff; color:#00327d;';
-        if (ev.type === 'passenger') iconBg = 'background:#ffedd5; color:#c2410c;';
-        if (ev.type === 'trip') iconBg = 'background:#dcfce7; color:#15803d;';
-
-        html += `
-          <div class="activity-item">
-            <div class="activity-icon-bg" style="${iconBg}">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-            </div>
-            <div>
-              <h5 style="font-size:13px; font-weight:800; color:#0f172a;">${ev.title}</h5>
-              <p style="font-size:12px; color:var(--text-muted); margin:2px 0;">${ev.desc}</p>
-              <span style="font-size:11px; color:#94a3b8;">${timeAgo}</span>
-            </div>
-          </div>
-        `;
-      });
-
-      listEl.innerHTML = html;
-    }
-
-    // ACTUALIZAR MÉTRICAS REALES DE PRODUCCIÓN DESDE SUPABASE
     async function updateRealMetrics() {
+      if (!adminAccessToken) return;
+      const status = document.getElementById('operationsStatus');
       try {
-        let profiles = [];
-        let passengers = [];
-        let trips = [];
-
-        // 1. Conductores
-        const driversRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?role=eq.driver&select=*`, {
-          headers: apiHeaders()
+        const response = await adminFetch(`${SUPABASE_URL}/rest/v1/rpc/admin_operations_summary`, {
+          method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: '{}'
         });
-        if (driversRes.ok) {
-          profiles = await driversRes.json();
-          if (Array.isArray(profiles)) {
-            const habilitados = profiles.filter(p => p.is_approved === true).length;
-            const elActivos = document.getElementById('metricConductoresActivos');
-            const elSubActivos = document.getElementById('metricSubActivos');
-            if (elActivos) elActivos.innerText = habilitados;
-            if (elSubActivos) elSubActivos.innerText = `${profiles.length} conductores en total`;
-          }
-        }
-
-        // 2. Pasajeros
-        const passRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?role=eq.passenger&select=*`, {
-          headers: apiHeaders()
-        });
-        if (passRes.ok) {
-          passengers = await passRes.json();
-          if (Array.isArray(passengers)) {
-            const elUsuarios = document.getElementById('metricUsuarios');
-            const elSubUsuarios = document.getElementById('metricSubUsuarios');
-            if (elUsuarios) elUsuarios.innerText = passengers.length;
-            if (elSubUsuarios) elSubUsuarios.innerText = `${passengers.length} registrados`;
-          }
-        }
-
-        // 3. Viajes
-        const tripsRes = await fetch(`${SUPABASE_URL}/rest/v1/trips?select=*`, {
-          headers: apiHeaders()
-        });
-        if (tripsRes.ok) {
-          trips = await tripsRes.json();
-          if (Array.isArray(trips)) {
-            const hoyStr = new Date().toISOString().split('T')[0];
-            const viajesHoy = trips.filter(t => t.created_at && t.created_at.startsWith(hoyStr)).length;
-            // Una solicitud todavía sin conductor no es un viaje en curso.
-            // Tampoco lo es un servicio que ya llegó a la etapa de pago.
-            const estadosEnCurso = ['accepted', 'arrived', 'in_progress', 'awaiting_finish_code'];
-            const enCurso = trips.filter(t => estadosEnCurso.includes(t.status)).length;
-            const cancelados = trips.filter(t => t.status === 'cancelled').length;
-
-            const elViajesDia = document.getElementById('metricViajesDia');
-            const elEnCurso = document.getElementById('metricViajesEnCurso');
-            const elCancelados = document.getElementById('metricViajesCancelados');
-
-            if (elViajesDia) elViajesDia.innerText = viajesHoy;
-            if (elEnCurso) elEnCurso.innerText = enCurso;
-            if (elCancelados) elCancelados.innerText = cancelados;
-          }
-        }
-
-        // Renderizar gráfico de demanda real y actividad reciente
-        renderRealChart(trips);
-        renderRealActivity(profiles, passengers, trips);
-
-      } catch (err) {
-        console.error('Error actualizando métricas reales:', err);
+        if (!response.ok) throw new Error('No se pudo cargar el resumen. Verificá la conexión y la instalación de las migraciones de producción.');
+        const summary = await response.json();
+        document.getElementById('metricViajesDia').textContent = Number(summary.trips_today || 0);
+        document.getElementById('metricUsuarios').textContent = Number(summary.passengers_total || 0);
+        document.getElementById('metricConductoresActivos').textContent = Number(summary.drivers_eligible || 0);
+        document.getElementById('metricSubActivos').textContent = `${Number(summary.drivers_total || 0)} conductores registrados`;
+        document.getElementById('metricViajesEnCurso').textContent = Number(summary.trips_active || 0);
+        document.getElementById('metricViajesCancelados').textContent = Number(summary.trips_cancelled_today || 0);
+        renderDemandCounts(summary.demand_by_hour || []);
+        const events = Array.isArray(summary.recent_activity) ? summary.recent_activity : [];
+        document.getElementById('activityList').innerHTML = events.length ? events.map(item =>
+          `<div class="activity-item"><div><strong>${escapeHtml(item.title)}</strong><p style="font-size:13px;color:var(--text-muted);margin:4px 0;">${escapeHtml(item.description)}</p><small>${escapeHtml(AdminCore.formatDate(item.created_at))}</small></div></div>`
+        ).join('') : '<p>No hay actividad reciente.</p>';
+        status.textContent = 'Actualizado ' + AdminCore.formatDate(new Date().toISOString());
+      } catch (error) {
+        status.textContent = error.message;
+        ['metricViajesDia','metricUsuarios','metricConductoresActivos','metricViajesEnCurso','metricViajesCancelados'].forEach(id => { document.getElementById(id).textContent = '—'; });
       }
+    }
+
+    function renderDemandCounts(values) {
+      const counts = Array.from({ length: 12 }, (_, i) => Math.max(0, Number(values[i]) || 0));
+      const max = Math.max(5, ...counts);
+      document.getElementById('chartYAxis').innerHTML = [max, Math.round(max * 2 / 3), Math.round(max / 3), 0].map(value => `<span>${value}</span>`).join('');
+      document.getElementById('chartContainer').innerHTML = counts.map((value, i) =>
+        `<div class="chart-col" title="${String(i * 2).padStart(2, '0')}:00–${String(i * 2 + 2).padStart(2, '0')}:00 · ${value} solicitudes"><span class="val-label">${value}</span><div class="chart-bar ${value === Math.max(...counts) && value > 0 ? 'active-orange' : 'active-blue'}" style="height:${Math.max(4, value * 100 / max)}%;"></div></div>`
+      ).join('');
+    }
+
+    async function fetchTripsTable() {
+      const body = document.getElementById('tripsTableBody');
+      body.innerHTML = '<tr><td colspan="7">Cargando viajes...</td></tr>';
+      try {
+        const filter = document.getElementById('tripsStatusFilter').value;
+        let predicate = '';
+        if (filter === 'active') predicate = '&status=in.(accepted,arrived,in_progress,awaiting_finish_code)';
+        else if (filter === 'disputed') predicate = '&payment_status=eq.disputed';
+        else if (['completed','cancelled'].includes(filter)) predicate = '&status=eq.' + filter;
+        const fields = 'id,created_at,passenger_id,passenger_name,driver_id,driver_name,pickup_address,destination_address,fare_amount,status,payment_status';
+        const response = await adminFetch(`${SUPABASE_URL}/rest/v1/trips?select=${fields}&order=created_at.desc,id.desc&limit=${PAGE_SIZE + 1}&offset=${tripsPage * PAGE_SIZE}${predicate}`, { headers: apiHeaders() });
+        if (!response.ok) throw new Error('No se pudo consultar el historial. Verificá la conexión y los permisos administrativos.');
+        const rows = updatePager('trips', tripsPage, await response.json());
+        body.innerHTML = rows.length ? rows.map(trip => `<tr>
+          <td><code>${escapeHtml(trip.id)}</code><br><small>${escapeHtml(AdminCore.formatDate(trip.created_at))}</small></td>
+          <td>${escapeHtml(trip.passenger_name || (trip.passenger_id ? 'Pasajero registrado' : 'Cuenta eliminada'))}</td>
+          <td>${escapeHtml(trip.driver_name || (trip.driver_id ? 'Conductor asignado' : 'Sin asignar'))}</td>
+          <td>${escapeHtml(trip.pickup_address || '—')} → ${escapeHtml(trip.destination_address || '—')}</td>
+          <td>$${Number(trip.fare_amount || 0).toLocaleString('es-AR')} ARS</td>
+          <td>${escapeHtml(AdminCore.tripLabels[trip.status] || trip.status)}</td>
+          <td>${escapeHtml(AdminCore.paymentLabel(trip))}</td></tr>`).join('') : '<tr><td colspan="7">No hay viajes en esta página.</td></tr>';
+      } catch (error) { body.innerHTML = `<tr><td colspan="7" role="alert">${escapeHtml(error.message)}</td></tr>`; }
     }
 
     // CARGAR TABLA REAL DE CHOFERES DESDE SUPABASE
@@ -1892,12 +1930,14 @@
                  </div>`;
 
             const tr = document.createElement('tr');
+            tr.dataset.search = [p.full_name, p.name, p.phone, p.email, p.plate, p.taxi_number, p.vehicle_info]
+              .filter(Boolean).join(' ').toLowerCase();
             tr.innerHTML = `
               <td>
-                <strong>${p.full_name || p.name || 'Conductor Registrado'}</strong><br>
-                <span style="font-size:12px; color:var(--text-muted);">${p.phone || p.email || 'Sin teléfono'}</span>
+                <strong>${escapeHtml(p.full_name || p.name || 'Conductor Registrado')}</strong><br>
+                <span style="font-size:12px; color:var(--text-muted);">${escapeHtml(p.phone || p.email || 'Sin teléfono')}</span>
               </td>
-              <td>${p.vehicle_info || 'Móvil Registrado'}</td>
+              <td>${escapeHtml(p.vehicle_info || 'Móvil Registrado')}</td>
               <td>${vencimientoText}</td>
               <td>
                 <button class="btn-sm btn-blue" onclick="openDocsModal('${p.id}')">Ver / Editar Legajo</button>
@@ -1907,6 +1947,7 @@
             `;
             tbody.appendChild(tr);
           });
+          filterDriverRows(document.getElementById('driverSearchInput')?.value || '');
         } else {
           tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No se encontraron solicitudes de choferes en Supabase aún.</td></tr>`;
         }
@@ -1914,6 +1955,13 @@
         console.error(err);
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--accent-red);">Error al conectar con Supabase</td></tr>`;
       }
+    }
+
+    function filterDriverRows(value) {
+      const query = String(value || '').trim().toLowerCase();
+      document.querySelectorAll('#driversTableBody tr[data-search]').forEach(row => {
+        row.style.display = !query || row.dataset.search.includes(query) ? '' : 'none';
+      });
     }
 
     // LIGHTBOX VISOR DE IMÁGENES REALES (SIN ABOUT:BLANK NI EMOJIS)
@@ -1943,6 +1991,7 @@
       const modal = document.getElementById('docsModal');
       const content = document.getElementById('docsModalContent');
       modal.classList.add('active');
+      content.innerHTML = `<p style="color:var(--text-muted);">Cargando legajo y documentos...</p>`;
 
       const driver = window.profilesList ? window.profilesList.find(p => p.id === driverId) : null;
       if (!driver) {
@@ -1954,10 +2003,20 @@
 
       const venc = calcularProximoVencimiento(driver);
 
-      const docsResponse = await fetch(`${SUPABASE_URL}/rest/v1/driver_documents?driver_id=eq.${driverId}&select=*`, {
-        headers: apiHeaders()
-      });
-      const documentRows = docsResponse.ok ? await docsResponse.json() : [];
+      let docsResponse;
+      try {
+        docsResponse = await fetch(`${SUPABASE_URL}/rest/v1/driver_documents?driver_id=eq.${driverId}&select=*`, {
+          headers: apiHeaders()
+        });
+      } catch (_) {
+        content.innerHTML = `<p style="color:var(--accent-red);">No se pudo conectar para consultar el legajo. Intentá nuevamente.</p>`;
+        return;
+      }
+      if (!docsResponse.ok) {
+        content.innerHTML = `<p style="color:var(--accent-red);">No se pudo consultar el legajo. La sesión puede haber vencido.</p>`;
+        return;
+      }
+      const documentRows = await docsResponse.json();
       const documentsByType = {};
       await Promise.all(documentRows.map(async row => {
         row.signed_url = await createDocumentSignedUrl(row.storage_path);
@@ -2015,8 +2074,11 @@
             </select></div>
             <div class="record-field"><label>Vencimiento</label><input data-document-expiry="${doc.type}" id="doc-expiry-${doc.type}" type="date" value="${escapeHtml(doc.record.expires_at || '')}"></div>
           </div>`;
+          html += `<div class="record-field" style="margin-bottom:9px;"><label>Observación para el conductor</label>
+            <input data-document-note="${doc.type}" id="doc-note-${doc.type}" maxlength="300"
+              placeholder="Ej.: La foto está borrosa; volvé a cargarla" value="${escapeHtml(doc.record.review_note || '')}"></div>`;
           if (doc.record.signed_url) {
-            html += `<a href="${doc.record.signed_url}" target="_blank" rel="noopener" class="btn-sm btn-blue" style="display:inline-block;text-decoration:none;margin-right:6px;">Abrir documento</a>`;
+            html += `<a href="${escapeHtml(doc.record.signed_url)}" target="_blank" rel="noopener" class="btn-sm btn-blue" style="display:inline-block;text-decoration:none;margin-right:6px;">Abrir documento</a>`;
           }
         } else {
           html += `<span style="font-size:12px;color:var(--accent-red);font-weight:bold;display:block;margin-bottom:9px;">Documento no adjuntado</span>`;
@@ -2176,7 +2238,8 @@
         return {
           document_type: type,
           status: select.value,
-          expires_at: document.getElementById(`doc-expiry-${type}`)?.value || null
+          expires_at: document.getElementById(`doc-expiry-${type}`)?.value || null,
+          review_note: document.getElementById(`doc-note-${type}`)?.value?.trim() || null
         };
       });
 
@@ -2312,6 +2375,9 @@
     restoreAdminSession();
     setInterval(updateRealMetrics, 30000);
     setInterval(fetchAdminNotifications, 30000);
+    setInterval(async () => {
+      if (adminRefreshToken && !(await refreshAdminAccessToken())) logoutAdmin();
+    }, 45 * 60 * 1000);
 
     async function fetchRealDrivers() {
       if (!adminMap || !adminAccessToken) return;
@@ -2340,7 +2406,7 @@
                 iconAnchor: [22, 22]
               });
               const marker = L.marker([d.latitude, d.longitude], { icon: carIcon })
-                .bindPopup(`<b style="color:#00327d;">🚖 ${d.driver_name || 'Conductor Habilitado'}</b><br>${d.vehicle_info || 'Móvil'}<br><span style="color:#10b981; font-weight:bold;">DISPONIBLE EN LA QUIACA</span>`);
+                .bindPopup(`<b style="color:#00327d;">Taxi · ${escapeHtml(d.driver_name || 'Conductor Habilitado')}</b><br>${escapeHtml(d.vehicle_info || 'Móvil')}<br><span style="color:#10b981; font-weight:bold;">DISPONIBLE EN LA QUIACA</span>`);
               driverMarkersGroup.addLayer(marker);
             }
           });

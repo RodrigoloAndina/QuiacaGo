@@ -40,13 +40,20 @@ class _VerificarTelefonoScreenState extends State<VerificarTelefonoScreen> {
       setState(() => _error = 'Ingresá un celular argentino válido.');
       return;
     }
-    setState(() { _sending = true; _error = null; });
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
     try {
-      await SupabaseService().client.auth.updateUser(UserAttributes(phone: phone));
+      await SupabaseService()
+          .client
+          .auth
+          .updateUser(UserAttributes(phone: phone));
       if (mounted) setState(() => _sent = true);
     } catch (error) {
-      if (mounted) setState(() => _error =
-          'No se pudo enviar el código. Verificá que el proveedor SMS esté configurado en Supabase.');
+      if (mounted)
+        setState(() => _error =
+            'No se pudo enviar el código. Verificá que el proveedor SMS esté configurado en Supabase.');
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -59,12 +66,18 @@ class _VerificarTelefonoScreenState extends State<VerificarTelefonoScreen> {
       setState(() => _error = 'Ingresá el código de 6 dígitos.');
       return;
     }
-    setState(() { _sending = true; _error = null; });
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
     try {
-      await SupabaseService().client.auth.verifyOTP(
-            type: OtpType.phoneChange, phone: phone, token: token);
-      await SupabaseService().client.rpc('confirm_my_phone_verification',
-          params: {'p_phone': phone});
+      await SupabaseService()
+          .client
+          .auth
+          .verifyOTP(type: OtpType.phoneChange, phone: phone, token: token);
+      await SupabaseService()
+          .client
+          .rpc('confirm_my_phone_verification', params: {'p_phone': phone});
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
       if (mounted) setState(() => _error = 'Código incorrecto o vencido.');
@@ -74,30 +87,53 @@ class _VerificarTelefonoScreenState extends State<VerificarTelefonoScreen> {
   }
 
   @override
-  void dispose() { _phoneController.dispose(); _codeController.dispose(); super.dispose(); }
+  void dispose() {
+    _phoneController.dispose();
+    _codeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Verificar teléfono')),
         body: ListView(padding: const EdgeInsets.all(22), children: [
-          const Icon(Icons.verified_user_outlined, size: 64, color: AppColors.primary),
+          const Icon(Icons.verified_user_outlined,
+              size: 64, color: AppColors.primary),
           const SizedBox(height: 16),
-          const Text('Confirmá que este celular es tuyo', textAlign: TextAlign.center,
+          const Text('Confirmá que este celular es tuyo',
+              textAlign: TextAlign.center,
               style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
-          const Text('Te enviaremos un código de 6 dígitos por SMS. El número verificado se usará para avisos de la Municipalidad.',
-              textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
+          const Text(
+              'Te enviaremos un código de 6 dígitos por SMS. El número verificado se usará para avisos de la Municipalidad.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 24),
-          TextField(controller: _phoneController, keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Celular', hintText: '+54 9 3885 000000')),
+          TextField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                  labelText: 'Celular', hintText: '+54 9 3885 000000')),
           const SizedBox(height: 14),
-          if (_sent) TextField(controller: _codeController, keyboardType: TextInputType.number,
-              maxLength: 6, decoration: const InputDecoration(labelText: 'Código recibido')),
-          if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12),
-              child: Text(_error!, style: const TextStyle(color: AppColors.statusRejected))),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-              onPressed: _sending ? null : (_sent ? _verify : _sendCode),
-              child: Text(_sending ? 'PROCESANDO...' : (_sent ? 'CONFIRMAR CÓDIGO' : 'ENVIAR CÓDIGO')))),
+          if (_sent)
+            TextField(
+                controller: _codeController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration:
+                    const InputDecoration(labelText: 'Código recibido')),
+          if (_error != null)
+            Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(_error!,
+                    style: const TextStyle(color: AppColors.statusRejected))),
+          SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                  onPressed: _sending ? null : (_sent ? _verify : _sendCode),
+                  child: Text(_sending
+                      ? 'PROCESANDO...'
+                      : (_sent ? 'CONFIRMAR CÓDIGO' : 'ENVIAR CÓDIGO')))),
         ]),
       );
 }

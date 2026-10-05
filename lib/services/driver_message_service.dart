@@ -9,11 +9,9 @@ class DriverMessageService {
     var query = _client
         .from('driver_messages')
         .select()
-        .eq('driver_id', _client.auth.currentUser?.id ?? '')
-        .order('created_at', ascending: false)
-        .limit(50);
+        .eq('driver_id', _client.auth.currentUser?.id ?? '');
     if (unreadOnly) query = query.isFilter('read_at', null);
-    final rows = await query;
+    final rows = await query.order('created_at', ascending: false).limit(50);
     return List<Map<String, dynamic>>.from(rows);
   }
 

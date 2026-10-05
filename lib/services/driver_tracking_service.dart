@@ -29,13 +29,17 @@ class DriverTrackingService {
       lastStartError = unavailableReason;
       return false;
     }
-    _latest = await LocationService.getCurrentLocation();
+    _latest = await LocationService.getFreshLocation();
+    if (_latest == null) {
+      lastStartError = 'No se pudo obtener una ubicación GPS actual.';
+      return false;
+    }
     if (!await _publish()) return false;
     _subscription =
         LocationService.getRealtimeLocationStream().listen((p) => _latest = p);
     // Diez segundos mantiene al conductor dentro de la ventana activa de
     // veinte segundos sin duplicar escrituras innecesarias en Supabase.
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _publish());
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) => _publish());
     await DriverBackgroundService.start();
     await ScreenAwakeService.enable();
     return true;
@@ -45,7 +49,7 @@ class DriverTrackingService {
   /// depende únicamente del Timer, que Android puede demorar temporalmente.
   Future<bool> publishNow() async {
     await ScreenAwakeService.enable();
-    _latest ??= await LocationService.getCurrentLocation();
+    _latest ??= await LocationService.getFreshLocation();
     return _publish();
   }
 

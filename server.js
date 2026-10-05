@@ -3,8 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 const PREVIEW_DIR = path.join(__dirname, 'preview');
 const ADMIN_DIR = path.join(__dirname, 'admin_web');
+const SUPABASE_DIR = path.join(__dirname, 'supabase');
 
 const mimeTypes = {
   '.html': 'text/html',
@@ -17,20 +19,20 @@ const mimeTypes = {
   '.svg': 'image/svg+xml',
 };
 
-// Almacenamiento en memoria para sincronización de viajes y conductores
-let pendingTrips = [];
-let registeredDrivers = [
-  { id: 1, name: 'Carlos Mendoza', phone: '+54 3885 401234', vehicle: 'Chevrolet Corsa', plate: 'ABC 123', taxiNumber: '045', isApproved: true },
-  { id: 2, name: 'Roberto Sulca', phone: '+54 3885 998877', vehicle: 'Fiat Siena', plate: 'XYZ 789', taxiNumber: '012', isApproved: true }
-];
+function safePath(base, requestPath) {
+  const decoded = decodeURIComponent((requestPath || '/').split('?')[0]);
+  const relative = decoded === '/' ? 'index.html' : decoded.replace(/^[/\\]+/, '');
+  const resolved = path.resolve(base, relative);
+  return resolved === base || resolved.startsWith(`${base}${path.sep}`) ? resolved : null;
+}
+
+function send(res, status, body, type = 'text/plain; charset=utf-8') {
+  res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
+  res.end(body);
+}
 
 const server = http.createServer((req, res) => {
   let reqUrl = req.url;
-
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -38,63 +40,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API REST /api/trips
-  if (reqUrl.startsWith('/api/trips')) {
-    if (req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => body += chunk.toString());
-      req.on('end', () => {
-        try {
-          const tripData = JSON.parse(body || '{}');
-          tripData.id = 'TRIP-' + Date.now();
-          tripData.status = 'requested';
-          tripData.createdAt = new Date().toISOString();
-          pendingTrips.push(tripData);
-          
-          console.log(`\n🚗 [NUEVO VIAJE SOLICITADO] ID: ${tripData.id} | Pasajero: ${tripData.passengerName || 'Pasajero'} | Tarifa: $${tripData.fareAmount || 2500}`);
-          
-          res.writeHead(201, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, trip: tripData }));
-        } catch (e) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'JSON inválido' }));
-        }
-      });
-      return;
-    }
-
-    if (req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ trips: pendingTrips }));
-      return;
-    }
-  }
-
-  // API REST /api/drivers
-  if (reqUrl.startsWith('/api/drivers')) {
-    if (req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => body += chunk.toString());
-      req.on('end', () => {
-        try {
-          const driver = JSON.parse(body || '{}');
-          driver.id = registeredDrivers.length + 1;
-          registeredDrivers.push(driver);
-          res.writeHead(201, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, driver }));
-        } catch (e) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'JSON inválido' }));
-        }
-      });
-      return;
-    }
-
-    if (req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ drivers: registeredDrivers }));
-      return;
-    }
+  // Supabase is the only source of real data; never expose in-memory demo data.
+  if (reqUrl.split('?')[0].startsWith('/api/')) {
+    return send(res, 410, JSON.stringify({ error: 'Servidor de vista local: configurá Supabase para datos reales.' }), 'application/json; charset=utf-8');
   }
 
   // Archivos Estáticos y Web Panel Admin
@@ -103,21 +51,30 @@ const server = http.createServer((req, res) => {
     targetDir = ADMIN_DIR;
     reqUrl = reqUrl.replace('/admin', '') || '/';
   }
+  if (reqUrl.startsWith('/supabase/')) {
+    targetDir = SUPABASE_DIR;
+    reqUrl = reqUrl.replace('/supabase', '') || '/';
+  }
+  if (reqUrl.split('?')[0] === '/supabase-bundle.html') {
+    targetDir = path.join(__dirname, 'web');
+    reqUrl = '/supabase-bundle.html';
+  }
 
-  let filePath = path.join(targetDir, reqUrl === '/' ? 'index.html' : reqUrl);
+  let filePath = safePath(targetDir, reqUrl);
+  if (!filePath) return send(res, 400, 'Ruta inválida');
   const extname = String(path.extname(filePath)).toLowerCase();
   const contentType = mimeTypes[extname] || 'text/html';
 
   fs.readFile(filePath, (error, content) => {
     if (error) {
-      if (error.code === 'ENOENT') {
-        fs.readFile(path.join(targetDir, 'index.html'), (err, fallbackContent) => {
+      if (error.code === 'ENOENT' && String(req.headers.accept || '').includes('text/html')) {
+        fs.readFile(safePath(targetDir, '/index.html'), (err, fallbackContent) => {
+          if (err) return send(res, 404, 'No encontrado');
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(fallbackContent, 'utf-8');
+          res.end(fallbackContent);
         });
       } else {
-        res.writeHead(500);
-        res.end('Server Error: ' + error.code);
+        send(res, 404, 'No encontrado');
       }
     } else {
       res.writeHead(200, { 'Content-Type': contentType + '; charset=utf-8' });
@@ -126,10 +83,13 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+if (require.main === module) server.listen(PORT, HOST, () => {
   console.log(`\n=============================================================`);
   console.log(` QuiacaGo - Servidores Locales Iniciados`);
   console.log(` 📱 App Móvil (Pasajero/Conductor): http://localhost:${PORT}/`);
   console.log(` 💻 Panel Web Admin Municipal:      http://localhost:${PORT}/admin`);
+  console.log(` 🌐 Red local:                      http://IP-DE-ESTA-PC:${PORT}/admin`);
   console.log(`=============================================================\n`);
 });
+
+module.exports = { server, safePath };

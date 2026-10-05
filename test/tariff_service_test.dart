@@ -64,6 +64,19 @@ void main() {
       expect(trip.fareAmount, 2500);
       expect(trip.status, 'requested');
     });
+
+    test('conserva el estado de un pago reclamado al guardar la sesión', () {
+      final trip = TripModel.fromMap({
+        'id': 'trip-dispute',
+        'status': 'completed',
+        'payment_status': 'disputed',
+        'fare_amount': 3200,
+      });
+
+      expect(trip.paymentStatus, 'disputed');
+      expect(trip.toMap()['payment_status'], 'disputed');
+      expect(trip.copyWithStatus('completed').paymentStatus, 'disputed');
+    });
   });
 
   group('Cancelaciones y suspensiones', () {

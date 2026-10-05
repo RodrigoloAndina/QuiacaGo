@@ -31,8 +31,10 @@ class DriverForegroundService : Service(), LocationListener {
     companion object {
         private const val CONNECTION_CHANNEL = "driver_connection"
         private const val OFFER_CHANNEL = "trip_offers"
+        private const val MESSAGE_CHANNEL = "driver_messages"
         private const val CONNECTION_NOTIFICATION_ID = 4201
         private const val OFFER_NOTIFICATION_ID = 4202
+        private const val MESSAGE_NOTIFICATION_ID = 4203
         @Volatile
         var isActive = false
             private set
@@ -51,6 +53,7 @@ class DriverForegroundService : Service(), LocationListener {
     private var locationManager: LocationManager? = null
     private var latestLocation: Location? = null
     private var lastNotifiedTripId: String? = null
+    private var lastNotifiedMessageId: String? = null
 
     private var supabaseUrl = ""
     private var anonKey = ""
@@ -132,6 +135,13 @@ class DriverForegroundService : Service(), LocationListener {
         latestLocation = location
     }
 
+    @androidx.annotation.RequiresApi(35)
+    override fun onTimeout(startId: Int) {
+        // Location foreground services do not use the data-sync timeout, but
+        // stop safely if a future Android policy invokes this callback.
+        stopSelf(startId)
+    }
+
     @Deprecated("Deprecated in Android")
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
 
@@ -144,6 +154,7 @@ class DriverForegroundService : Service(), LocationListener {
         if (supabaseUrl.isBlank() || anonKey.isBlank() || accessToken.isBlank() || driverId.isBlank()) return
         latestLocation?.let { publishLocation(it) }
         pollOffer()
+        pollAdminMessage()
     }
 
     private fun publishLocation(location: Location) {
@@ -174,6 +185,18 @@ class DriverForegroundService : Service(), LocationListener {
         showOfferNotification(offer)
     }
 
+    private fun pollAdminMessage() {
+        val response = authorizedGet(
+            "$supabaseUrl/rest/v1/driver_messages?driver_id=eq.$driverId&read_at=is.null" +
+                "&select=id,title,body&order=created_at.desc&limit=1"
+        ) ?: return
+        val message = parseOffer(response) ?: return
+        val id = message.optString("id")
+        if (id.isBlank() || id == lastNotifiedMessageId) return
+        lastNotifiedMessageId = id
+        showAdminMessageNotification(message)
+    }
+
     private fun parseOffer(response: String): JSONObject? {
         val trimmed = response.trim()
         if (trimmed.isBlank() || trimmed == "null" || trimmed == "{}" || trimmed == "[]") return null
@@ -199,6 +222,33 @@ class DriverForegroundService : Service(), LocationListener {
             result = request(endpoint, body, accessToken, additionalHeaders)
         }
         return if (result.first in 200..299) result.second else null
+    }
+
+    private fun authorizedGet(endpoint: String): String? {
+        var result = getRequest(endpoint, accessToken)
+        if (result.first == HttpURLConnection.HTTP_UNAUTHORIZED && refreshSession()) {
+            result = getRequest(endpoint, accessToken)
+        }
+        return if (result.first in 200..299) result.second else null
+    }
+
+    private fun getRequest(endpoint: String, bearer: String): Pair<Int, String?> {
+        var connection: HttpURLConnection? = null
+        return try {
+            connection = URL(endpoint).openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 6000
+            connection.readTimeout = 6000
+            connection.setRequestProperty("apikey", anonKey)
+            connection.setRequestProperty("Authorization", "Bearer $bearer")
+            val status = connection.responseCode
+            val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+            Pair(status, stream?.bufferedReader()?.use { it.readText() })
+        } catch (_: Exception) {
+            Pair(-1, null)
+        } finally {
+            connection?.disconnect()
+        }
     }
 
     private fun refreshSession(): Boolean {
@@ -270,6 +320,13 @@ class DriverForegroundService : Service(), LocationListener {
         )
         manager.createNotificationChannel(
             NotificationChannel(
+                MESSAGE_CHANNEL,
+                "Avisos de administración",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply { description = "Aprobaciones, rechazos y vencimientos del legajo" }
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
                 OFFER_CHANNEL,
                 "Solicitudes de viaje",
                 NotificationManager.IMPORTANCE_HIGH
@@ -319,6 +376,22 @@ class DriverForegroundService : Service(), LocationListener {
             .build()
         getSystemService(NotificationManager::class.java)
             .notify(OFFER_NOTIFICATION_ID, notification)
+    }
+
+    private fun showAdminMessageNotification(message: JSONObject) {
+        val title = message.optString("title", "Aviso de QuiacaGo")
+        val body = message.optString("body", "Tenés una novedad en tu cuenta")
+        val notification = NotificationCompat.Builder(this, MESSAGE_CHANNEL)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setContentIntent(appPendingIntent())
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+        getSystemService(NotificationManager::class.java)
+            .notify(MESSAGE_NOTIFICATION_ID, notification)
     }
 
     private fun utcNow(): String {

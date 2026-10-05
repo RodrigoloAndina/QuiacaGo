@@ -13,6 +13,8 @@ import '../../services/auth_service.dart';
 import '../../services/routing_service.dart';
 import '../../services/offline_sync_service.dart';
 import '../../services/current_trip_session.dart';
+import '../../services/passenger_background_service.dart';
+import '../../services/payment_dispute_service.dart';
 import '../trips/cancellation_dialog.dart';
 
 enum EstadoPasajero {
@@ -23,6 +25,7 @@ enum EstadoPasajero {
   enViaje,
   codigoFinalizacion,
   pagoPendiente,
+  pagoReclamado,
   viajeFinalizado,
   cancelado
 }
@@ -38,7 +41,8 @@ class InicioPasajeroScreen extends StatefulWidget {
   State<InicioPasajeroScreen> createState() => _InicioPasajeroScreenState();
 }
 
-class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
+class _InicioPasajeroScreenState extends State<InicioPasajeroScreen>
+    with WidgetsBindingObserver {
   EstadoPasajero _estado = EstadoPasajero.inicio;
 
   LatLng _pasajeroPos =
@@ -70,20 +74,47 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
   bool _ratingSubmitted = false;
   int _rating = 5;
   final TextEditingController _ratingCommentCtrl = TextEditingController();
-  List<DriverLocationModel> _conductoresDisponibles = [];
+  int? _availableDrivers;
+  Map<String, dynamic>? _openPaymentDispute;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _cargarTarifasVigentes();
     _iniciarGPSReal();
     _cargarConductoresDisponibles();
     _restaurarViajeActivo();
+    _checkPaymentDispute();
     _connectivitySub = OfflineSyncService().statusStream.listen((online) {
       if (online) _sincronizarAlReconectar();
     });
     _driversRefreshTimer = Timer.periodic(
-        const Duration(seconds: 8), (_) => _cargarConductoresDisponibles());
+        const Duration(seconds: 20), (_) => _cargarConductoresDisponibles());
+  }
+
+  Future<void> _checkPaymentDispute() async {
+    try {
+      final dispute = await PaymentDisputeService().myOpenDispute();
+      if (!mounted) return;
+      setState(() {
+        _openPaymentDispute = dispute;
+        if (dispute != null && _viajeActual == null) {
+          _estado = EstadoPasajero.pagoReclamado;
+        } else if (dispute == null && _estado == EstadoPasajero.pagoReclamado) {
+          _estado = EstadoPasajero.inicio;
+        }
+      });
+    } catch (_) {
+      // La validación definitiva se repite en Supabase al solicitar un viaje.
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _sincronizarAlReconectar();
+    }
   }
 
   Future<void> _cargarTarifasVigentes() async {
@@ -113,6 +144,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       };
     });
     _escucharEstadoViaje(trip.id);
+    await PassengerBackgroundService.start(trip.id);
     _cargarRutaSimplificada(trip);
     if (trip.driverId != null) _iniciarSeguimientoConductor(trip.driverId!);
   }
@@ -153,9 +185,11 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
   }
 
   Future<void> _cargarConductoresDisponibles() async {
-    final conductores =
-        await DriverLocationService.obtenerConductoresDisponibles();
-    if (mounted) setState(() => _conductoresDisponibles = conductores);
+    if (_estado != EstadoPasajero.inicio ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.paused)
+      return;
+    final count = await DriverLocationService.availableCount();
+    if (mounted) setState(() => _availableDrivers = count);
   }
 
   Future<void> _cargarRutaSimplificada(TripModel trip) async {
@@ -232,6 +266,16 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
 
   Future<void> _confirmarSolicitud() async {
     if (_creatingTrip) return;
+    await _checkPaymentDispute();
+    if (_openPaymentDispute != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Tenés un reclamo de pago pendiente. Soporte debe resolverlo antes de otro viaje.'),
+        ));
+      }
+      return;
+    }
     if (!_pickupConfirmed) {
       _seleccionarEnMapa(recogida: true);
       return;
@@ -344,6 +388,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       setState(() => _viajeActual = trip);
       CurrentTripSession().setTrip(trip);
       _escucharEstadoViaje(trip.id);
+      await PassengerBackgroundService.start(trip.id);
       _cargarRutaSimplificada(trip);
     } else if (mounted) {
       print('[Pasajero] ERROR: No se pudo crear el viaje en Supabase');
@@ -365,6 +410,15 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
       if (!mounted) return;
       _aplicarEstadoViaje(tripActualizado);
     });
+  }
+
+  Future<void> _refreshTripCodes() async {
+    final id = _viajeActual?.id;
+    if (id == null) return;
+    final trip = await TripService.obtenerViaje(id);
+    if (mounted && trip != null && _viajeActual?.id == id) {
+      _aplicarEstadoViaje(trip);
+    }
   }
 
   void _aplicarEstadoViaje(TripModel tripActualizado) {
@@ -401,13 +455,20 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
         break;
       case 'completed':
         _detenerSeguimientoConductor();
-        setState(() => _estado = EstadoPasajero.viajeFinalizado);
+        setState(() => _estado = tripActualizado.paymentStatus == 'disputed'
+            ? EstadoPasajero.pagoReclamado
+            : EstadoPasajero.viajeFinalizado);
         CurrentTripSession().clear();
+        PassengerBackgroundService.stop();
+        if (tripActualizado.paymentStatus == 'disputed') {
+          _checkPaymentDispute();
+        }
         break;
       case 'cancelled':
         _detenerSeguimientoConductor();
         setState(() => _estado = EstadoPasajero.cancelado);
         CurrentTripSession().clear();
+        PassengerBackgroundService.stop();
         break;
     }
   }
@@ -470,6 +531,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
               ],
             ));
     if (confirmed != true) return;
+    await PassengerBackgroundService.stop();
     await AuthService().logout();
     InicioPasajeroScreen.passengerName = 'Pasajero';
     InicioPasajeroScreen.passengerPhone = '';
@@ -503,6 +565,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
     _detenerSeguimientoConductor();
     _tripStreamSub?.cancel();
     CurrentTripSession().clear();
+    await PassengerBackgroundService.stop();
     setState(() {
       _estado = EstadoPasajero.cancelado;
     });
@@ -562,6 +625,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _gpsSubscription?.cancel();
     _tripStreamSub?.cancel();
     _connectivitySub?.cancel();
@@ -594,7 +658,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 3))
             ]),
@@ -603,31 +667,6 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                 Icon(Icons.person_pin_circle, color: Colors.white, size: 26)),
       ),
     ));
-
-    // Marcadores de CONDUCTORES DISPONIBLES REALES (de Supabase)
-    if (_estado == EstadoPasajero.inicio) {
-      for (final c in _conductoresDisponibles) {
-        markers.add(Marker(
-          point: c.posicion,
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          child: Container(
-            decoration: BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3))
-                ]),
-            child: const Center(
-                child: Icon(Icons.local_taxi, color: Colors.white, size: 22)),
-          ),
-        ));
-      }
-    }
 
     // Marcador del conductor asignado en seguimiento en tiempo real
     if (_conductorPosRealtime != null &&
@@ -646,7 +685,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
               border: Border.all(color: Colors.white, width: 3),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 4))
               ]),
@@ -670,7 +709,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3))
               ]),
@@ -721,7 +760,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                     Polyline(
                       points: _rutaViaje,
                       strokeWidth: 4,
-                      color: AppColors.primary.withOpacity(0.7),
+                      color: AppColors.primary.withValues(alpha: 0.7),
                       strokeCap: StrokeCap.round,
                       strokeJoin: StrokeJoin.round,
                     ),
@@ -747,7 +786,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
+                                  color: Colors.black.withValues(alpha: 0.3),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4))
                             ]),
@@ -772,7 +811,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 10,
                           offset: const Offset(0, 3))
                     ]),
@@ -795,7 +834,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 10,
                           offset: const Offset(0, 3))
                     ]),
@@ -826,17 +865,35 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
             child: Container(
               decoration: const BoxDecoration(
                   color: Colors.white, shape: BoxShape.circle),
-              child: IconButton(
-                tooltip: 'Cerrar sesión',
-                onPressed: _cerrarSesion,
-                icon: const Icon(Icons.logout, color: Colors.red),
+              child: PopupMenuButton<String>(
+                tooltip: 'Mi cuenta y ayuda',
+                icon: const Icon(Icons.account_circle_outlined,
+                    color: AppColors.primary),
+                onSelected: (value) {
+                  if (value == 'account') context.push('/cuenta-pasajero');
+                  if (value == 'support') context.push('/soporte-pasajero');
+                  if (value == 'logout') _cerrarSesion();
+                },
+                itemBuilder: (context) => [
+                  if ({
+                    EstadoPasajero.inicio,
+                    EstadoPasajero.viajeFinalizado,
+                    EstadoPasajero.cancelado
+                  }.contains(_estado)) ...[
+                    const PopupMenuItem(
+                        value: 'account', child: Text('Mi cuenta')),
+                    const PopupMenuItem(
+                        value: 'logout', child: Text('Cerrar sesión')),
+                  ],
+                  const PopupMenuItem(
+                      value: 'support', child: Text('Ayuda y emergencia')),
+                ],
               ),
             ),
           ),
 
           // Cantidad de taxis disponibles
-          if (_estado == EstadoPasajero.inicio &&
-              _conductoresDisponibles.isNotEmpty)
+          if (_estado == EstadoPasajero.inicio && _availableDrivers != null)
             Positioned(
               top: 44,
               right: 16,
@@ -848,7 +905,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2))
                     ]),
@@ -859,7 +916,7 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                         color: AppColors.primary, size: 18),
                     const SizedBox(width: 6),
                     Text(
-                        '${_conductoresDisponibles.length} disponible${_conductoresDisponibles.length > 1 ? "s" : ""}',
+                        '$_availableDrivers disponible${_availableDrivers == 1 ? "" : "s"}',
                         style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -1141,6 +1198,10 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                   style: const TextStyle(
                       fontSize: 12, color: AppColors.textSecondary)),
               const SizedBox(height: 20),
+              if (_viajeActual?.pinCode == '----')
+                TextButton(
+                    onPressed: _refreshTripCodes,
+                    child: const Text('REINTENTAR CARGA DEL CÓDIGO')),
               _buildCancelButton(),
             ],
           ),
@@ -1256,6 +1317,10 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                   ],
                 ),
               ),
+              if (_viajeActual?.pinCode == '----')
+                TextButton(
+                    onPressed: _refreshTripCodes,
+                    child: const Text('REINTENTAR CARGA DEL CÓDIGO')),
               const SizedBox(height: 14),
               _buildCancelButton(),
             ],
@@ -1339,6 +1404,10 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
             const SizedBox(height: 8),
             const Text('Código de un solo uso',
                 style: TextStyle(fontSize: 11, color: AppColors.outline)),
+            if (_viajeActual?.finishCode == '----')
+              TextButton(
+                  onPressed: _refreshTripCodes,
+                  child: const Text('REINTENTAR CARGA DEL CÓDIGO')),
           ]),
         );
 
@@ -1375,7 +1444,10 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
             SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _confirmingPayment ? null : _confirmarPago,
+                  onPressed: _confirmingPayment ||
+                          _viajeActual?.passengerPaidAt != null
+                      ? null
+                      : _confirmarPago,
                   icon: _confirmingPayment
                       ? const SizedBox(
                           width: 18,
@@ -1385,8 +1457,57 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen> {
                       : const Icon(Icons.check_circle_outline),
                   label: Text(_confirmingPayment
                       ? 'CONFIRMANDO...'
-                      : 'CONFIRMAR PAGO Y FINALIZAR'),
+                      : _viajeActual?.passengerPaidAt != null
+                          ? 'ESPERANDO CONFIRMACIÓN DEL CHOFER'
+                          : 'YA ENTREGUÉ EL EFECTIVO'),
                 )),
+          ]),
+        );
+
+      case EstadoPasajero.pagoReclamado:
+        final amount = (_openPaymentDispute?['amount'] as num?)?.toDouble() ??
+            _viajeActual?.fareAmount ??
+            0;
+        return Container(
+          padding: const EdgeInsets.all(22),
+          decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 20,
+                    offset: Offset(0, -6))
+              ]),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.report_problem_outlined,
+                color: AppColors.statusPending, size: 48),
+            const Text('PAGO EN REVISIÓN',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(TariffService.formatearMonto(amount),
+                style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary)),
+            const Text(
+                'El conductor informó que no recibió el pago. No podrás pedir otro viaje hasta que soporte revise el caso.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => context.push('/soporte-pasajero'),
+                icon: const Icon(Icons.support_agent_outlined),
+                label: const Text('CONTACTAR A SOPORTE'),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _checkPaymentDispute,
+              icon: const Icon(Icons.refresh),
+              label: const Text('VERIFICAR RESOLUCIÓN'),
+            ),
           ]),
         );
 

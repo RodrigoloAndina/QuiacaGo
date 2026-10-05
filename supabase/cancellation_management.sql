@@ -52,7 +52,8 @@ $$;
 drop policy if exists trips_create on public.trips;
 create policy trips_create on public.trips for insert to authenticated
   with check(passenger_id=auth.uid() and driver_id is null
-    and status='requested' and public.account_is_enabled(auth.uid()));
+    and status='requested' and public.account_is_enabled(auth.uid())
+    and not public.passenger_has_open_payment_dispute(auth.uid()));
 
 create or replace function public.create_trip(
  p_passenger_name text,p_passenger_phone text,p_pickup_address text,
@@ -67,6 +68,9 @@ begin
  ) then raise exception 'La sesión no pertenece a un pasajero registrado'; end if;
  if not public.account_is_enabled(auth.uid()) then
    raise exception 'La cuenta está suspendida temporalmente';
+ end if;
+ if public.passenger_has_open_payment_dispute(auth.uid()) then
+   raise exception 'Tenés un reclamo de pago pendiente. Contactá a soporte para resolverlo';
  end if;
  update public.trips set status='cancelled',
    cancellation_reason='Reemplazada por una nueva solicitud',
@@ -97,12 +101,9 @@ begin
  if not exists(select 1 from public.profiles where id=auth.uid() and role='driver') then
    raise exception 'La cuenta no tiene rol driver';
  end if;
- if not exists(select 1 from public.profiles where id=auth.uid() and is_approved) then
-   raise exception 'Conductor no aprobado';
- end if;
- if exists(select 1 from public.profiles where id=auth.uid()
-   and approved_until is not null and approved_until<now()) then
-   raise exception 'Habilitación vencida';
+ perform public.refresh_driver_compliance(auth.uid(),true);
+ if not public.driver_is_operational(auth.uid()) then
+   raise exception 'Conductor no habilitado: revisá aprobación y documentación';
  end if;
  update public.trips set driver_id=auth.uid()::text,driver_name=p_driver_name,
    vehicle_info=p_vehicle_info,status='accepted',accepted_at=now(),

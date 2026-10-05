@@ -1,5 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
+import 'driver_tracking_service.dart';
+import 'driver_session_service.dart';
+import 'passenger_background_service.dart';
+import 'offline_sync_service.dart';
+import 'current_trip_session.dart';
 
 class AuthService {
   SupabaseClient get _client => SupabaseService().client;
@@ -53,5 +58,56 @@ class AuthService {
     return _client.from('profiles').select().eq('id', id).maybeSingle();
   }
 
-  Future<void> logout() => _client.auth.signOut();
+  Future<bool> refreshDriverCompliance() async {
+    final id = _client.auth.currentUser?.id;
+    if (id == null) return false;
+    final result = await _client.rpc('refresh_driver_compliance', params: {
+      'p_driver_id': id,
+      'p_notify': true,
+    });
+    return result == true;
+  }
+
+  Future<Map<String, dynamic>> updateDriverProfile({
+    required String fullName,
+    required String phone,
+    required String vehicleInfo,
+    required String plate,
+    required String taxiNumber,
+  }) async {
+    final id = _client.auth.currentUser?.id;
+    if (id == null) throw StateError('La sesión venció. Volvé a ingresar.');
+    final rows = await _client
+        .from('profiles')
+        .update({
+          'full_name': fullName.trim(),
+          'phone': phone.trim(),
+          'vehicle_info': vehicleInfo.trim(),
+          'plate': plate.trim().toUpperCase(),
+          'taxi_number': taxiNumber.trim(),
+        })
+        .eq('id', id)
+        .eq('role', 'driver')
+        .select();
+    if (rows.isEmpty) {
+      throw StateError('No se encontró el perfil del conductor.');
+    }
+    return Map<String, dynamic>.from(rows.first);
+  }
+
+  Future<void> logout() async {
+    // El cierre local debe completarse aun si una red o un plugin falla.
+    try {
+      await DriverTrackingService().stop();
+    } catch (_) {}
+    try {
+      await PassengerBackgroundService.stop();
+    } catch (_) {}
+    CurrentTripSession().clear();
+    try {
+      await OfflineSyncService().clearUserData();
+    } catch (_) {}
+    DriverSessionService().clear();
+    await _client.auth.signOut(scope: SignOutScope.local);
+  }
 }

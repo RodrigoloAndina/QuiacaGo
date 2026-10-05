@@ -21,6 +21,8 @@ import '../../features/trips/historial_viajes_screen.dart';
 import '../../features/profile/perfil_usuario_screen.dart';
 import '../../features/documents/documentacion_conductor_screen.dart';
 import '../../features/auth/verificar_telefono_screen.dart';
+import '../../features/support/support_screen.dart';
+import '../../features/legal/legal_gate.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
@@ -48,7 +50,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/pasajero-home',
       builder: (BuildContext context, GoRouterState state) =>
-          const InicioPasajeroScreen(),
+          const LegalGate(child: InicioPasajeroScreen()),
     ),
     GoRoute(
       path: '/recuperar-password',
@@ -68,7 +70,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/home',
       builder: (BuildContext context, GoRouterState state) =>
-          const InicioConductorScreen(),
+          const LegalGate(child: InicioConductorScreen()),
     ),
     GoRoute(
       path: '/nuevo-pedido',
@@ -124,6 +126,11 @@ final GoRouter appRouter = GoRouter(
       path: '/verificar-telefono',
       builder: (BuildContext context, GoRouterState state) =>
           const VerificarTelefonoScreen(),
+    ),
+    GoRoute(
+      path: '/soporte',
+      builder: (BuildContext context, GoRouterState state) =>
+          const SupportScreen(),
     ),
   ],
 );

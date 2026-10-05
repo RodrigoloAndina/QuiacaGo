@@ -7,7 +7,7 @@ import 'services/supabase_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await SupabaseService().initialize();
+    await SupabaseService().initialize(appType: 'admin');
   } catch (_) {}
 
   runApp(

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -132,21 +131,17 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
 
   Future<void> _seleccionarArchivo(String tipo, String etiqueta) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final files = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
-        withData: true,
       );
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        final bytes = file.bytes ??
-            (file.path != null ? await File(file.path!).readAsBytes() : null);
-        if (bytes != null) {
-          final ext = file.extension?.toLowerCase() ?? 'jpg';
-          final mime = ext == 'pdf' ? 'application/pdf' : 'image/jpeg';
-          final base64String = 'data:$mime;base64,${base64Encode(bytes)}';
-          _guardarDocumento(tipo, base64String, file.name);
-        }
+      if (files.isNotEmpty) {
+        final file = files.first;
+        final bytes = await file.readAsBytes();
+        final ext = file.extension?.toLowerCase() ?? 'jpg';
+        final mime = ext == 'pdf' ? 'application/pdf' : 'image/jpeg';
+        final base64String = 'data:$mime;base64,${base64Encode(bytes)}';
+        _guardarDocumento(tipo, base64String, file.name);
       }
     } catch (e) {
       _mostrarSnackError('Error al seleccionar archivo: $e');
@@ -593,11 +588,8 @@ class _RegistroConductorScreenState extends State<RegistroConductorScreen> {
                     _dniFrenteNombre),
                 _buildDocItem(
                     'DNI Dorso', 'dni_dorso', dniDorsoCargado, _dniDorsoNombre),
-                _buildDocItem(
-                    'Licencia (Frente)',
-                    'licencia_frente',
-                    licenciaFrenteCargada,
-                    _licenciaFrenteNombre),
+                _buildDocItem('Licencia (Frente)', 'licencia_frente',
+                    licenciaFrenteCargada, _licenciaFrenteNombre),
                 _buildExpiryField(
                     'Vencimiento de licencia', _licenciaVenceCtrl),
                 _buildDocItem('Póliza de Seguro de Taxi', 'seguro',

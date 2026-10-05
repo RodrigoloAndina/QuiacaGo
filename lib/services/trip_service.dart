@@ -16,6 +16,8 @@ class TripModel {
   final String pinCode;
   final String finishCode;
   final String status;
+  final String paymentStatus;
+  final DateTime? passengerPaidAt;
   final String? driverId;
   final String? driverName;
   final String? vehicleInfo;
@@ -36,6 +38,8 @@ class TripModel {
     required this.pinCode,
     required this.finishCode,
     required this.status,
+    this.paymentStatus = 'pending',
+    this.passengerPaidAt,
     this.driverId,
     this.driverName,
     this.vehicleInfo,
@@ -80,7 +84,12 @@ class TripModel {
       status: value('status', const ['estado']).isEmpty
           ? 'requested'
           : value('status', const ['estado']).toLowerCase(),
+      paymentStatus: value('payment_status').isEmpty
+          ? 'pending'
+          : value('payment_status').toLowerCase(),
       driverId: map['driver_id']?.toString(),
+      passengerPaidAt:
+          DateTime.tryParse(map['passenger_paid_at']?.toString() ?? ''),
       driverName: map['driver_name']?.toString(),
       vehicleInfo: map['vehicle_info']?.toString(),
       acceptedAt: DateTime.tryParse(map['accepted_at']?.toString() ?? ''),
@@ -102,6 +111,8 @@ class TripModel {
         'pin_code': pinCode,
         'finish_code': finishCode,
         'status': status,
+        'payment_status': paymentStatus,
+        'passenger_paid_at': passengerPaidAt?.toIso8601String(),
         'driver_id': driverId,
         'driver_name': driverName,
         'vehicle_info': vehicleInfo,
@@ -123,6 +134,8 @@ class TripModel {
         pinCode: pinCode,
         finishCode: finishCode,
         status: newStatus,
+        paymentStatus: paymentStatus,
+        passengerPaidAt: passengerPaidAt,
         driverId: driverId,
         driverName: driverName,
         vehicleInfo: vehicleInfo,
@@ -199,7 +212,8 @@ class TripService {
       'p_destination_lng': destinationLng,
       'p_fare_amount': fareAmount,
     });
-    return _tripFromResponse(response, operation: 'crear el viaje');
+    final trip = _tripFromResponse(response, operation: 'crear el viaje');
+    return trip == null ? null : _withPassengerCodes(trip, passengerId);
   }
 
   /// Obtiene exclusivamente la oferta asignada por el despachador al conductor actual.
@@ -372,7 +386,7 @@ class TripService {
     }
     try {
       return await _supabase
-              .rpc('confirm_cash_payment', params: {'p_trip_id': tripId}) ==
+              .rpc('acknowledge_cash_payment', params: {'p_trip_id': tripId}) ==
           true;
     } catch (_) {
       await OfflineSyncService()
@@ -382,18 +396,53 @@ class TripService {
     }
   }
 
-  /// Finaliza el viaje
-  static Future<bool> finalizarViaje(String tripId) async {
-    try {
-      await _supabase.from('trips').update({
-        'status': 'completed',
-        'finished_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', tripId);
-      return true;
-    } catch (e) {
-      print('[TripService] Error finalizando viaje: $e');
-      return false;
+  static Future<String?> confirmarPagoRecibido(String tripId) async {
+    if (!await OfflineSyncService().checkNow()) {
+      return 'Necesitás conexión para confirmar el cobro.';
     }
+    try {
+      final result = await _supabase
+          .rpc('confirm_cash_payment', params: {'p_trip_id': tripId});
+      return result == true
+          ? null
+          : 'No se confirmó el cobro. Actualizá el viaje.';
+    } catch (_) {
+      return 'No se pudo confirmar el cobro. Si hay un reclamo abierto, debe resolverlo soporte.';
+    }
+  }
+
+  static Future<String?> reportarPagoNoRecibido({
+    required String tripId,
+    required String reasonCode,
+    String notes = '',
+  }) async {
+    if (!await OfflineSyncService().checkNow()) {
+      return 'Necesitás conexión para registrar el reclamo de forma segura.';
+    }
+    try {
+      final response = await _supabase.rpc(
+        'report_cash_payment_not_received',
+        params: {
+          'p_trip_id': tripId,
+          'p_reason_code': reasonCode,
+          'p_notes': notes.trim().isEmpty ? null : notes.trim(),
+        },
+      );
+      if (response is Map && response['success'] == true) return null;
+      return 'El servidor no confirmó el reclamo.';
+    } catch (error) {
+      final message = error.toString();
+      if (message.contains('ya fue pagado')) {
+        return 'El pago ya fue confirmado y no puede reclamarse.';
+      }
+      return 'No pudimos registrar el reclamo. Reintentá antes de abandonar esta pantalla.';
+    }
+  }
+
+  /// Compatibilidad con integraciones antiguas. La finalización directa está
+  /// prohibida: primero se valida el código de llegada y luego el cobro.
+  static Future<bool> finalizarViaje(String tripId) async {
+    return false;
   }
 
   /// Cancela o reasigna de forma atómica según el usuario y estado del viaje.
@@ -436,13 +485,39 @@ class TripService {
   }
 
   /// Obtiene un viaje específico por ID
+  static Future<TripModel> _withPassengerCodes(
+      TripModel trip, String? passengerId) async {
+    final userId = _supabase.auth.currentUser?.id;
+    final row = trip.toMap();
+    row['pin_code'] = '----';
+    row['finish_code'] = '----';
+    if (userId != null &&
+        passengerId == userId &&
+        !['completed', 'cancelled'].contains(trip.status)) {
+      try {
+        final codes = await _supabase
+            .rpc('get_my_trip_codes', params: {'p_trip_id': trip.id});
+        if (_supabase.auth.currentUser?.id == userId && codes is Map) {
+          for (final key in ['pin_code', 'finish_code']) {
+            final value = codes[key]?.toString() ?? '';
+            if (RegExp(r'^\d{4}$').hasMatch(value)) row[key] = value;
+          }
+        }
+      } catch (_) {
+        // El estado del viaje sigue disponible; una actualización reintenta.
+      }
+    }
+    return TripModel.fromMap(row);
+  }
+
   static Future<TripModel?> obtenerViaje(String tripId) async {
     try {
       final data =
           await _supabase.from('trips').select().eq('id', tripId).maybeSingle();
 
       if (data != null) {
-        return TripModel.fromMap(data);
+        return await _withPassengerCodes(
+            TripModel.fromMap(data), data['passenger_id']?.toString());
       }
     } catch (e) {
       print('[TripService] Error obteniendo viaje: $e');
@@ -451,7 +526,8 @@ class TripService {
   }
 
   /// Recupera el viaje activo después de cerrar o reiniciar la aplicación.
-  static Future<TripModel?> obtenerViajeActivo() async {
+  static Future<TripModel?> obtenerViajeActivo(
+      {bool throwOnError = false}) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return null;
     try {
@@ -470,8 +546,12 @@ class TripService {
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
-      return data == null ? null : TripModel.fromMap(data);
+      return data == null
+          ? null
+          : await _withPassengerCodes(
+              TripModel.fromMap(data), data['passenger_id']?.toString());
     } catch (_) {
+      if (throwOnError) rethrow;
       return null;
     }
   }
@@ -518,9 +598,10 @@ class TripService {
         .from('trips')
         .stream(primaryKey: ['id'])
         .eq('id', tripId)
-        .map((list) {
+        .asyncMap((list) async {
           if (list.isNotEmpty) {
-            return TripModel.fromMap(list.first);
+            return _withPassengerCodes(TripModel.fromMap(list.first),
+                list.first['passenger_id']?.toString());
           }
           throw Exception('Viaje no encontrado');
         });
@@ -582,7 +663,7 @@ class TripService {
         final isCompleted = trip.status == 'completed';
         final isMyTrip = trip.driverId == driverId;
 
-        if (isCompleted && isMyTrip) {
+        if (isCompleted && isMyTrip && trip.paymentStatus == 'paid') {
           gananciasTotal += trip.fareAmount;
           totalViajes++;
 

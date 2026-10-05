@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/auth_service.dart';
 import 'inicio_pasajero_screen.dart';
+import '../legal/legal_screen.dart';
 
 class LoginPasajeroScreen extends StatefulWidget {
   const LoginPasajeroScreen({super.key});
@@ -13,16 +14,15 @@ class LoginPasajeroScreen extends StatefulWidget {
 }
 
 class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
-  // Credenciales temporales para agilizar el piloto. Retirar en producción.
-  final _emailCtrl = TextEditingController(text: 'pasajero@quiaca.com');
-  final _passwordCtrl = TextEditingController(text: '123456');
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   bool _isLoading = false;
   String? _errorMsg;
   bool _emailNotConfirmed = false;
 
   Future<void> _ingresarPasajero() async {
     final input = _emailCtrl.text.trim();
-    final password = _passwordCtrl.text.trim();
+    final password = _passwordCtrl.text;
 
     if (input.isEmpty || !input.contains('@') || password.isEmpty) {
       setState(() => _errorMsg = 'Ingrese correo y contraseña');
@@ -115,6 +115,13 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
   }
 
   @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -162,7 +169,7 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -185,7 +192,7 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444).withOpacity(0.1),
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -237,6 +244,8 @@ class _LoginPasajeroScreenState extends State<LoginPasajeroScreen> {
                             borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
+                    Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => context.push('/recuperar-password'), child: const Text('Olvidé mi contraseña'))),
+                    TextButton.icon(onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const LegalScreen())), icon: const Icon(Icons.policy_outlined), label: const Text('Condiciones y privacidad')),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,

@@ -1,4 +1,4 @@
-name: Compilar APK Android QuiacaGo
+name: Validar y compilar APK beta de QuiacaGo
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Compilar APK Android (Release)
+    name: Pruebas y APK beta Android
     runs-on: ubuntu-latest
 
     steps:
@@ -26,20 +26,24 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Reconstruir Plantilla Nativa de Android
-        run: |
-          rm -rf android
-          flutter create --platforms=android --org com.quiacago .
-
       - name: Instalar Dependencias
         run: flutter pub get
 
-      - name: Compilar APK Release
-        run: flutter build apk --release --no-tree-shake-icons
+      - name: Analizar código
+        run: flutter analyze
+
+      - name: Ejecutar pruebas
+        run: flutter test
+
+      - name: Compilar Conductor Beta
+        run: flutter build apk --debug --flavor conductorBeta --target lib/main.dart
+
+      - name: Compilar Pasajero Beta
+        run: flutter build apk --debug --flavor pasajeroBeta --target lib/main_pasajero.dart
 
       - name: Subir APK de QuiacaGo como Artefacto Descargable
         uses: actions/upload-artifact@v4
         with:
-          name: QuiacaGo-Android-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: QuiacaGo-APKs-Beta
+          path: build/app/outputs/flutter-apk/*beta-debug.apk
           if-no-files-found: error

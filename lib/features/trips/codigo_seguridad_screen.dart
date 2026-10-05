@@ -110,9 +110,10 @@ class _CodigoSeguridadScreenState extends State<CodigoSeguridadScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none,
+            tooltip: 'Ayuda y emergencia',
+            icon: const Icon(Icons.support_agent_outlined,
                 color: AppColors.onSurface, size: 24),
-            onPressed: () {},
+            onPressed: () => context.push('/soporte'),
           ),
         ],
       ),

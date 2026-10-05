@@ -37,6 +37,40 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
+            "com.quiacago/passenger_background"
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "start" -> {
+                    val arguments = call.arguments as? Map<*, *>
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                        PackageManager.PERMISSION_GRANTED
+                    ) {
+                        ActivityCompat.requestPermissions(
+                            this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9043
+                        )
+                    }
+                    val intent = Intent(this, PassengerTripForegroundService::class.java)
+                    arguments?.forEach { (key, value) ->
+                        if (key is String && value is String) intent.putExtra(key, value)
+                    }
+                    try {
+                        ContextCompat.startForegroundService(this, intent)
+                        result.success(null)
+                    } catch (error: Exception) {
+                        result.error("PASSENGER_SERVICE_START_FAILED", error.message, null)
+                    }
+                }
+                "stop" -> {
+                    stopService(Intent(this, PassengerTripForegroundService::class.java))
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
             "com.quiacago/driver_background"
         ).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -84,10 +118,12 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         DriverForegroundService.appInForeground = true
+        PassengerTripForegroundService.appInForeground = true
     }
 
     override fun onPause() {
         DriverForegroundService.appInForeground = false
+        PassengerTripForegroundService.appInForeground = false
         super.onPause()
     }
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'supabase_service.dart';
 
 class DriverSessionService extends ChangeNotifier {
   static final DriverSessionService _instance =
@@ -53,6 +54,7 @@ class DriverSessionService extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
+    if (kIsWeb) return;
     final file = await _sessionFile();
     await file.writeAsString(
       jsonEncode({
@@ -70,10 +72,12 @@ class DriverSessionService extends ChangeNotifier {
 
   Future<bool> restore() async {
     try {
+      if (kIsWeb) return false;
       final file = await _sessionFile();
       if (!await file.exists()) return false;
       final data = Map<String, dynamic>.from(
           jsonDecode(await file.readAsString()) as Map);
+      if (data['id'] != SupabaseService().client.auth.currentUser?.id) return false;
       _id = data['id']?.toString() ?? '';
       _fullName = data['full_name']?.toString() ?? 'Conductor Habilitado';
       _phone = data['phone']?.toString() ?? '';
@@ -101,6 +105,7 @@ class DriverSessionService extends ChangeNotifier {
   }
 
   Future<void> _deletePersisted() async {
+    if (kIsWeb) return;
     final file = await _sessionFile();
     if (await file.exists()) await file.delete();
   }

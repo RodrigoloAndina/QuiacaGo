@@ -1,5 +1,6 @@
 import 'package:latlong2/latlong.dart';
 import 'supabase_service.dart';
+import 'runtime_policy.dart';
 
 class DriverLocationModel {
   final String driverId;
@@ -38,6 +39,14 @@ class DriverLocationModel {
 class DriverLocationService {
   static final _supabase = SupabaseService().client;
   static String? lastPublishError;
+  static Future<int?> availableCount() async {
+    try {
+      final result = await _supabase.rpc('available_driver_count');
+      return result is num ? result.toInt() : int.tryParse('$result');
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Publica o actualiza la ubicación GPS del conductor en Supabase (UPSERT)
   static Future<bool> publicarUbicacion({
@@ -90,12 +99,13 @@ class DriverLocationService {
       obtenerConductoresDisponibles() async {
     try {
       final activeSince =
-          DateTime.now().toUtc().subtract(const Duration(seconds: 20));
+          DateTime.now().toUtc().subtract(AppRuntimePolicy.locationFreshness);
       final data = await _supabase
           .from('driver_locations')
           .select()
           .eq('is_online', true)
-          .gte('updated_at', activeSince.toIso8601String());
+          .gte('updated_at', activeSince.toIso8601String())
+          .limit(50);
 
       if (data.isNotEmpty) {
         return data.map((item) => DriverLocationModel.fromMap(item)).toList();
@@ -111,7 +121,7 @@ class DriverLocationService {
       String driverId) async {
     try {
       final activeSince =
-          DateTime.now().toUtc().subtract(const Duration(seconds: 20));
+          DateTime.now().toUtc().subtract(AppRuntimePolicy.locationFreshness);
       final data = await _supabase
           .from('driver_locations')
           .select()

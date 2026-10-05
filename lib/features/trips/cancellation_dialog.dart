@@ -71,15 +71,24 @@ Future<CancellationChoice?> showTripCancellationDialog(
                   style: const TextStyle(color: Colors.black54),
                 ),
                 const SizedBox(height: 14),
-                ...reasons.map((reason) => RadioListTile<String>(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      value: reason.code,
-                      groupValue: selected,
-                      title: Text(reason.label),
-                      onChanged: (value) =>
-                          setModalState(() => selected = value!),
-                    )),
+                RadioGroup<String>(
+                  groupValue: selected,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setModalState(() => selected = value);
+                    }
+                  },
+                  child: Column(
+                    children: reasons
+                        .map((reason) => RadioListTile<String>(
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              value: reason.code,
+                              title: Text(reason.label),
+                            ))
+                        .toList(),
+                  ),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: detailController,

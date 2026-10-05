@@ -233,7 +233,7 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -255,7 +255,7 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -283,7 +283,7 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
+                    color: Colors.black.withValues(alpha: 0.25),
                     blurRadius: 15,
                     offset: const Offset(0, 6),
                   ),
@@ -365,6 +365,17 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
             ),
           ),
 
+          Positioned(
+            top: 128,
+            right: 16,
+            child: FloatingActionButton.small(
+              heroTag: 'support-taxi-assigned',
+              tooltip: 'Ayuda y emergencia',
+              onPressed: () => context.push('/soporte'),
+              child: const Icon(Icons.support_agent_outlined),
+            ),
+          ),
+
           // PANEL INFERIOR CON DATOS DEL PASAJERO
           Positioned(
             left: 16,
@@ -377,7 +388,7 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 24,
                     offset: const Offset(0, -6),
                   ),

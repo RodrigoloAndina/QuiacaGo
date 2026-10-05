@@ -66,4 +66,63 @@ select 'avisos automáticos de conductores',
        case when exists(
          select 1 from pg_trigger
          where tgname='notify_admins_driver_profile' and not tgisinternal
-       ) then 'OK' else 'FALTA' end;
+       ) then 'OK' else 'FALTA' end
+union all
+select 'app_release_controls',
+       case when to_regclass('public.app_release_controls') is not null
+            then 'OK' else 'FALTA' end
+union all
+select 'check_app_release(text,integer)',
+       case when to_regprocedure('public.check_app_release(text,integer)') is not null
+            then 'OK' else 'FALTA' end
+union all
+select 'driver_is_operational(uuid)',
+       case when to_regprocedure('public.driver_is_operational(uuid)') is not null
+            then 'OK' else 'FALTA' end
+union all
+select 'refresh_driver_compliance(uuid,boolean)',
+       case when to_regprocedure('public.refresh_driver_compliance(uuid,boolean)') is not null
+            then 'OK' else 'FALTA' end
+union all
+select 'bloqueo servidor de conductor inhabilitado',
+       case when exists(
+         select 1 from pg_trigger
+         where tgname='guard_trip_driver_eligibility' and not tgisinternal
+       ) then 'OK' else 'FALTA' end
+union all
+select 'delete_my_account()',
+       case when to_regprocedure('public.delete_my_account()') is not null
+            then 'OK' else 'FALTA' end
+union all
+select 'get_public_support_config()',
+       case when to_regprocedure('public.get_public_support_config()') is not null
+            then 'OK' else 'FALTA' end
+union all
+select 'driver_documents.review_note',
+       case when exists(
+         select 1 from information_schema.columns
+         where table_schema='public' and table_name='driver_documents'
+           and column_name='review_note'
+       ) then 'OK' else 'FALTA' end
+union all
+select 'payment_disputes',
+       case when to_regclass('public.payment_disputes') is not null
+            then 'OK' else 'FALTA' end
+union all
+select 'report_cash_payment_not_received(text,text,text)',
+       case when to_regprocedure('public.report_cash_payment_not_received(text,text,text)') is not null
+            then 'OK' else 'FALTA' end
+union all
+select 'resolve_payment_dispute(uuid,text,text)',
+       case when to_regprocedure('public.resolve_payment_dispute(uuid,text,text)') is not null
+            then 'OK' else 'FALTA' end;
+
+-- Integración móvil: comprobar también las RPC nuevas. La existencia de estas
+-- funciones NO prueba el despliegue de Edge Functions ni un viaje completo.
+select signature as componente,
+ case when to_regprocedure('public.' || signature) is not null then 'OK' else 'FALTA' end as estado
+from (values ('get_my_trip_codes(text)'), ('available_driver_count()'),
+ ('acknowledge_cash_payment(text)'), ('confirm_cash_payment(text)'),
+ ('request_my_account_deletion()'), ('account_deletion_objects(uuid)'),
+ ('finish_account_data_deletion(uuid)'), ('get_my_legal_acceptance()'),
+ ('accept_legal_documents(text)')) checks(signature);

@@ -7,6 +7,9 @@ alter table public.profiles
   add column if not exists account_suspended_at timestamptz,
   add column if not exists account_suspended_by uuid;
 
+alter table public.driver_documents
+  add column if not exists review_note text;
+
 create table if not exists public.admin_notifications (
   id uuid primary key default gen_random_uuid(),
   kind text not null check (kind in (
@@ -51,6 +54,28 @@ create policy driver_documents_admin_update on storage.objects
   using(bucket_id='driver-documents' and public.is_admin())
   with check(bucket_id='driver-documents' and public.is_admin());
 
+-- Los cambios de vehículo hechos por el propio conductor requieren una nueva
+-- revisión. Los cambios administrativos no interrumpen una habilitación activa.
+create or replace function public.mark_driver_pending_on_vehicle_change()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  if new.role='driver' and not public.is_admin() and (
+    new.vehicle_info is distinct from old.vehicle_info or
+    new.plate is distinct from old.plate or
+    new.taxi_number is distinct from old.taxi_number
+  ) then
+    new.is_approved:=false;
+    new.approved_until:=null;
+    new.suspension_reason:='Datos del vehículo actualizados; revisión municipal pendiente';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists driver_vehicle_profile_changed on public.profiles;
+create trigger driver_vehicle_profile_changed
+before update of vehicle_info,plate,taxi_number on public.profiles
+for each row execute function public.mark_driver_pending_on_vehicle_change();
+
 create or replace function public.notify_admins_about_driver_profile()
 returns trigger language plpgsql security definer set search_path=public as $$
 declare
@@ -72,10 +97,6 @@ begin
     v_message:=coalesce(new.full_name,'Conductor')||' fue suspendido hasta '||
       to_char(new.account_suspended_until at time zone 'America/Argentina/Buenos_Aires','DD/MM/YYYY HH24:MI')||
       coalesce('. Motivo: '||nullif(new.account_suspension_reason,''),'.');
-  elsif old.is_approved=true and new.is_approved=false then
-    v_kind:='driver_disabled';
-    v_title:='Conductor inhabilitado';
-    v_message:=coalesce(new.full_name,'Conductor')||' quedó inhabilitado. Revisá su legajo y documentación.';
   elsif not public.is_admin() and (
     new.full_name is distinct from old.full_name or
     new.phone is distinct from old.phone or
@@ -90,6 +111,10 @@ begin
     v_kind:='driver_profile_updated';
     v_title:='Datos de conductor actualizados';
     v_message:=coalesce(new.full_name,'Conductor')||' modificó datos de su legajo. Requiere revisión.';
+  elsif old.is_approved=true and new.is_approved=false then
+    v_kind:='driver_disabled';
+    v_title:='Conductor inhabilitado';
+    v_message:=coalesce(new.full_name,'Conductor')||' quedó inhabilitado. Revisá su legajo y documentación.';
   else
     return new;
   end if;
@@ -149,6 +174,9 @@ declare item jsonb;
 declare v_type text;
 declare v_status text;
 declare v_expires date;
+declare v_review_note text;
+declare v_previous_status text;
+declare v_previous_note text;
 begin
   if not public.is_admin() then raise exception 'Acceso administrativo requerido'; end if;
   if not exists(select 1 from public.profiles where id=p_driver_id and role='driver') then
@@ -172,14 +200,36 @@ begin
     v_type:=item->>'document_type';
     v_status:=item->>'status';
     v_expires:=nullif(item->>'expires_at','')::date;
+    v_review_note:=nullif(trim(item->>'review_note'),'');
     if v_type is null or v_type not in ('dni_front','dni_back','license','insurance','vtv') then
       raise exception 'Tipo de documento inválido';
     end if;
     if v_status is null or v_status not in ('pending','approved','rejected','expired') then
       raise exception 'Estado de documento inválido';
     end if;
-    update public.driver_documents set status=v_status,expires_at=v_expires
+    select status,review_note into v_previous_status,v_previous_note
+      from public.driver_documents
       where driver_id=p_driver_id and document_type=v_type;
+    update public.driver_documents set status=v_status,expires_at=v_expires,
+      review_note=case when v_status='rejected' then v_review_note else null end
+      where driver_id=p_driver_id and document_type=v_type;
+    if v_status='rejected' and
+      (v_previous_status is distinct from v_status or v_previous_note is distinct from v_review_note) then
+      insert into public.driver_messages(driver_id,title,body,message_type,created_by)
+      values(
+        p_driver_id,
+        'Documento observado',
+        case v_type
+          when 'dni_front' then 'DNI frente'
+          when 'dni_back' then 'DNI dorso'
+          when 'license' then 'Licencia de conducir'
+          when 'insurance' then 'Seguro del taxi'
+          when 'vtv' then 'VTV/RTO'
+        end||' requiere una nueva carga.'||
+          case when v_review_note is null then '' else ' Motivo: '||v_review_note end,
+        'document',auth.uid()
+      );
+    end if;
   end loop;
 end $$;
 

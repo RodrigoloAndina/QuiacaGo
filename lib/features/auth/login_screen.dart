@@ -14,9 +14,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Credenciales temporales para agilizar el piloto. Retirar en producción.
-  final _phoneController = TextEditingController(text: 'conductor@quiaca.com');
-  final _passwordController = TextEditingController(text: '123456');
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
 
   String? _errorMessage;
@@ -24,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     final phone = _phoneController.text.trim();
-    final password = _passwordController.text.trim();
+    final password = _passwordController.text;
 
     if (phone.isEmpty || password.isEmpty) {
       setState(() => _errorMessage = 'Ingresá tu correo y contraseña.');
@@ -40,7 +39,16 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final auth = AuthService();
       await auth.signIn(identifier: phone, password: password);
-      final data = await auth.currentProfile();
+      var data = await auth.currentProfile();
+
+      if (data?['role'] == 'driver') {
+        try {
+          await auth.refreshDriverCompliance();
+          data = await auth.currentProfile();
+        } catch (_) {
+          // El servidor volverá a validar obligatoriamente al conectarse.
+        }
+      }
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -48,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (data == null) {
         // Usuario NO registrado
         setState(() => _errorMessage =
-            '⚠️ Tu número no se encuentra registrado. Regístrate para solicitar la habilitación municipal.');
+            'No encontramos tu perfil. Contactá a soporte para revisar tu registro.');
         return;
       }
 
@@ -121,9 +129,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (isApproved && motivoVencimiento == null) {
         context.go('/home');
-      } else if (motivoVencimiento != null) {
-        setState(() => _errorMessage =
-            'Acceso suspendido: $motivoVencimiento. Presenta la documentación actualizada en la Municipalidad de La Quiaca.');
       } else {
         context.go('/cuenta-pendiente');
       }
@@ -164,6 +169,13 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -214,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -237,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444).withOpacity(0.1),
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(

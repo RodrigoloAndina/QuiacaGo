@@ -13,24 +13,24 @@ subprojects {
 subprojects {
     project.plugins.withId('com.android.library') {
         project.android.ext.flutter = [
-            compileSdkVersion: 34,
-            minSdkVersion: 21,
+            compileSdkVersion: 36,
+            minSdkVersion: 24,
             targetSdkVersion: 34,
-            ndkVersion: "25.1.8937393"
+            ndkVersion: "28.2.13676358"
         ]
         project.android {
-            compileSdkVersion 34
+            compileSdkVersion 36
         }
     }
     project.plugins.withId('com.android.application') {
         project.android.ext.flutter = [
-            compileSdkVersion: 34,
-            minSdkVersion: 21,
+            compileSdkVersion: 36,
+            minSdkVersion: 24,
             targetSdkVersion: 34,
-            ndkVersion: "25.1.8937393"
+            ndkVersion: "28.2.13676358"
         ]
         project.android {
-            compileSdkVersion 34
+            compileSdkVersion 36
         }
     }
 }

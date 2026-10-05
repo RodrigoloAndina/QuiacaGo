@@ -66,6 +66,9 @@ begin
  if auth.uid() is null or not exists(
    select 1 from public.profiles where id=auth.uid() and role='passenger'
  ) then raise exception 'La sesión no pertenece a un pasajero registrado'; end if;
+ if public.passenger_has_open_payment_dispute(auth.uid()) then
+   raise exception 'Tenés un reclamo de pago pendiente. Contactá a soporte para resolverlo';
+ end if;
  update public.trips set status='cancelled',
    cancellation_reason='Reemplazada por una nueva solicitud'
  where passenger_id=auth.uid() and status in ('requested','buscando','pending')
@@ -91,9 +94,8 @@ declare
  v_best_driver text;
 begin
  if auth.uid() is null then return null; end if;
- if not exists(select 1 from public.profiles p where p.id=auth.uid()
-   and p.role='driver' and p.is_approved
-   and (p.approved_until is null or p.approved_until>=v_now)) then
+ perform public.refresh_driver_compliance(auth.uid(),true);
+ if not public.driver_is_operational(auth.uid()) then
    return null;
  end if;
 
@@ -148,8 +150,7 @@ begin
    where t.driver_id=dl.driver_id and t.status='completed'
  ) history on true
  where dl.is_online=true and dl.updated_at>=v_now-interval '20 seconds'
-   and p.role='driver' and p.is_approved
-   and (p.approved_until is null or p.approved_until>=v_now)
+   and public.driver_is_operational(p.id)
    and not exists(select 1 from public.trips active_trip
      where active_trip.driver_id=dl.driver_id
        and active_trip.status in ('accepted','arrived','in_progress','awaiting_finish_code','payment_pending'))
@@ -206,12 +207,9 @@ begin
  if not exists(select 1 from public.profiles where id=auth.uid() and role='driver') then
    raise exception 'La cuenta no tiene rol driver';
  end if;
- if not exists(select 1 from public.profiles where id=auth.uid() and is_approved) then
-   raise exception 'Conductor no aprobado';
- end if;
- if exists(select 1 from public.profiles where id=auth.uid()
-   and approved_until is not null and approved_until<now()) then
-   raise exception 'Habilitación vencida';
+ perform public.refresh_driver_compliance(auth.uid(),true);
+ if not public.driver_is_operational(auth.uid()) then
+   raise exception 'Conductor no habilitado: revisá aprobación y documentación';
  end if;
  update public.trips set driver_id=auth.uid()::text,driver_name=p_driver_name,
    vehicle_info=p_vehicle_info,status='accepted',accepted_at=now(),

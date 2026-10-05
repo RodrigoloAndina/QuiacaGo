@@ -43,6 +43,10 @@ class _SplashScreenState extends State<SplashScreen>
     Map<String, dynamic>? profile;
     try {
       profile = await AuthService().currentProfile();
+      if (profile?['role'] == 'driver') {
+        await AuthService().refreshDriverCompliance();
+        profile = await AuthService().currentProfile();
+      }
     } catch (_) {
       if (AuthService().hasSession && await DriverSessionService().restore()) {
         if (mounted) context.go('/home');
@@ -103,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.accent.withOpacity(0.4),
+                        color: AppColors.accent.withValues(alpha: 0.4),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),

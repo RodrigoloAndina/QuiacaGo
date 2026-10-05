@@ -24,8 +24,7 @@ class TariffService {
           .eq('id', 'current')
           .single();
       _tarifaDiurna = _toDouble(data['day_amount'], tarifaDiurnaRespaldo);
-      _tarifaNocturna =
-          _toDouble(data['night_amount'], tarifaNocturnaRespaldo);
+      _tarifaNocturna = _toDouble(data['night_amount'], tarifaNocturnaRespaldo);
       _horaInicioDiurna =
           _toHour(data['day_starts_at'], fallback: _horaInicioDiurna);
       _horaInicioNocturna =

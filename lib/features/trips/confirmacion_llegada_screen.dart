@@ -149,6 +149,13 @@ class _ConfirmacionLlegadaScreenState extends State<ConfirmacionLlegadaScreen> {
         title: const Text('Esperando al Pasajero'),
         backgroundColor: AppColors.primary,
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            tooltip: 'Ayuda y emergencia',
+            onPressed: () => context.push('/soporte'),
+            icon: const Icon(Icons.support_agent_outlined),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -202,7 +209,7 @@ class _ConfirmacionLlegadaScreenState extends State<ConfirmacionLlegadaScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -216,7 +223,7 @@ class _ConfirmacionLlegadaScreenState extends State<ConfirmacionLlegadaScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.statusPending.withOpacity(0.15),
+                      color: AppColors.statusPending.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Row(

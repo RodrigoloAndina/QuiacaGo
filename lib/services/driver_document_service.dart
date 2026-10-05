@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'supabase_service.dart';
+import 'driver_document_rules.dart';
 
 class DriverDocumentService {
   SupabaseClient get _client => SupabaseService().client;
@@ -19,14 +20,20 @@ class DriverDocumentService {
     if (comma < 0) throw const FormatException('Archivo inválido');
     final bytes =
         Uint8List.fromList(base64Decode(dataUri.substring(comma + 1)));
+    final validationError =
+        DriverDocumentRules.validateUpload(fileName, bytes.length);
+    if (validationError != null) throw FormatException(validationError);
     final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-    final extension = safeName.contains('.') ? safeName.split('.').last : 'jpg';
+    final extension = DriverDocumentRules.extensionOf(safeName);
     final path = '$driverId/$type.$extension';
 
     await _client.storage.from('driver-documents').uploadBinary(
           path,
           bytes,
-          fileOptions: const FileOptions(upsert: true),
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: DriverDocumentRules.contentTypeFor(safeName),
+          ),
         );
 
     final existing = await _client
@@ -37,7 +44,6 @@ class DriverDocumentService {
         .maybeSingle();
     final values = {
       'storage_path': path,
-      'status': 'pending',
       'expires_at': expiresAt?.toIso8601String().split('T').first,
     };
     if (existing == null) {

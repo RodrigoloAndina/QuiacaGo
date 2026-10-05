@@ -23,16 +23,16 @@ class CurrentTripSession {
   bool get hasTrip => currentTrip != null;
 
   Future<TripModel?> restore() async {
-    currentTrip = await TripService.obtenerViajeActivo();
+    try {
+    currentTrip = await TripService.obtenerViajeActivo(throwOnError: true);
     if (currentTrip != null) {
       await OfflineSyncService().cacheTrip(currentTrip!.toMap());
       return currentTrip;
     }
-    if (!OfflineSyncService().isOnline) {
+    await OfflineSyncService().clearCachedTrip();
+    } catch (_) {
       final cached = await OfflineSyncService().readCachedTrip();
       if (cached != null) currentTrip = TripModel.fromMap(cached);
-    } else {
-      await OfflineSyncService().clearCachedTrip();
     }
     return currentTrip;
   }

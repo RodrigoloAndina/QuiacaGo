@@ -9,6 +9,10 @@ import 'features/pasajero/registro_pasajero_screen.dart';
 import 'features/pasajero/inicio_pasajero_screen.dart';
 import 'services/supabase_service.dart';
 import 'services/offline_sync_service.dart';
+import 'features/release/app_release_gate.dart';
+import 'features/profile/cuenta_pasajero_screen.dart';
+import 'features/support/support_screen.dart';
+import 'features/legal/legal_gate.dart';
 
 final GoRouter pasajeroRouter = GoRouter(
   initialLocation: '/splash-pasajero',
@@ -31,7 +35,17 @@ final GoRouter pasajeroRouter = GoRouter(
     GoRoute(
       path: '/pasajero-home',
       builder: (BuildContext context, GoRouterState state) =>
-          const InicioPasajeroScreen(),
+          const LegalGate(child: InicioPasajeroScreen()),
+    ),
+    GoRoute(
+      path: '/cuenta-pasajero',
+      builder: (BuildContext context, GoRouterState state) =>
+          const CuentaPasajeroScreen(),
+    ),
+    GoRoute(
+      path: '/soporte-pasajero',
+      builder: (BuildContext context, GoRouterState state) =>
+          const SupportScreen(),
     ),
   ],
 );
@@ -41,7 +55,7 @@ Future<void> main() async {
 
   // Inicialización oficial de Supabase Realtime para la App de Pasajeros
   try {
-    await SupabaseService().initialize();
+    await SupabaseService().initialize(appType: 'pasajero');
     await OfflineSyncService().start();
   } catch (_) {}
 
@@ -62,8 +76,9 @@ class QuiacaGoPasajeroApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: pasajeroRouter,
-      builder: (context, child) =>
-          ConnectionStatusOverlay(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => ConnectionStatusOverlay(
+        child: AppReleaseGate(child: child ?? const SizedBox.shrink()),
+      ),
     );
   }
 }

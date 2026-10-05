@@ -257,7 +257,7 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -319,7 +319,7 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 30,
                     offset: const Offset(0, 10)),
               ],
@@ -332,7 +332,7 @@ class _NuevoPedidoModalState extends State<NuevoPedidoModal> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryFixedDim.withOpacity(0.4),
+                    color: AppColors.primaryFixedDim.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Row(

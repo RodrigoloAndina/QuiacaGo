@@ -18,23 +18,24 @@ dependencies:
   go_router: ^13.0.0
   
   # UI, Tipografía e Iconos
-  google_fonts: ^6.1.0
+  google_fonts: ^8.2.1
   flutter_svg: ^2.0.9
   cupertino_icons: ^1.0.6
-  intl: ^0.19.0
+  intl: ^0.20.3
 
   # Mapas y Geolocalización (OpenStreetMap / MapLibre)
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
 
   # Backend Inicial y Autenticación
-  supabase_flutter: ^2.3.0
-  url_launcher: ^6.2.4
-  geolocator: ^10.1.0
+  supabase_flutter: ^2.18.0
+  url_launcher: ^6.3.3
+  geolocator: ^14.1.1
   http: ^1.2.0
-  image_picker: ^1.0.7
-  file_picker: ^8.0.0
-  path_provider: ^2.1.5
+  image_picker: ^1.2.3
+  file_picker: ^13.1.0
+  path_provider: ^2.1.6
+  package_info_plus: ^10.2.2
 
 dev_dependencies:
   flutter_test:
@@ -46,3 +47,4 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/legal/

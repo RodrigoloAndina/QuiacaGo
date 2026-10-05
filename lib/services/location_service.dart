@@ -43,8 +43,10 @@ class LocationService {
       // 1. Priorizar SIEMPRE la captura fresca del hardware GPS (Timeout 4s)
       try {
         Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 4),
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 4),
+          ),
         );
         return LatLng(position.latitude, position.longitude);
       } catch (_) {
@@ -55,6 +57,29 @@ class LocationService {
       return await _getLastKnownOrCenter();
     } catch (_) {
       return await _getLastKnownOrCenter();
+    }
+  }
+
+  /// Posición válida sólo para publicar disponibilidad. Nunca devuelve el
+  /// centro de la ciudad como si fuera una lectura del GPS.
+  static Future<LatLng?> getFreshLocation() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return null;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) return null;
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      return LatLng(position.latitude, position.longitude);
+    } catch (_) {
+      return null;
     }
   }
 

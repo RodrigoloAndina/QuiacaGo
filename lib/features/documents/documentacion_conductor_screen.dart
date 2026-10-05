@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../services/driver_document_service.dart';
+import '../../services/driver_document_rules.dart';
 import '../../services/supabase_service.dart';
 
 class DocumentacionConductorScreen extends StatefulWidget {
@@ -18,18 +19,11 @@ class DocumentacionConductorScreen extends StatefulWidget {
 
 class _DocumentacionConductorScreenState
     extends State<DocumentacionConductorScreen> {
-  static const _types = <String, String>{
-    'dni_front': 'DNI frente',
-    'dni_back': 'DNI dorso',
-    'license': 'Licencia',
-    'insurance': 'Póliza de seguro de taxi',
-    'vtv': 'VTV / RTO vigente',
-  };
-
   final _service = DriverDocumentService();
   List<Map<String, dynamic>> _documents = [];
   bool _loading = true;
   String? _uploadingType;
+  String? _loadError;
 
   String get _driverId => SupabaseService().client.auth.currentUser?.id ?? '';
 
@@ -44,9 +38,20 @@ class _DocumentacionConductorScreenState
       if (mounted) setState(() => _loading = false);
       return;
     }
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     try {
       final documents = await _service.forDriver(_driverId);
       if (mounted) setState(() => _documents = documents);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadError =
+            'No pudimos consultar tu legajo. Revisá la conexión e intentá nuevamente.');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -77,25 +82,53 @@ class _DocumentacionConductorScreenState
   }
 
   Future<void> _upload(String type) async {
-    final result = await FilePicker.platform.pickFiles(
+    final files = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf'],
-      withData: true,
     );
-    if (result == null || result.files.isEmpty) return;
-    final file = result.files.first;
-    if (file.bytes == null) return;
+    if (files.isEmpty) return;
+    final file = files.first;
+    final fileLength = await file.length() ?? 0;
+    final validationError =
+        DriverDocumentRules.validateUpload(file.name, fileLength);
+    if (validationError != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(validationError)));
+      }
+      return;
+    }
+    final current = _documentFor(type);
+    if (current != null && mounted) {
+      final replace = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('¿Actualizar este documento?'),
+          content: const Text(
+              'La versión actual será reemplazada y el legajo volverá a revisión administrativa.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('CANCELAR')),
+            FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('ACTUALIZAR')),
+          ],
+        ),
+      );
+      if (replace != true) return;
+    }
+    final bytes = await file.readAsBytes();
     final expiry = await _expiryFor(type);
     if (type != 'dni_front' && type != 'dni_back' && expiry == null) return;
 
     setState(() => _uploadingType = type);
     try {
-      final extension = file.extension?.toLowerCase() ?? 'jpg';
-      final mime = extension == 'pdf' ? 'application/pdf' : 'image/$extension';
+      final mime = DriverDocumentRules.contentTypeFor(file.name);
       await _service.upload(
         driverId: _driverId,
         type: type,
-        dataUri: 'data:$mime;base64,${base64Encode(file.bytes!)}',
+        dataUri: 'data:$mime;base64,${base64Encode(bytes)}',
         fileName: file.name,
         expiresAt: expiry,
       );
@@ -127,8 +160,18 @@ class _DocumentacionConductorScreenState
   }
 
   Future<void> _open(Map<String, dynamic> document) async {
-    final url = await _service.signedUrl(document['storage_path'].toString());
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    try {
+      final url = await _service.signedUrl(document['storage_path'].toString());
+      final opened =
+          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      if (!opened) throw StateError('No hay una aplicación disponible.');
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No pudimos abrir el documento. Intentá nuevamente.'),
+        ));
+      }
+    }
   }
 
   @override
@@ -144,21 +187,21 @@ class _DocumentacionConductorScreenState
           : _driverId.isEmpty
               ? const Center(
                   child: Text('Iniciá sesión para cargar tu legajo.'))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      const Text(
-                        'Cargá los cinco documentos para completar tu legajo. Podés reemplazar licencia, seguro o VTV antes de su vencimiento; la nueva versión quedará pendiente de revisión.',
-                        style: TextStyle(color: AppColors.textSecondary),
+              : _loadError != null
+                  ? _errorState()
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView(
+                        padding: const EdgeInsets.all(20),
+                        children: [
+                          _summaryCard(),
+                          const SizedBox(height: 16),
+                          for (final definition
+                              in DriverDocumentRules.definitions)
+                            _documentCard(definition.type, definition.label),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      for (final entry in _types.entries)
-                        _documentCard(entry.key, entry.value),
-                    ],
-                  ),
-                ),
+                    ),
     );
   }
 
@@ -166,9 +209,13 @@ class _DocumentacionConductorScreenState
     final document = _documentFor(type);
     final status = document?['status']?.toString() ?? 'missing';
     final expiry = DateTime.tryParse(document?['expires_at']?.toString() ?? '');
-    final daysUntilExpiry = expiry?.difference(DateTime.now()).inDays;
-    final expiresSoon = daysUntilExpiry != null && daysUntilExpiry <= 30;
-    final needsExpiryAttention = expiresSoon && status == 'approved';
+    final daysUntilExpiry = DriverDocumentRules.daysUntilExpiry(expiry);
+    final expiresSoon = daysUntilExpiry != null &&
+        daysUntilExpiry >= 0 &&
+        daysUntilExpiry <= 30;
+    final isExpired = daysUntilExpiry != null && daysUntilExpiry < 0;
+    final needsExpiryAttention =
+        (expiresSoon || isExpired) && status == 'approved';
     final color = switch (status) {
       'approved' => AppColors.statusAvailable,
       'rejected' || 'expired' => AppColors.statusRejected,
@@ -190,6 +237,7 @@ class _DocumentacionConductorScreenState
             : AppColors.statusPending)
         : color;
     final expiryText = document?['expires_at']?.toString();
+    final reviewNote = document?['review_note']?.toString().trim();
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -218,6 +266,21 @@ class _DocumentacionConductorScreenState
                       : 'Vence: $expiryText',
                   style: const TextStyle(color: AppColors.textSecondary)),
             ],
+            if (reviewNote?.isNotEmpty == true) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text('Observación: $reviewNote',
+                    style: const TextStyle(
+                        color: AppColors.statusRejected,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ],
             const SizedBox(height: 10),
             Row(children: [
               if (document != null)
@@ -240,6 +303,88 @@ class _DocumentacionConductorScreenState
             ]),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _summaryCard() {
+    final summary = DriverDocumentRules.summarize(_documents);
+    final uploaded =
+        DriverDocumentRules.definitions.length - summary.missing.length;
+    String message;
+    Color color;
+    IconData icon;
+    if (summary.missing.isNotEmpty) {
+      message =
+          'Te faltan ${summary.missing.length} documentos para completar el legajo.';
+      color = AppColors.statusRejected;
+      icon = Icons.pending_actions_outlined;
+    } else if (summary.expired.isNotEmpty) {
+      message = 'Tenés documentación vencida o sin fecha válida.';
+      color = AppColors.statusRejected;
+      icon = Icons.event_busy_outlined;
+    } else if (summary.rejected.isNotEmpty) {
+      message =
+          'Administración pidió reemplazar ${summary.rejected.length} documento(s).';
+      color = AppColors.statusRejected;
+      icon = Icons.error_outline;
+    } else if (summary.pending.isNotEmpty) {
+      message = 'Tu legajo está completo y espera revisión administrativa.';
+      color = AppColors.statusPending;
+      icon = Icons.hourglass_top_outlined;
+    } else {
+      message = 'Tu documentación está completa, vigente y aprobada.';
+      color = AppColors.statusAvailable;
+      icon = Icons.verified_outlined;
+    }
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Text(message,
+                    style:
+                        TextStyle(color: color, fontWeight: FontWeight.w800))),
+          ]),
+          const SizedBox(height: 12),
+          LinearProgressIndicator(
+            value: uploaded / DriverDocumentRules.definitions.length,
+            minHeight: 7,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          const SizedBox(height: 8),
+          Text(
+              '$uploaded de ${DriverDocumentRules.definitions.length} documentos cargados',
+              style: const TextStyle(color: AppColors.textSecondary)),
+          const SizedBox(height: 8),
+          const Text(
+            'Formatos admitidos: JPG, PNG o PDF, hasta 10 MB. Al reemplazar un archivo, vuelve a revisión.',
+            style: TextStyle(color: AppColors.textSecondary, height: 1.35),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _errorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.cloud_off_outlined,
+              size: 52, color: AppColors.textSecondary),
+          const SizedBox(height: 12),
+          Text(_loadError!, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: _load,
+            icon: const Icon(Icons.refresh),
+            label: const Text('REINTENTAR'),
+          ),
+        ]),
       ),
     );
   }

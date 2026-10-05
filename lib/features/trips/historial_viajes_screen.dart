@@ -119,6 +119,11 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
                       itemBuilder: (context, index) {
                         final t = _trips[index];
                         final isCancelled = t.status == 'cancelled';
+                        final paymentIssueLabel = switch (t.paymentStatus) {
+                          'disputed' => 'Pago en revisión',
+                          'waived' => 'Deuda anulada',
+                          _ => null,
+                        };
                         return _buildTripCard(
                           date: t.id.length > 8
                               ? 'ID: ${t.id.substring(0, 8)}...'
@@ -131,6 +136,7 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
                           passenger:
                               'Pasajero: ${t.passengerName} (${t.passengerPhone})',
                           isCancelled: isCancelled,
+                          paymentIssueLabel: paymentIssueLabel,
                         );
                       },
                     ),
@@ -149,6 +155,7 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
     String? passenger,
     bool hasBorderLeft = false,
     bool isCancelled = false,
+    String? paymentIssueLabel,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -160,7 +167,7 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
             : Border.all(color: AppColors.surfaceContainerHigh),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -175,7 +182,7 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
               Text(date,
                   style:
                       const TextStyle(fontSize: 12, color: AppColors.outline)),
-              if (isCancelled)
+              if (isCancelled || paymentIssueLabel != null)
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -183,9 +190,9 @@ class _HistorialViajesScreenState extends State<HistorialViajesScreen> {
                     color: AppColors.badgeCancelledBackground,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Cancelado',
-                    style: TextStyle(
+                  child: Text(
+                    paymentIssueLabel ?? 'Cancelado',
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: AppColors.statusCancelled,

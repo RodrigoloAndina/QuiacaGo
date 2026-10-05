@@ -12,6 +12,12 @@ if (localPropertiesFile.exists()) {
     }
 }
 
+def signingProperties = new Properties()
+def signingFile = rootProject.file('key.properties')
+if (signingFile.exists()) {
+    signingFile.withInputStream { signingProperties.load(it) }
+}
+
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
     flutterVersionCode = '1'
@@ -24,8 +30,10 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.quiacago.quiaca_go_conductor"
-    compileSdkVersion 35
-    ndkVersion flutter.ndkVersion
+    compileSdkVersion 36
+    ndkVersion "28.2.13676358"
+
+    flavorDimensions += ["quiacagoApp", "quiacagoEnvironment"]
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -38,15 +46,48 @@ android {
 
     defaultConfig {
         applicationId "com.quiacago.quiaca_go_conductor"
-        minSdkVersion 21
-        targetSdkVersion 34
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
 
+    signingConfigs {
+        release {
+            if (signingProperties['storeFile']) {
+                storeFile file(signingProperties['storeFile'])
+                storePassword signingProperties['storePassword']
+                keyAlias signingProperties['keyAlias']
+                keyPassword signingProperties['keyPassword']
+            }
+        }
+    }
+
+    productFlavors {
+        conductor {
+            dimension "quiacagoApp"
+            applicationId "com.quiacago.conductor"
+        }
+        pasajero {
+            dimension "quiacagoApp"
+            applicationId "com.quiacago.pasajero"
+        }
+        beta {
+            dimension "quiacagoEnvironment"
+            applicationIdSuffix ".beta"
+            versionNameSuffix "-beta"
+        }
+        production {
+            dimension "quiacagoEnvironment"
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            if (!signingProperties['storeFile'] && gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+                throw new GradleException('Falta android/key.properties: no se permite firmar una versión de producción con la clave debug.')
+            }
+            if (signingProperties['storeFile']) signingConfig signingConfigs.release
         }
     }
 }

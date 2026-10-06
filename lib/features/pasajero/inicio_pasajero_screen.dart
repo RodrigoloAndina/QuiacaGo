@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/map_bottom_panel.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/location_service.dart';
 import '../../services/tariff_service.dart';
@@ -927,11 +928,11 @@ class _InicioPasajeroScreenState extends State<InicioPasajeroScreen>
             ),
 
           // Panel inferior
-          Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _buildPanel(precio, descTarifa)),
+          Positioned.fill(
+            child: MapBottomPanel(
+              child: _buildPanel(precio, descTarifa),
+            ),
+          ),
         ],
       ),
     );

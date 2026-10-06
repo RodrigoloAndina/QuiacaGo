@@ -11,6 +11,7 @@ import '../../services/trip_service.dart';
 import '../../services/offline_sync_service.dart';
 import '../../services/tariff_service.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/map_bottom_panel.dart';
 
 class ViajeEnCursoScreen extends StatefulWidget {
   const ViajeEnCursoScreen({super.key});
@@ -311,134 +312,135 @@ class _ViajeEnCursoScreenState extends State<ViajeEnCursoScreen> {
           ),
 
           // PANEL INFERIOR DE FINALIZACIÓN
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 24,
-                    offset: const Offset(0, -6),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'DESTINO FINAL',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF94A3B8)),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              CurrentTripSession()
-                                      .currentTrip
-                                      ?.destinationAddress ??
-                                  'Destino indicado por el pasajero',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A)),
-                            ),
-                          ],
+          Positioned.fill(
+            child: MapBottomPanel(
+              horizontalMargin: 16,
+              bottomMargin: 24,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, -6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'DESTINO FINAL',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF94A3B8)),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                CurrentTripSession()
+                                        .currentTrip
+                                        ?.destinationAddress ??
+                                    'Destino indicado por el pasajero',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A)),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(16),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            TariffService.formatearMonto(
+                                CurrentTripSession().currentTrip?.fareAmount ??
+                                    TariffService.calcularPrecio()),
+                            style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF00327D)),
+                          ),
                         ),
-                        child: Text(
-                          TariffService.formatearMonto(
-                              CurrentTripSession().currentTrip?.fareAmount ??
-                                  TariffService.calcularPrecio()),
-                          style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF00327D)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  const Divider(height: 1),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      const Icon(Icons.person,
-                          color: Color(0xFF00327D), size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                          CurrentTripSession().currentTrip?.passengerName ??
-                              'Pasajero',
-                          style: const TextStyle(
-                              color: Color(0xFF0F172A),
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold)),
-                      const Spacer(),
-                      IconButton.filledTonal(
-                        icon: const Icon(Icons.phone,
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    const Divider(height: 1),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        const Icon(Icons.person,
                             color: Color(0xFF00327D), size: 20),
-                        onPressed: _hacerLlamada,
-                        style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFEFF6FF)),
-                      ),
-                      const SizedBox(width: 6),
-                      IconButton.filledTonal(
-                        icon: const Icon(Icons.chat_outlined,
-                            color: Color(0xFF10B981), size: 20),
-                        onPressed: _abrirWhatsApp,
-                        style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFECFDF5)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton.icon(
-                      onPressed: _finishing ? null : _llegueAlDestino,
-                      icon:
-                          const Icon(Icons.flag, color: Colors.white, size: 22),
-                      label: Text(
-                        'LLEGUÉ AL DESTINO · COBRAR ${TariffService.formatearMonto(CurrentTripSession().currentTrip?.fareAmount ?? 0)}',
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF4444),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                        const SizedBox(width: 8),
+                        Text(
+                            CurrentTripSession().currentTrip?.passengerName ??
+                                'Pasajero',
+                            style: const TextStyle(
+                                color: Color(0xFF0F172A),
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold)),
+                        const Spacer(),
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.phone,
+                              color: Color(0xFF00327D), size: 20),
+                          onPressed: _hacerLlamada,
+                          style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFEFF6FF)),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.chat_outlined,
+                              color: Color(0xFF10B981), size: 20),
+                          onPressed: _abrirWhatsApp,
+                          style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFECFDF5)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: _finishing ? null : _llegueAlDestino,
+                        icon: const Icon(Icons.flag,
+                            color: Colors.white, size: 22),
+                        label: Text(
+                          'LLEGUÉ AL DESTINO · COBRAR ${TariffService.formatearMonto(CurrentTripSession().currentTrip?.fareAmount ?? 0)}',
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

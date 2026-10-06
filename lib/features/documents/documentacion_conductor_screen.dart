@@ -10,7 +10,14 @@ import '../../services/driver_document_rules.dart';
 import '../../services/supabase_service.dart';
 
 class DocumentacionConductorScreen extends StatefulWidget {
-  const DocumentacionConductorScreen({super.key});
+  final DriverDocumentService? service;
+  final String? driverId;
+
+  const DocumentacionConductorScreen({
+    super.key,
+    this.service,
+    this.driverId,
+  });
 
   @override
   State<DocumentacionConductorScreen> createState() =>
@@ -19,17 +26,19 @@ class DocumentacionConductorScreen extends StatefulWidget {
 
 class _DocumentacionConductorScreenState
     extends State<DocumentacionConductorScreen> {
-  final _service = DriverDocumentService();
+  late final DriverDocumentService _service;
   List<Map<String, dynamic>> _documents = [];
   bool _loading = true;
   String? _uploadingType;
   String? _loadError;
 
-  String get _driverId => SupabaseService().client.auth.currentUser?.id ?? '';
+  String get _driverId =>
+      widget.driverId ?? SupabaseService().client.auth.currentUser?.id ?? '';
 
   @override
   void initState() {
     super.initState();
+    _service = widget.service ?? DriverDocumentService();
     _load();
   }
 
@@ -292,6 +301,13 @@ class _DocumentacionConductorScreenState
               const Spacer(),
               OutlinedButton.icon(
                 onPressed: _uploadingType == null ? () => _upload(type) : null,
+                // El tema global usa ancho infinito para botones de formulario.
+                // Dentro de un Row eso produce restricciones infinitas y deja
+                // esta pantalla sin cuerpo en builds release.
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                ),
                 icon: _uploadingType == type
                     ? const SizedBox(
                         width: 16,

@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/map_bottom_panel.dart';
 
 import '../../services/current_trip_session.dart';
 import '../../services/location_service.dart';
@@ -198,144 +199,145 @@ class _ConfirmacionLlegadaScreenState extends State<ConfirmacionLlegadaScreen> {
           ),
 
           // Sheet Inferior de Notificación al Pasajero
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Tag de Estado
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.statusPending.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
+          Positioned.fill(
+            child: MapBottomPanel(
+              horizontalMargin: 16,
+              bottomMargin: 24,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Tag de Estado
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusPending.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.access_time_filled,
+                              color: AppColors.statusPending, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'ESPERANDO EN EL PUNTO DE RECOGIDA',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.statusPending,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+                    Text(
+                      CurrentTripSession().currentTrip?.pickupAddress ??
+                          'Punto de recogida',
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Pasajero: ${CurrentTripSession().currentTrip?.passengerName ?? 'Pasajero'}',
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // BOTONES DE LLAMADA Y MENSAJE DIRECTO AL PASAJERO
+                    Row(
                       children: [
-                        Icon(Icons.access_time_filled,
-                            color: AppColors.statusPending, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'ESPERANDO EN EL PUNTO DE RECOGIDA',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.statusPending,
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _hacerLlamada,
+                            icon: const Icon(Icons.phone,
+                                color: AppColors.primary),
+                            label: const Text('LLAMAR',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: const BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _abrirWhatsApp,
+                            icon: const Icon(Icons.chat_outlined,
+                                color: Colors.white),
+                            label: const Text('WHATSAPP',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.statusAvailable,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
-                  Text(
-                    CurrentTripSession().currentTrip?.pickupAddress ??
-                        'Punto de recogida',
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Pasajero: ${CurrentTripSession().currentTrip?.passengerName ?? 'Pasajero'}',
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary),
-                  ),
+                    const SizedBox(height: 16),
 
-                  const SizedBox(height: 20),
-
-                  // BOTONES DE LLAMADA Y MENSAJE DIRECTO AL PASAJERO
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _hacerLlamada,
-                          icon:
-                              const Icon(Icons.phone, color: AppColors.primary),
-                          label: const Text('LLAMAR',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: const BorderSide(color: AppColors.primary),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
-                          ),
+                    // Botón ingresar PIN para iniciar viaje
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push('/codigo-seguridad'),
+                        icon: const Icon(Icons.lock_open, color: Colors.white),
+                        label: const Text(
+                          'INGRESAR PIN E INICIAR VIAJE',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _abrirWhatsApp,
-                          icon: const Icon(Icons.chat_outlined,
-                              color: Colors.white),
-                          label: const Text('WHATSAPP',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.statusAvailable,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Botón ingresar PIN para iniciar viaje
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.push('/codigo-seguridad'),
-                      icon: const Icon(Icons.lock_open, color: Colors.white),
-                      label: const Text(
-                        'INGRESAR PIN E INICIAR VIAJE',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: _cancellingTrip ? null : _cancelarYReasignar,
-                    icon: const Icon(Icons.cancel_outlined),
-                    label: Text(_cancellingTrip
-                        ? 'CANCELANDO...'
-                        : _remainingNoShow == Duration.zero
-                            ? 'CANCELAR / PASAJERO AUSENTE'
-                            : 'CANCELAR O REASIGNAR · AUSENTE EN ${_remainingNoShow.inMinutes}:${(_remainingNoShow.inSeconds % 60).toString().padLeft(2, '0')}'),
-                    style: TextButton.styleFrom(
-                        foregroundColor: AppColors.statusCancelled),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _cancellingTrip ? null : _cancelarYReasignar,
+                      icon: const Icon(Icons.cancel_outlined),
+                      label: Text(_cancellingTrip
+                          ? 'CANCELANDO...'
+                          : _remainingNoShow == Duration.zero
+                              ? 'CANCELAR / PASAJERO AUSENTE'
+                              : 'CANCELAR O REASIGNAR · AUSENTE EN ${_remainingNoShow.inMinutes}:${(_remainingNoShow.inSeconds % 60).toString().padLeft(2, '0')}'),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.statusCancelled),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

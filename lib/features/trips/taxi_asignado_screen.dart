@@ -10,6 +10,7 @@ import '../../services/routing_service.dart';
 import '../../services/current_trip_session.dart';
 import '../../services/trip_service.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/map_bottom_panel.dart';
 import 'cancellation_dialog.dart';
 
 class TaxiAsignadoScreen extends StatefulWidget {
@@ -377,183 +378,185 @@ class _TaxiAsignadoScreenState extends State<TaxiAsignadoScreen> {
           ),
 
           // PANEL INFERIOR CON DATOS DEL PASAJERO
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 24,
-                    offset: const Offset(0, -6),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: const Color(0xFF00327D),
-                        child: Text(
-                          (CurrentTripSession()
-                                      .currentTrip
-                                      ?.passengerName
-                                      .isNotEmpty ==
-                                  true)
-                              ? CurrentTripSession()
-                                  .currentTrip!
-                                  .passengerName
-                                  .substring(0, 1)
-                                  .toUpperCase()
-                              : 'P',
-                          style: const TextStyle(
-                              color: Colors.white,
+          Positioned.fill(
+            child: MapBottomPanel(
+              horizontalMargin: 16,
+              bottomMargin: 24,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, -6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: const Color(0xFF00327D),
+                          child: Text(
+                            (CurrentTripSession()
+                                        .currentTrip
+                                        ?.passengerName
+                                        .isNotEmpty ==
+                                    true)
+                                ? CurrentTripSession()
+                                    .currentTrip!
+                                    .passengerName
+                                    .substring(0, 1)
+                                    .toUpperCase()
+                                : 'P',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                CurrentTripSession()
+                                            .currentTrip
+                                            ?.passengerName
+                                            .isNotEmpty ==
+                                        true
+                                    ? CurrentTripSession()
+                                        .currentTrip!
+                                        .passengerName
+                                    : 'Pasajero QuiacaGo',
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A)),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.star,
+                                      color: Colors.amber, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    CurrentTripSession()
+                                                .currentTrip
+                                                ?.passengerPhone
+                                                .isNotEmpty ==
+                                            true
+                                        ? CurrentTripSession()
+                                            .currentTrip!
+                                            .passengerPhone
+                                        : 'Pasajero Registrado',
+                                    style: const TextStyle(
+                                        fontSize: 13, color: Color(0xFF64748B)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton.filledTonal(
+                          icon:
+                              const Icon(Icons.phone, color: Color(0xFF00327D)),
+                          onPressed: _hacerLlamada,
+                          style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFEFF6FF)),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.chat_outlined,
+                              color: Color(0xFF10B981)),
+                          onPressed: _abrirWhatsApp,
+                          style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFECFDF5)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(height: 1),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on,
+                            color: Color(0xFF10B981), size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'PUNTO DE RECOGIDA (GPS ACTIVO)',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF94A3B8)),
+                              ),
+                              Text(
+                                CurrentTripSession()
+                                            .currentTrip
+                                            ?.pickupAddress
+                                            .isNotEmpty ==
+                                        true
+                                    ? CurrentTripSession()
+                                        .currentTrip!
+                                        .pickupAddress
+                                    : 'Ubicación GPS del Pasajero',
+                                style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: _markingArrival ? null : _marcarLlegada,
+                        icon: const Icon(Icons.check_circle_outline,
+                            color: Colors.white, size: 22),
+                        label: const Text(
+                          'HE LLEGADO / NOTIFICAR',
+                          style: TextStyle(
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16),
+                              letterSpacing: 0.5),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              CurrentTripSession()
-                                          .currentTrip
-                                          ?.passengerName
-                                          .isNotEmpty ==
-                                      true
-                                  ? CurrentTripSession()
-                                      .currentTrip!
-                                      .passengerName
-                                  : 'Pasajero QuiacaGo',
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A)),
-                            ),
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                const Icon(Icons.star,
-                                    color: Colors.amber, size: 16),
-                                const SizedBox(width: 4),
-                                Text(
-                                  CurrentTripSession()
-                                              .currentTrip
-                                              ?.passengerPhone
-                                              .isNotEmpty ==
-                                          true
-                                      ? CurrentTripSession()
-                                          .currentTrip!
-                                          .passengerPhone
-                                      : 'Pasajero Registrado',
-                                  style: const TextStyle(
-                                      fontSize: 13, color: Color(0xFF64748B)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton.filledTonal(
-                        icon: const Icon(Icons.phone, color: Color(0xFF00327D)),
-                        onPressed: _hacerLlamada,
-                        style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFEFF6FF)),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filledTonal(
-                        icon: const Icon(Icons.chat_outlined,
-                            color: Color(0xFF10B981)),
-                        onPressed: _abrirWhatsApp,
-                        style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFECFDF5)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(height: 1),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on,
-                          color: Color(0xFF10B981), size: 22),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'PUNTO DE RECOGIDA (GPS ACTIVO)',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF94A3B8)),
-                            ),
-                            Text(
-                              CurrentTripSession()
-                                          .currentTrip
-                                          ?.pickupAddress
-                                          .isNotEmpty ==
-                                      true
-                                  ? CurrentTripSession()
-                                      .currentTrip!
-                                      .pickupAddress
-                                  : 'Ubicación GPS del Pasajero',
-                              style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton.icon(
-                      onPressed: _markingArrival ? null : _marcarLlegada,
-                      icon: const Icon(Icons.check_circle_outline,
-                          color: Colors.white, size: 22),
-                      label: const Text(
-                        'HE LLEGADO / NOTIFICAR',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: _cancellingTrip ? null : _cancelarYReasignar,
-                    icon: const Icon(Icons.cancel_outlined),
-                    label: Text(_cancellingTrip
-                        ? 'CANCELANDO...'
-                        : 'NO PUEDO REALIZAR ESTE VIAJE'),
-                    style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFBA1A1A)),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _cancellingTrip ? null : _cancelarYReasignar,
+                      icon: const Icon(Icons.cancel_outlined),
+                      label: Text(_cancellingTrip
+                          ? 'CANCELANDO...'
+                          : 'NO PUEDO REALIZAR ESTE VIAJE'),
+                      style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFBA1A1A)),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

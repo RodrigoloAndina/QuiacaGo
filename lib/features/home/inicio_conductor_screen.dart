@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/map_bottom_panel.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/location_service.dart';
 import '../../services/trip_service.dart';
@@ -362,42 +363,20 @@ class _InicioConductorScreenState extends State<InicioConductorScreen>
           children: [
             Icon(Icons.local_taxi, color: AppColors.primary, size: 24),
             SizedBox(width: 8),
-            Text(
-              'QuiacaGo Conductor',
-              style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20),
+            Expanded(
+              child: Text(
+                'QuiacaGo Conductor',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20),
+              ),
             ),
           ],
         ),
         actions: [
-          if (_isConnected)
-            Container(
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.statusAvailable.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                          color: AppColors.statusAvailable,
-                          shape: BoxShape.circle)),
-                  const SizedBox(width: 6),
-                  const Text('EN LÍNEA',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.statusAvailable)),
-                ],
-              ),
-            ),
           IconButton(
             tooltip: 'Cerrar sesión',
             onPressed: _cerrarSesion,
@@ -449,189 +428,189 @@ class _InicioConductorScreenState extends State<InicioConductorScreen>
           ),
 
           // BOTTOM SHEET
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 90),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 20,
-                      offset: Offset(0, -5))
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                          color: AppColors.outlineVariant,
-                          borderRadius: BorderRadius.circular(2))),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Tu estado',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.onSurface)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
+          Positioned.fill(
+            child: MapBottomPanel(
+              includeSystemBottomInset: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 20,
+                        offset: Offset(0, -5))
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                        width: 40,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: _isConnected
-                              ? AppColors.statusAvailable
-                                  .withValues(alpha: 0.15)
-                              : AppColors.badgeCancelledBackground,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
+                            color: AppColors.outlineVariant,
+                            borderRadius: BorderRadius.circular(2))),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Tu estado',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.onSurface)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _isConnected
+                                ? AppColors.statusAvailable
+                                    .withValues(alpha: 0.15)
+                                : AppColors.badgeCancelledBackground,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                      color: _isConnected
+                                          ? AppColors.statusAvailable
+                                          : AppColors.statusCancelled,
+                                      shape: BoxShape.circle)),
+                              const SizedBox(width: 6),
+                              Text(
+                                _isConnected ? 'Disponible' : 'No disponible',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
                                     color: _isConnected
                                         ? AppColors.statusAvailable
-                                        : AppColors.statusCancelled,
-                                    shape: BoxShape.circle)),
-                            const SizedBox(width: 6),
-                            Text(
-                              _isConnected ? 'Disponible' : 'No disponible',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: _isConnected
-                                      ? AppColors.statusAvailable
-                                      : AppColors.statusCancelled),
-                            ),
-                          ],
+                                        : AppColors.statusCancelled),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: _isConnecting
-                          ? null
-                          : () async {
-                              bool changedSuccessfully = true;
-                              if (_isConnected) {
-                                _desconectarse();
-                              } else {
-                                changedSuccessfully = await _conectarse();
-                              }
-                              if (!mounted ||
-                                  _isConnecting ||
-                                  !changedSuccessfully) {
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(_isConnected
-                                      ? 'Disponible. Esperando solicitudes reales...'
-                                      : 'Desconectado.'),
-                                  backgroundColor: _isConnected
-                                      ? AppColors.statusAvailable
-                                      : AppColors.outline,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                      icon: const Icon(Icons.power_settings_new,
-                          color: Colors.white),
-                      label: Text(
-                        _isConnecting
-                            ? 'CONECTANDO...'
-                            : (_isConnected ? 'DESCONECTARSE' : 'CONECTARSE'),
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isConnected
-                            ? AppColors.statusCancelled
-                            : AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40)),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: _isConnecting
+                            ? null
+                            : () async {
+                                bool changedSuccessfully = true;
+                                if (_isConnected) {
+                                  _desconectarse();
+                                } else {
+                                  changedSuccessfully = await _conectarse();
+                                }
+                                if (!mounted ||
+                                    _isConnecting ||
+                                    !changedSuccessfully) {
+                                  return;
+                                }
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(_isConnected
+                                        ? 'Disponible. Esperando solicitudes reales...'
+                                        : 'Desconectado.'),
+                                    backgroundColor: _isConnected
+                                        ? AppColors.statusAvailable
+                                        : AppColors.outline,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.power_settings_new,
+                            color: Colors.white),
+                        label: Text(
+                          _isConnecting
+                              ? 'CONECTANDO...'
+                              : (_isConnected ? 'DESCONECTARSE' : 'CONECTARSE'),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.0),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isConnected
+                              ? AppColors.statusCancelled
+                              : AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40)),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(20)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(children: [
-                                Icon(Icons.account_balance_wallet_outlined,
-                                    size: 16, color: AppColors.outline),
-                                SizedBox(width: 4),
-                                Text('Ganancias hoy',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.outline)),
-                              ]),
-                              const SizedBox(height: 4),
-                              Text('\$${_gananciasHoy.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.primary)),
-                            ],
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                                color: AppColors.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(children: [
+                                  Icon(Icons.account_balance_wallet_outlined,
+                                      size: 16, color: AppColors.outline),
+                                  SizedBox(width: 4),
+                                  Text('Ganancias hoy',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.outline)),
+                                ]),
+                                const SizedBox(height: 4),
+                                Text('\$${_gananciasHoy.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.primary)),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(20)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(children: [
-                                Icon(Icons.access_time,
-                                    size: 16, color: AppColors.outline),
-                                SizedBox(width: 4),
-                                Text('Viajes',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.outline)),
-                              ]),
-                              const SizedBox(height: 4),
-                              Text('$_viajesHoy',
-                                  style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.primary)),
-                            ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                                color: AppColors.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(children: [
+                                  Icon(Icons.access_time,
+                                      size: 16, color: AppColors.outline),
+                                  SizedBox(width: 4),
+                                  Text('Viajes',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.outline)),
+                                ]),
+                                const SizedBox(height: 4),
+                                Text('$_viajesHoy',
+                                    style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.primary)),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
